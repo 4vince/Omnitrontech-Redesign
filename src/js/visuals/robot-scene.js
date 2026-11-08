@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { applyPixelRatio, getRendererInfo } from "../core/scene-quality.js";
 import { createHud, hudFontsReady } from "./robot-hud.js";
+import { createMatrixRain } from "./matrix-rain.js";
 import { BEATS, clamp01, pullAt, slideAt, smooth, turnAt } from "../home/robot-timing.js";
 
 /**
@@ -13,6 +14,7 @@ import { BEATS, clamp01, pullAt, slideAt, smooth, turnAt } from "../home/robot-t
  * so the display fills the screen; as progress runs to 1 the camera pulls
  * back through the visor frame, past the head and shoulders, and eases into
  * a slight three-quarter view with the robot on the right of the frame.
+ * Behind it, faint columns of falling glyphs (matrix-rain.js).
  *
  * Rendering stays crisp: no bloom, fog or shadow maps. Shell materials are
  * lit by a generated RoomEnvironment; the display is unlit (toneMapped off)
@@ -243,6 +245,8 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
 
   const { robot, head } = buildRobot(hudTexture);
   scene.add(robot);
+  const rain = createMatrixRain();
+  robot.add(rain.mesh);
 
   /* ── Camera path ─────────────────────────────────────────────────────
      Start: centred on the visor face, close enough that the display (not
@@ -320,6 +324,7 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
 
     // Display: the canvas redraw + texture upload is the cost, so the rate
     // follows how much of the screen the display covers.
+    rain.update(t);
     if (state.animate) {
       state.hudClock += dt;
       state.hudAccum += dt;
