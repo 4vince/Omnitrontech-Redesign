@@ -1,15 +1,15 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* Type */
-  --font-display: "Sora Variable", "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
-  --fs-display: clamp(2.85rem, 6.1vw, 6rem);
-  --fs-h2: clamp(2.15rem, 4.5vw, 4.35rem);
-  --fs-h3: clamp(1.35rem, 2.2vw, 2rem);
-  --fs-lead: clamp(1.05rem, 1.35vw, 1.28rem);
+  --fs-display: clamp(3.4rem, 7.2vw, 7.2rem);
+  --fs-h2: clamp(2.25rem, 3.9vw, 4rem);
+  --fs-h3: clamp(1.45rem, 2.6vw, 2.25rem);
+  --fs-lead: clamp(1.1rem, 1.45vw, 1.4rem);
   --fs-body: clamp(1rem, 1.02vw, 1.1rem);
   --fs-small: 0.875rem;
   --fs-micro: 0.6875rem;
@@ -27,7 +27,7 @@
   /* Layout — full bleed: wrappers span the viewport, gutters are the only
      inset, and text is capped per block (ch) rather than by the container. */
   --wrap-max: 100%;
-  --pad: clamp(20px, 3vw, 56px);
+  --pad: clamp(16px, 2.4vw, 44px);
   --gut: var(--pad);
   --nav-h: 76px;
 
@@ -38,9 +38,16 @@
   --radius-lg: 20px;
   --radius-pill: 999px;
 
-  /* Motion */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Motion
+     Curves: strong ease-out for anything entering/exiting or responding;
+     strong ease-in-out for things moving/morphing on screen.
+     Durations: UI feedback stays under 300ms. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 120ms;   /* press / active feedback */
+  --dur-ui: 200ms;      /* hover, focus, small state changes */
+  --dur-panel: 280ms;   /* accordions, menus, panels changing size */
+  --dur-reveal: 400ms;  /* content entering (success card, scene fade) */
   --dur-fast: 180ms;
   --dur: 360ms;
   --dur-slow: 720ms;
@@ -58,41 +65,133 @@
   --theme-dur: 380ms;
 }
 
+/*
+ * Confirmed redesign palette — light / off-white dominant system built on
+ * white, off-white, blue and grey. The orange accent is retired (design brief
+ * v1.0). Blue is the single functional accent.
+ */
 :root,
-[data-theme="dark"] {
-  color-scheme: dark;
+[data-theme="light"],
+.tone-light {
+  color-scheme: light;
 
-  --bg: #05070b;
-  --bg-2: #080b12;
-  --bg-3: #0b0f18;
-  --surface: #0b0f18;
-  --surface-2: #101624;
-  --surface-3: #151d2e;
+  /* Surfaces — warm off-white family */
+  --bg: #f6f5f1;
+  --bg-2: #efede6;
+  --bg-3: #e8e5dd;
+  --surface: #fbfaf7;
+  --surface-2: #f4f2ec;
+  --surface-3: #ffffff;
+  --paper: #fdfcfa; /* near-white reading sections (see tones.css) */
 
-  --ink: #f3f5f9;
-  --ink-soft: #d6dbe4;
-  --muted: #98a1b0;
-  --muted-2: #707a8a;
-  --placeholder: #6c7686;
+  /* Backdrop: blueprint grid + light pools (backdrop.css) */
+  --grid-minor: rgba(43, 70, 214, 0.055);
+  --grid-major: rgba(43, 70, 214, 0.15);
+  --grid-cell: 24px;
+  --grid-major-cell: 96px;
+  --pool-a: rgba(43, 70, 214, 0.16);
+  --pool-b: rgba(79, 108, 240, 0.1);
 
-  --line: rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.17);
-  --line-soft: rgba(255, 255, 255, 0.055);
+  /* Elevation: layered, tinted navy (never grey), plus a top-edge highlight */
+  --elev-1: 0 1px 2px rgba(10, 27, 82, 0.06), 0 8px 20px -10px rgba(10, 27, 82, 0.18);
+  --elev-2: 0 2px 4px rgba(10, 27, 82, 0.06), 0 24px 48px -20px rgba(10, 27, 82, 0.28),
+    0 60px 90px -50px rgba(43, 70, 214, 0.28);
+  --elev-3: 0 4px 8px rgba(10, 27, 82, 0.08), 0 34px 64px -24px rgba(10, 27, 82, 0.34),
+    0 80px 120px -56px rgba(43, 70, 214, 0.36);
+  --edge-hi: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 
-  --blue: #315bff;
-  --blue-bright: #5a7dff;
-  --blue-soft: #5a7dff;
+  /* Ink — cool charcoal with clear secondary-text steps */
+  --ink: #17191f;
+  --ink-soft: #33373f;
+  --muted: #4e535d;
+  --muted-2: #555c67;
+  --placeholder: #5f6672;
+
+  /* Lines — visible at rest without competing with content */
+  --line: rgba(23, 25, 31, 0.14);
+  --line-strong: rgba(23, 25, 31, 0.3);
+  --line-control: rgba(23, 25, 31, 0.48);
+  --line-soft: rgba(23, 25, 31, 0.08);
+
+  /* Accent — single blue */
+  --blue: #2b46d6;
+  --blue-bright: #304fd8;
+  --blue-soft: #4f6cf0;
   --blue-deep: #0a1b52;
   --blue-ink: #071236;
 
-  --orange: #ff7a2f;
-  --orange-bright: #ff9a5f;
-  --orange-soft: #ff9a5f;
-  --orange-ink: #180a03;
+  /* Warm accent retired per design brief v1.0 — blue only. */
 
-  --glow-blue: rgba(49, 91, 255, 0.36);
-  --glow-blue-soft: rgba(49, 91, 255, 0.14);
-  --glow-orange: rgba(255, 122, 47, 0.22);
+  --glow-blue: rgba(43, 70, 214, 0.14);
+  --glow-blue-soft: rgba(43, 70, 214, 0.07);
+
+  --danger: #c23a2e;
+  --danger-bg: rgba(194, 58, 46, 0.08);
+  --success: #1d8a5f;
+  --success-bg: rgba(29, 138, 95, 0.08);
+
+  --cta-bg: #0a1b52;
+  --cta-bg-2: #10247e;
+  --cta-ink: #f6f5f1;
+  --cta-muted: #b9c4e5;
+
+  --btn-bg: #2b46d6;
+  --btn-ink: #f6f5f1;
+  --btn-bg-hover: #3b5bff;
+
+  --field-bg: rgba(23, 25, 31, 0.04);
+  --field-bg-focus: rgba(43, 70, 214, 0.07);
+
+  --shadow-deep: 0 42px 90px -34px rgba(23, 25, 31, 0.28),
+    0 12px 34px -18px rgba(23, 25, 31, 0.18);
+  --shadow-card: 0 30px 70px -34px rgba(23, 25, 31, 0.3),
+    0 5px 20px -10px rgba(23, 25, 31, 0.2);
+  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  --inset-panel: inset 1px 0 0 rgba(23, 25, 31, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+
+  --nav-bg: rgba(246, 245, 241, 0.92); /* near-opaque: stays clean over navy bands */
+  --nav-bg-solid: rgba(246, 245, 241, 0.96);
+  --selection: rgba(43, 70, 214, 0.2);
+
+  --card-sheen: radial-gradient(
+    120% 130% at 12% 0%,
+    rgba(255, 255, 255, 0.85),
+    transparent 46%
+  );
+  --scene-fade: #f6f5f1;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces — deep slate, same blue family */
+  --bg: #0b0d13;
+  --bg-2: #0e1118;
+  --bg-3: #12151d;
+  --surface: #10131a;
+  --surface-2: #141824;
+  --surface-3: #181d29;
+
+  --ink: #eef0f5;
+  --ink-soft: #c3c9d4;
+  --muted: #aab2bf;
+  --muted-2: #8993a2;
+  --placeholder: #808a9a;
+
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.28);
+  --line-control: rgba(255, 255, 255, 0.4);
+  --line-soft: rgba(255, 255, 255, 0.08);
+
+  --blue: #5a82ff;
+  --blue-bright: #7c97ff;
+  --blue-soft: #8ba2ff;
+  --blue-deep: #0a1b52;
+  --blue-ink: #071236;
+
+  --glow-blue: rgba(90, 130, 255, 0.32);
+  --glow-blue-soft: rgba(90, 130, 255, 0.14);
 
   --danger: #ff6b5e;
   --danger-bg: rgba(255, 92, 78, 0.08);
@@ -103,11 +202,10 @@
   --cta-bg-2: #0a2168;
   --cta-ink: #f7f9ff;
   --cta-muted: #b9c4e5;
-  --footer-bg: #03050a;
 
-  --btn-bg: var(--orange);
-  --btn-ink: var(--orange-ink);
-  --btn-bg-hover: var(--orange-bright);
+  --btn-bg: #5a82ff;
+  --btn-ink: #060a18;
+  --btn-bg-hover: #6f97ff;
 
   --field-bg: rgba(255, 255, 255, 0.035);
   --field-bg-focus: rgba(255, 255, 255, 0.06);
@@ -122,7 +220,7 @@
 
   --nav-bg: rgba(5, 7, 11, 0.7);
   --nav-bg-solid: rgba(5, 7, 11, 0.94);
-  --selection: rgba(255, 122, 47, 0.32);
+  --selection: rgba(90, 130, 255, 0.32);
 
   --card-sheen: radial-gradient(
     120% 130% at 12% 0%,
@@ -130,77 +228,4 @@
     transparent 42%
   );
   --scene-fade: #05070b;
-}
-
-[data-theme="light"] {
-  color-scheme: light;
-
-  --bg: #efebe3;
-  --bg-2: #e8e3d9;
-  --bg-3: #e1dbcf;
-  --surface: #faf8f3;
-  --surface-2: #fffdf9;
-  --surface-3: #ffffff;
-
-  --ink: #090b10;
-  --ink-soft: #1b2029;
-  --muted: #565f6d;
-  --muted-2: #59616d;
-  --placeholder: #7b838f;
-
-  --line: rgba(9, 11, 16, 0.13);
-  --line-strong: rgba(9, 11, 16, 0.24);
-  --line-soft: rgba(9, 11, 16, 0.075);
-
-  --blue: #1f46d6;
-  --blue-bright: #2e54e2;
-  --blue-soft: #4166e9;
-  --blue-deep: #0a1b52;
-  --blue-ink: #071236;
-
-  --orange: #a83d08;
-  --orange-bright: #963806;
-  --orange-soft: #a53c08;
-  --orange-ink: #fff8f2;
-
-  --glow-blue: rgba(31, 70, 214, 0.17);
-  --glow-blue-soft: rgba(31, 70, 214, 0.08);
-  --glow-orange: rgba(201, 78, 16, 0.12);
-
-  --danger: #b42318;
-  --danger-bg: rgba(180, 35, 24, 0.07);
-  --success: #16794f;
-  --success-bg: rgba(22, 121, 79, 0.07);
-
-  --cta-bg: #081749;
-  --cta-bg-2: #0c2469;
-  --cta-ink: #f7f9ff;
-  --cta-muted: #b9c4e5;
-  --footer-bg: #06080e;
-
-  --btn-bg: var(--orange);
-  --btn-ink: var(--orange-ink);
-  --btn-bg-hover: var(--orange-bright);
-
-  --field-bg: rgba(9, 11, 16, 0.035);
-  --field-bg-focus: rgba(9, 11, 16, 0.06);
-
-  --shadow-deep: 0 42px 90px -36px rgba(32, 38, 54, 0.28),
-    0 12px 34px -18px rgba(32, 38, 54, 0.2);
-  --shadow-card: 0 30px 70px -38px rgba(32, 38, 54, 0.34),
-    0 5px 20px -12px rgba(32, 38, 54, 0.18);
-  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --inset-panel: inset 1px 0 0 rgba(255, 255, 255, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-
-  --nav-bg: rgba(239, 235, 227, 0.76);
-  --nav-bg-solid: rgba(239, 235, 227, 0.95);
-  --selection: rgba(31, 70, 214, 0.22);
-
-  --card-sheen: radial-gradient(
-    120% 130% at 12% 0%,
-    rgba(255, 255, 255, 0.9),
-    transparent 46%
-  );
-  --scene-fade: #efebe3;
 }

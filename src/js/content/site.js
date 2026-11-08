@@ -9,15 +9,17 @@ export const site = {
     { label: "Contact", href: "/contact/" },
   ],
   cta: { label: "Start the conversation", href: "/contact/" },
+  // Profile URLs only. A bare domain (https://x.com) sends visitors to a
+  // login wall, so an empty href hides that icon until the real link exists.
   socials: [
     {
       label: "Omnitron on LinkedIn",
-      href: "https://linkedin.com",
+      href: "",
       icon: "ph-linkedin-logo",
     },
     {
       label: "Omnitron on X",
-      href: "https://x.com",
+      href: "",
       icon: "ph-x-logo",
     },
   ],

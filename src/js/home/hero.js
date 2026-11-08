@@ -1,361 +1,235 @@
-import { services, serviceContactHref } from "../content/services.js";
-import { gsap, ScrollTrigger, isDesktop, prefersReducedMotion } from "../core/motion.js";
+import {
+  createScrubDriver,
+  gsap,
+  isDesktop,
+  prefersReducedMotion,
+  refreshMotion,
+  ScrollTrigger,
+} from "../core/motion.js";
+import { initHeroAmbient } from "./hero-ambient.js";
+import { BEATS, titleAt } from "./robot-timing.js";
 
-const clamp01 = (value) => Math.min(1, Math.max(0, value));
+/*
+ * Homepage hero — "through the AI's eyes".
+ *
+ * One scroll clock (createScrubDriver over .hero-track) drives two things:
+ *   - the robot scene (robot-scene.js): camera pull-back out of the visor
+ *   - a paused GSAP timeline for the HTML layers, scrubbed to the same
+ *     progress so copy and 3D can never drift apart
+ *
+ * Beats (progress p, 0-1; BEATS in robot-timing.js):
+ *   0    - 0.08  inside the lens: the display fills the screen, the headline
+ *                 sits over it, caption + scroll cue visible
+ *   0.08 - 0.55  pull-back: camera backs out through the visor frame; the
+ *                 headline glides from centre to the left column
+ *   0.55 - 0.9   reveal: robot settles right, subline + CTAs rise in
+ *   0.9  - 1     short hold, then the pin releases into the bridge band
+ *
+ * The headline's glide is not part of the timeline: it reads titleAt(p)
+ * from robot-timing.js, sequenced against the robot's slideAt(p) (headline
+ * leads, robot follows) so the shrinking visor never crosses the text.
+ *
+ * Tablets and reduced motion get a static layout instead: copy on top, the
+ * robot below in its final framing, no pin.
+ *
+ * Phones (< 640px) get no robot at all: headline, subline and both CTAs
+ * fill the first screen, and Three.js is never downloaded. If the window
+ * later widens past the phone breakpoint the scene loads then.
+ */
 
-function smoothstep(a, b, value) {
-  const x = clamp01((value - a) / (b - a));
-  return x * x * (3 - 2 * x);
-}
+const PHONE = window.matchMedia("(max-width: 639px)");
 
-const SERVICE_START = 0.56;
-const SERVICE_END = 0.86;
-const SERVICE_SPAN = SERVICE_END - SERVICE_START;
+const { pull: PULL, reveal: REVEAL } = BEATS;
+const START_SCALE = 0.78;
+const START_Y = 0.25; // headline centre at p=0, as a fraction of stage height
 
-function progressForService(index) {
-  return SERVICE_START + ((index + 0.5) / services.length) * SERVICE_SPAN;
-}
-
-export function initHero(lenis) {
+export function initHero() {
   const track = document.querySelector("[data-hero-track]");
-  if (!track) return;
+  const stage = track?.querySelector("[data-hero-stage]");
+  const canvas = track?.querySelector("[data-scene-canvas]");
+  const fallback = track?.querySelector("[data-hero-fallback]");
+  const title = track?.querySelector("[data-hero-title]");
+  const more = track?.querySelector("[data-hero-more]");
+  const caption = track?.querySelector("[data-hero-caption]");
+  const grid = track?.querySelector("[data-hero-grid]");
+  if (!track || !stage || !canvas || !title || !more) return;
 
-  const stage = track.querySelector("[data-hero-stage]");
-  const copy = track.querySelector("[data-hero-copy]");
-  const serviceLayer = track.querySelector("[data-service-layer]");
-  const serviceTabs = track.querySelector("[data-service-tabs]");
-  const serviceDetail = track.querySelector("[data-service-detail]");
-  const serviceVisual = track.querySelector("[data-service-visual]");
-  const serviceOrbit = track.querySelector("[data-service-orbit]");
-  const serviceLabel = track.querySelector("[data-service-label]");
-  const serviceCount = track.querySelector("[data-service-count]");
-  const diveCaption = track.querySelector("[data-dive-caption]");
-  const scrollCue = track.querySelector("[data-scroll-cue]");
-  const canvas = track.querySelector("[data-scene-canvas]");
-  const copyTitle = serviceDetail?.querySelector("[data-service-title]");
-  const copyDescription = serviceDetail?.querySelector("[data-service-desc]");
-  const copyLink = serviceDetail?.querySelector("[data-service-link]");
-  const serviceCopy = track.querySelector(".service-copy");
-
-  if (
-    !stage ||
-    !copy ||
-    !serviceLayer ||
-    !serviceTabs ||
-    !serviceDetail ||
-    !serviceVisual ||
-    !canvas
-  ) {
-    return;
-  }
-
-  let activeIndex = -1;
   let scene = null;
-  let scrollTrigger = null;
-  let manualIndex = null;
-  let manualTimer = 0;
-  let layerInert = null;
-  let visualInert = null;
+  let driver = null;
+  let timeline = null;
+  let fallbackHud = null;
+  let visible = true;
+  const center = { x: 0, y: 0 };
 
-  function renderTabs() {
-    serviceTabs.innerHTML = services
-      .map(
-        (service, index) => `<button class="tab" type="button" role="tab" id="service-tab-${index}" aria-controls="service-detail" aria-selected="${index === 0}" tabindex="${index === 0 ? 0 : -1}">${service.name}</button>`,
-      )
-      .join("");
+  const staticMode = () => !isDesktop() || prefersReducedMotion();
 
-    serviceTabs.addEventListener("keydown", (event) => {
-      const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
-      if (!keys.includes(event.key)) return;
-      event.preventDefault();
-      let next = activeIndex;
-      if (event.key === "ArrowRight") next = (activeIndex + 1) % services.length;
-      if (event.key === "ArrowLeft") next = (activeIndex - 1 + services.length) % services.length;
-      if (event.key === "Home") next = 0;
-      if (event.key === "End") next = services.length - 1;
-      selectService(next, { focus: true, scroll: true });
-    });
-
-    serviceTabs.addEventListener("click", (event) => {
-      const tab = event.target.closest("[role='tab']");
-      if (!tab) return;
-      const index = Number.parseInt(tab.id.replace("service-tab-", ""), 10);
-      if (Number.isFinite(index)) selectService(index, { focus: false, scroll: true });
-    });
+  /* Where the headline sits at p=0: horizontally centred, in the upper part
+     of the lens. Measured against its resting (left-column) position. */
+  function measureCenter() {
+    const previous = title.style.transform;
+    title.style.transform = "none";
+    const s = stage.getBoundingClientRect();
+    const r = title.getBoundingClientRect();
+    title.style.transform = previous;
+    center.x = s.left + s.width / 2 - (r.left + r.width / 2);
+    center.y = s.top + s.height * START_Y - (r.top + r.height / 2);
   }
 
-  function renderOrbit(service) {
-    const orbitNodes = serviceOrbit?.querySelector("[data-orbit-nodes]");
-    if (!orbitNodes) return;
-    orbitNodes.replaceChildren();
-    service.chips.forEach((chip, index) => {
-      const node = document.createElement("span");
-      node.className = "orbit__chip";
-      if (index === 0) node.classList.add("is-active");
-      const angle = (index / service.chips.length) * 360 - 90;
-      const duration = 28 + index * 4;
-      node.style.setProperty("--angle", `${angle}deg`);
-      node.style.setProperty("--counter-angle", `${-angle}deg`);
-      node.style.setProperty("--orbit-duration", `${duration}s`);
-      node.style.setProperty("--orbit-depth", `${index % 2 === 0 ? 20 : -16}px`);
-      if (index % 2 === 1) node.classList.add("is-reverse");
-      const label = document.createElement("span");
-      label.className = "orbit__chip-label";
-      label.textContent = chip;
-      node.append(label);
-      orbitNodes.append(node);
-    });
+  function buildTimeline() {
+    measureCenter();
+    timeline = gsap.timeline({ paused: true, defaults: { ease: "none" } });
+    timeline
+      .addLabel("pull", PULL)
+      .addLabel("reveal", REVEAL)
+      .to(caption, { opacity: 0, y: 16, duration: 0.07 }, 0.02)
+      .fromTo(grid, { opacity: 0 }, { opacity: 1, duration: 0.2 }, "reveal-=0.1")
+      .fromTo(more, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, "reveal")
+      // Pad to exactly 1 so timeline progress maps 1:1 onto scroll progress.
+      .set({}, {}, 1);
   }
 
-  function selectService(index, { focus = false, scroll = false } = {}) {
-    const next = Math.max(0, Math.min(services.length - 1, index));
-    const service = services[next];
-    activeIndex = next;
+  // Headline glide: centred on the lens (and a touch smaller, so the task
+  // flow stays readable under it) → resting left column. Leads the robot's
+  // slide (robot-timing.js).
+  const setTitleX = gsap.quickSetter(title, "x", "px");
+  const setTitleY = gsap.quickSetter(title, "y", "px");
+  const setTitleScale = gsap.quickSetter(title, "scale");
 
-    [...serviceTabs.querySelectorAll("[role='tab']")].forEach((tab, tabIndex) => {
-      const selected = tabIndex === next;
-      tab.setAttribute("aria-selected", String(selected));
-      tab.tabIndex = selected ? 0 : -1;
-      if (selected && focus) tab.focus({ preventScroll: true });
-    });
-
-    if (copyTitle) copyTitle.textContent = service.outcome;
-    if (copyDescription) copyDescription.textContent = service.summary;
-    if (copyLink) {
-      copyLink.href = serviceContactHref(service);
-      copyLink.innerHTML = `Explore ${service.name} <i class="ph ph-arrow-up-right" aria-hidden="true"></i>`;
-    }
-    if (serviceLabel) serviceLabel.textContent = `Service / ${service.index}`;
-    if (serviceCount) serviceCount.textContent = service.index;
-    if (serviceDetail) {
-      serviceDetail.setAttribute("aria-labelledby", `service-tab-${next}`);
-    }
-    renderOrbit(service);
-
-    if (scroll && scrollTrigger) {
-      manualIndex = next;
-      window.clearTimeout(manualTimer);
-      manualTimer = window.setTimeout(() => {
-        manualIndex = null;
-      }, 2200);
-      const progress = progressForService(next);
-      const y = scrollTrigger.start + (scrollTrigger.end - scrollTrigger.start) * progress;
-      if (lenis) {
-        lenis.scrollTo(y, {
-          duration: 1.5,
-          easing: (t) => 1 - Math.pow(1 - t, 4),
-        });
-      } else {
-        window.scrollTo({ top: y, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-      }
-    }
+  function placeTitle(p) {
+    const k = titleAt(p);
+    setTitleX(center.x * (1 - k));
+    setTitleY(center.y * (1 - k));
+    setTitleScale(START_SCALE + (1 - START_SCALE) * k);
   }
 
-  function setInteractiveLayer(active) {
-    if (layerInert !== active) {
-      layerInert = active;
-      serviceLayer.classList.toggle("is-active", active);
-      serviceLayer.inert = !active;
-      if (active) serviceLayer.removeAttribute("aria-hidden");
-      else serviceLayer.setAttribute("aria-hidden", "true");
-    }
-    if (visualInert !== active) {
-      visualInert = active;
-      serviceVisual.inert = !active;
-    }
-  }
-
-  function setCopyInteractive(interactive) {
-    if (copy.inert === !interactive) return;
-    copy.inert = !interactive;
-    if (interactive) copy.removeAttribute("aria-hidden");
-    else copy.setAttribute("aria-hidden", "true");
-  }
-
-  function applyProgress(progress) {
-    const p = clamp01(progress);
-
-    const copyFade = 1 - smoothstep(0.015, 0.16, p);
-    gsap.set(copy, { yPercent: -50, y: -p * 180, opacity: copyFade });
-    setCopyInteractive(copyFade > 0.05);
-
-    if (scrollCue) {
-      scrollCue.style.opacity = String(1 - smoothstep(0, 0.055, p));
-    }
-
-    if (diveCaption) {
-      const enter = smoothstep(0.27, 0.35, p);
-      const exit = 1 - smoothstep(0.41, 0.47, p);
-      diveCaption.style.opacity = String(enter * exit);
-      diveCaption.style.transform = `translateY(${(1 - enter) * 24}px)`;
-    }
-
-    const layerEnter = smoothstep(0.43, 0.56, p);
-    const layerExit = 1 - smoothstep(0.94, 0.995, p);
-    const layerOpacity = Math.max(0, layerExit);
-    serviceLayer.style.opacity = String(layerOpacity);
-    if (serviceCopy) {
-      gsap.set(serviceCopy, {
-        yPercent: -50,
-        y: (1 - layerEnter) * 34,
-        opacity: layerEnter,
-      });
-    }
-
-    const panelIn = smoothstep(0.43, 0.61, p);
-    const panelOut = smoothstep(0.93, 0.995, p);
-    gsap.set(serviceVisual, { xPercent: (1 - panelIn) * 100 + panelOut * 100 });
-
-    const interactive = p > 0.445 && p < 0.955;
-    setInteractiveLayer(interactive);
-
-    if (p > 0.52 && p < 0.91 && manualIndex === null) {
-      const raw = ((p - SERVICE_START) / SERVICE_SPAN) * services.length;
-      const next = Math.max(0, Math.min(services.length - 1, Math.floor(raw)));
-      if (next !== activeIndex) selectService(next);
-    }
-
+  function applyProgress(p) {
+    timeline?.progress(p);
+    if (timeline) placeTitle(p);
+    // Keep the CTAs out of the tab order until they are actually visible.
+    if (timeline) more.inert = p < REVEAL;
     scene?.setProgress(p);
   }
 
-  function tick(time, deltaMs) {
-    if (!scrollTrigger) return;
-    const dt = Math.min(0.05, (deltaMs || 16.7) / 1000);
-    const eased = 1 - Math.exp(-dt * 2.1);
-    const next =
-      scrollState.current + (scrollState.target - scrollState.current) * eased;
-    // Stop chasing tiny differences so the scene can settle.
-    scrollState.current =
-      Math.abs(scrollState.target - next) < 0.00015 ? scrollState.target : next;
-    applyProgress(scrollState.current);
-  }
-
-  const scrollState = { target: 0, current: 0 };
-
   function setupScroll() {
-    if (scrollTrigger) return;
-    scrollTrigger = ScrollTrigger.create({
-      trigger: track,
-      start: "top top",
-      end: "bottom bottom",
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        scrollState.target = self.progress;
-      },
-    });
-    scrollState.current = scrollState.target = scrollTrigger.progress || 0;
-    applyProgress(scrollState.current);
-    gsap.ticker.add(tick);
+    if (driver) return;
+    if (!timeline) buildTimeline();
+    driver = createScrubDriver({ trigger: track, onProgress: applyProgress });
   }
 
   function teardownScroll() {
-    if (!scrollTrigger) return;
-    gsap.ticker.remove(tick);
-    scrollTrigger.kill();
-    scrollTrigger = null;
-    gsap.set(copy, { clearProps: "transform,opacity" });
-    if (serviceCopy) gsap.set(serviceCopy, { clearProps: "transform,opacity" });
-    gsap.set(serviceVisual, { x: 0, xPercent: 0 });
-    serviceLayer.style.opacity = "";
-    if (diveCaption) {
-      diveCaption.style.opacity = "";
-      diveCaption.style.transform = "";
-    }
-    if (scrollCue) scrollCue.style.opacity = "";
-    scene?.setProgress(0);
+    driver?.kill();
+    driver = null;
+    timeline?.revert();
+    timeline = null;
+    gsap.set(title, { clearProps: "transform" });
+    more.inert = false;
   }
 
-  function staticMode() {
-    return !isDesktop() || prefersReducedMotion();
-  }
+  // Layout changes (resize, fonts) move the headline's resting position.
+  ScrollTrigger.addEventListener("refresh", () => {
+    if (!timeline || !driver) return;
+    measureCenter();
+    timeline.invalidate();
+    applyProgress(driver.progress);
+  });
 
-  function applyStaticMode() {
-    teardownScroll();
-    setInteractiveLayer(true);
-    serviceVisual.inert = false;
-    gsap.set(serviceVisual, { x: 0, xPercent: 0 });
-    copy.inert = false;
-    copy.removeAttribute("aria-hidden");
-    serviceLayer.style.opacity = "1";
-    serviceOrbit?.querySelectorAll(".orbit__chip").forEach((chip) => {
-      chip.style.opacity = "";
-    });
-    scene?.pause();
-  }
-
-  function onBreakpointChange() {
-    if (staticMode()) applyStaticMode();
-    else {
-      scene?.resume();
+  function applyMode() {
+    if (staticMode()) {
+      teardownScroll();
+      scene?.setLayout("stacked");
+      scene?.setProgress(1);
+      scene?.setMotionEnabled(!prefersReducedMotion());
+    } else {
+      scene?.setLayout("pinned");
+      scene?.setMotionEnabled(true);
       setupScroll();
-      ScrollTrigger.refresh();
+      refreshMotion();
     }
   }
 
-  renderTabs();
-  selectService(0);
-  // Pin the panel fully off-screen with a numeric transform. The authored
-  // CSS translateX(100%) is read by GSAP as a pixel base, so reset x first.
-  gsap.set(copy, { yPercent: -50 });
-  gsap.set(serviceVisual, { x: 0, xPercent: 100 });
+  /* No WebGL: mount the display itself as the hero visual. */
+  async function mountFallback() {
+    if (!fallback || fallbackHud) return;
+    const { createHud, hudFontsReady } = await import("../visuals/robot-hud.js");
+    await hudFontsReady();
+    fallbackHud = createHud();
+    fallbackHud.canvas.setAttribute("aria-hidden", "true");
+    fallback.append(fallbackHud.canvas);
+    fallbackHud.draw(0);
+    stage.classList.add("has-fallback");
+    if (prefersReducedMotion()) return;
+    let clock = 0;
+    gsap.ticker.add((time, delta) => {
+      if (!visible) return;
+      clock += delta / 1000;
+      fallbackHud.draw(clock);
+    });
+  }
+
+  async function setupScene() {
+    try {
+      const { createRobotScene } = await import("../visuals/robot-scene.js");
+      scene = await createRobotScene(canvas, { animate: !prefersReducedMotion() });
+    } catch (error) {
+      console.error("Could not load the homepage robot visual.", error);
+      scene = null;
+    }
+    if (!scene) {
+      await mountFallback();
+      return;
+    }
+    stage.classList.add("has-webgl");
+    applyMode();
+    applyProgress(driver?.progress ?? 1);
+    if (!visible) scene.pause();
+  }
+
+  // Head turns toward the cursor once the robot is revealed. Mouse only:
+  // on touch, pointermove fires mid-scroll and the head would twitch. The
+  // pinned stage fills the viewport, so normalising against the window
+  // avoids a layout read on every move.
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const onPointerMove = (event) => {
+    scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
+  };
+  const onPointerLeave = () => scene?.setPointer(0, 0);
+  const syncPointer = () => {
+    stage.removeEventListener("pointermove", onPointerMove);
+    stage.removeEventListener("pointerleave", onPointerLeave);
+    if (finePointer.matches) {
+      stage.addEventListener("pointermove", onPointerMove);
+      stage.addEventListener("pointerleave", onPointerLeave);
+    } else {
+      onPointerLeave();
+    }
+  };
+  syncPointer();
+  finePointer.addEventListener?.("change", syncPointer);
 
   if (typeof IntersectionObserver !== "undefined") {
     new IntersectionObserver(
-      ([entry]) => serviceOrbit?.classList.toggle("is-visible", entry.isIntersecting),
-      { threshold: 0.05 },
-    ).observe(serviceVisual);
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible) scene?.resume();
+        else scene?.pause();
+      },
+      { threshold: 0.01 },
+    ).observe(stage);
   }
 
-  if (staticMode()) {
-    applyStaticMode();
-  } else {
-    setInteractiveLayer(false);
-    setupScroll();
-  }
+  initHeroAmbient(stage);
 
-  // ── Optional WebGL scene ─────────────────────────────────────────────
-  async function setupScene() {
-    if (staticMode()) return;
-    try {
-      const module = await import("./core-scene.js");
-      scene = module.createHeroScene(canvas);
-      if (!scene) return;
-      stage.classList.add("has-webgl");
-      scene.setTheme(document.documentElement.dataset.theme || "dark");
-      scene.setProgress(scrollState.current);
+  if (!staticMode()) setupScroll();
 
-      const onPointer = (event) => {
-        if (event.pointerType === "touch") return;
-        scene?.setPointer(
-          (event.clientX / window.innerWidth) * 2 - 1,
-          (event.clientY / window.innerHeight) * 2 - 1,
-        );
-      };
-      window.addEventListener("pointermove", onPointer, { passive: true });
+  let sceneRequested = false;
+  const requestScene = () => {
+    if (sceneRequested || PHONE.matches) return;
+    sceneRequested = true;
+    void setupScene();
+  };
+  requestScene();
+  PHONE.addEventListener?.("change", requestScene);
 
-      if (typeof IntersectionObserver !== "undefined") {
-        new IntersectionObserver(
-          ([entry]) => {
-            if (!entry.isIntersecting) scene?.pause();
-            else scene?.resume();
-          },
-          { threshold: 0.02 },
-        ).observe(stage);
-      }
-    } catch {
-      // The authored CSS orbit remains in place. Nothing else changes.
-    }
-  }
-
-  setupScene();
-
-  const desktopQuery = window.matchMedia("(min-width: 900px)");
-  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-  desktopQuery.addEventListener?.("change", onBreakpointChange);
-  motionQuery.addEventListener?.("change", onBreakpointChange);
-  window.addEventListener("resize", () => {
-    if (!staticMode() && scrollTrigger) ScrollTrigger.refresh();
-  });
-
-  document.fonts?.ready.then(() => ScrollTrigger.refresh());
+  window.matchMedia("(min-width: 900px)").addEventListener?.("change", applyMode);
+  window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", applyMode);
 }

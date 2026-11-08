@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T00:00:00Z",
+  "title": "Design System: Omnitron",
+  "extensions": {
+    "colorMeta": {
+      "omnitron-blue": { "role": "primary", "displayName": "Omnitron Blue", "canonical": "#2b46d6", "tonalRamp": ["#0c1650", "#15257f", "#2034ad", "#2b46d6", "#5a72e4", "#8b9cee", "#bcc6f6", "#e6eafc"] },
+      "omnitron-blue-hover": { "role": "primary", "displayName": "Omnitron Blue Hover", "canonical": "#3b5bff" },
+      "omnitron-blue-soft": { "role": "primary", "displayName": "Omnitron Blue Soft", "canonical": "#4f6cf0" },
+      "deep-ops-navy": { "role": "secondary", "displayName": "Deep Ops Navy", "canonical": "#0a1640", "tonalRamp": ["#040a1f", "#060f2b", "#0a1640", "#0f1f55", "#182b66", "#3a4d86", "#7d8bb3", "#c9d0e3"] },
+      "deep-ops-navy-raised": { "role": "secondary", "displayName": "Deep Ops Navy Raised", "canonical": "#0f1d4d" },
+      "footer-navy": { "role": "secondary", "displayName": "Footer Navy", "canonical": "#060f2b" },
+      "blue-ink": { "role": "secondary", "displayName": "Blue Ink", "canonical": "#0a1b52" },
+      "navy-accent-lift": { "role": "secondary", "displayName": "Navy Accent Lift", "canonical": "#8aa3ff" },
+      "warm-bone": { "role": "neutral", "displayName": "Warm Bone", "canonical": "#f6f5f1", "tonalRamp": ["#2a2925", "#4a4842", "#77746b", "#a6a297", "#cfcbc0", "#e8e5dd", "#efede6", "#f6f5f1"] },
+      "warm-bone-2": { "role": "neutral", "displayName": "Warm Bone 2", "canonical": "#efede6" },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#fdfcfa" },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#fbfaf7" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#17191f", "tonalRamp": ["#17191f", "#33373f", "#4e535d", "#555c67", "#5f6672", "#8a909a", "#b9bdc4", "#e3e5e8"] },
+      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#33373f" },
+      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#4e535d" },
+      "muted-2": { "role": "neutral", "displayName": "Muted 2", "canonical": "#555c67" },
+      "line": { "role": "neutral", "displayName": "Line", "canonical": "rgba(23, 25, 31, 0.14)" },
+      "line-strong": { "role": "neutral", "displayName": "Line Strong", "canonical": "rgba(23, 25, 31, 0.3)" },
+      "line-control": { "role": "neutral", "displayName": "Line Control", "canonical": "rgba(23, 25, 31, 0.48)" },
+      "danger": { "role": "status", "displayName": "Danger", "canonical": "#c23a2e" },
+      "success": { "role": "status", "displayName": "Success", "canonical": "#1d8a5f" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headline only, max ~13ch, one phrase in Omnitron Blue." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings." },
+      "title": { "displayName": "Title", "purpose": "Service names, card and row titles." },
+      "lead": { "displayName": "Lead", "purpose": "One-sentence summary under a heading." },
+      "body": { "displayName": "Body", "purpose": "Running copy, capped per block in ch." },
+      "label": { "displayName": "Label", "purpose": "Mono uppercase eyebrows, step indexes, tags, meta." }
+    },
+    "shadows": [
+      { "name": "elev-1", "value": "0 1px 2px rgba(10,27,82,0.06), 0 8px 20px -10px rgba(10,27,82,0.18)", "purpose": "Resting cards, chips, small panels." },
+      { "name": "elev-2", "value": "0 2px 4px rgba(10,27,82,0.06), 0 24px 48px -20px rgba(10,27,82,0.28), 0 60px 90px -50px rgba(43,70,214,0.28)", "purpose": "Featured cards and hover lift." },
+      { "name": "elev-3", "value": "0 4px 8px rgba(10,27,82,0.08), 0 34px 64px -24px rgba(10,27,82,0.34), 0 80px 120px -56px rgba(43,70,214,0.36)", "purpose": "Hero visuals, top panel in a stack." },
+      { "name": "edge-hi", "value": "inset 0 1px 0 rgba(255,255,255,0.85)", "purpose": "Top-edge highlight on raised surfaces." },
+      { "name": "button-lift", "value": "0 18px 40px -22px rgba(23,25,31,0.4), inset 0 1px 0 rgba(255,255,255,0.28)", "purpose": "Primary button at rest." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Anything entering, exiting or responding." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "Things moving or morphing on screen." },
+      { "name": "dur-press", "value": "120ms", "purpose": "Press / active feedback." },
+      { "name": "dur-ui", "value": "200ms", "purpose": "Hover, focus, small state changes." },
+      { "name": "dur-panel", "value": "280ms", "purpose": "Accordions, menus, panels changing size." },
+      { "name": "dur-reveal", "value": "400ms", "purpose": "Content entering (success card, scene fade)." }
+    ],
+    "breakpoints": [
+      { "name": "xs", "value": "480px" },
+      { "name": "sm", "value": "560px" },
+      { "name": "md", "value": "760px" },
+      { "name": "nav", "value": "960px" },
+      { "name": "lg", "value": "1000px" },
+      { "name": "xl", "value": "1180px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tactile Omnitron Blue pill for the single conversion action.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Start the conversation <svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M200 64v104a8 8 0 0 1-16 0V83.3L69.7 197.7a8 8 0 0 1-11.4-11.4L172.7 72H88a8 8 0 0 1 0-16h104a8 8 0 0 1 8 8Z\"/></svg></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 23px; border: 1px solid transparent; border-radius: 999px; font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; font-size: 0.9rem; font-weight: 720; letter-spacing: -0.012em; line-height: 1; cursor: pointer; transition: background-color 200ms cubic-bezier(0.23,1,0.32,1), border-color 200ms cubic-bezier(0.23,1,0.32,1), transform 200ms cubic-bezier(0.23,1,0.32,1), box-shadow 200ms cubic-bezier(0.23,1,0.32,1); } .ds-btn svg { transition: transform 200ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-primary { background: #2b46d6; color: #f6f5f1; box-shadow: 0 18px 40px -22px rgba(23,25,31,0.4), inset 0 1px 0 rgba(255,255,255,0.28); } .ds-btn-primary:hover { background: #3b5bff; transform: translateY(-2px); box-shadow: 0 24px 46px -22px rgba(23,25,31,0.5), inset 0 1px 0 rgba(255,255,255,0.35); } .ds-btn:hover svg { transform: translate(2px,-2px); } .ds-btn:focus-visible { outline: 2px solid #2b46d6; outline-offset: 4px; } .ds-btn:active { transform: scale(0.97); transition-duration: 120ms; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary pill with a control-line border.",
+      "html": "<button class=\"ds-btn-ghost\">See the five services</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; min-height: 50px; padding: 0 23px; border: 1px solid rgba(23,25,31,0.48); border-radius: 999px; background: transparent; color: #17191f; font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; font-size: 0.9rem; font-weight: 720; letter-spacing: -0.012em; cursor: pointer; transition: border-color 200ms cubic-bezier(0.23,1,0.32,1), background-color 200ms cubic-bezier(0.23,1,0.32,1), transform 200ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-ghost:hover { border-color: #33373f; background: rgba(23,25,31,0.04); transform: translateY(-2px); } .ds-btn-ghost:focus-visible { outline: 2px solid #2b46d6; outline-offset: 4px; } .ds-btn-ghost:active { transform: scale(0.97); transition-duration: 120ms; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Contact-form field with a label and blue focus ring.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Work email</span><input class=\"ds-input\" type=\"email\" placeholder=\"you@company.com\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; } .ds-field-label { font-size: 0.8rem; font-weight: 660; color: #33373f; } .ds-input { width: 100%; min-height: 50px; padding: 13px 15px; border: 1px solid rgba(23,25,31,0.48); border-radius: 10px; background: rgba(23,25,31,0.04); color: #17191f; font: inherit; font-size: 1rem; transition: border-color 180ms, background-color 180ms, box-shadow 180ms; } .ds-input::placeholder { color: #5f6672; } .ds-input:focus { outline: none; border-color: #304fd8; background: rgba(43,70,214,0.07); box-shadow: 0 0 0 3px rgba(43,70,214,0.07); }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "nav",
+      "description": "Fixed bone bar, muted links with a blue underline that scales in.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-brand\">Omnitron</span><div class=\"ds-nav-links\"><a href=\"#\" aria-current=\"page\">Home</a><a href=\"#\">AI Solutions</a><a href=\"#\">Contact</a></div><a class=\"ds-nav-cta\" href=\"#\">Start the conversation</a></nav>",
+      "css": ".ds-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; height: 76px; padding: 0 24px; background: rgba(246,245,241,0.92); border-bottom: 1px solid rgba(23,25,31,0.08); font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; } .ds-nav-brand { font-family: 'Archivo Variable', Archivo, sans-serif; font-weight: 650; color: #17191f; } .ds-nav-links { display: flex; justify-content: center; gap: 36px; font-size: 0.9rem; font-weight: 520; } .ds-nav-links a { position: relative; color: #4e535d; text-decoration: none; padding: 12px 0; transition: color 180ms; } .ds-nav-links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 1px; background: #2b46d6; transform: scaleX(0); transform-origin: left; transition: transform 200ms cubic-bezier(0.23,1,0.32,1); } .ds-nav-links a:hover, .ds-nav-links a[aria-current='page'] { color: #17191f; } .ds-nav-links a:hover::after, .ds-nav-links a[aria-current='page']::after { transform: scaleX(1); } .ds-nav-links a:focus-visible { outline: 2px solid #2b46d6; outline-offset: 4px; } .ds-nav-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #2b46d6; color: #f6f5f1; font-size: 0.82rem; font-weight: 720; text-decoration: none; transition: background-color 200ms; } .ds-nav-cta:hover { background: #3b5bff; }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Mono uppercase pill; neutral and blue variants.",
+      "html": "<span class=\"ds-tag\">Governance</span> <span class=\"ds-tag ds-tag-blue\">Workflow design</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid rgba(23,25,31,0.14); border-radius: 999px; font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.13em; line-height: 1.2; text-transform: uppercase; color: #4e535d; } .ds-tag-blue { border-color: rgba(31,70,214,0.28); background: rgba(31,70,214,0.07); color: #2b46d6; }"
+    },
+    {
+      "name": "Service Tabs",
+      "kind": "custom",
+      "refersTo": "tab",
+      "description": "Pill switcher for the five service lines; selected fills blue.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Strategy</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Automation</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">AI agents</button></div>",
+      "css": ".ds-tabs { display: flex; flex-wrap: wrap; gap: 7px; } .ds-tab { min-height: 44px; padding: 9px 14px; border: 1px solid rgba(23,25,31,0.48); border-radius: 999px; background: transparent; color: #4e535d; font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; font-size: 0.76rem; font-weight: 620; line-height: 1; cursor: pointer; transition: background-color 180ms, color 180ms, border-color 180ms, transform 180ms; } .ds-tab:hover { color: #17191f; transform: translateY(-1px); } .ds-tab[aria-selected='true'] { border-color: #2b46d6; background: #2b46d6; color: #f6f5f1; box-shadow: 0 10px 26px -14px rgba(43,70,214,0.7); } .ds-tab:focus-visible { outline: 2px solid #17191f; outline-offset: 3px; }"
+    },
+    {
+      "name": "Flow Diagram",
+      "kind": "custom",
+      "refersTo": "flow",
+      "description": "Signature three-step flow; the final person-decides step turns blue.",
+      "html": "<div class=\"ds-flow\"><div class=\"ds-flow-step\"><span>Request</span><strong>A repeated process with too many hand-offs</strong></div><div class=\"ds-flow-step\"><span>Omnitron</span><strong>Map, connect and automate the path</strong></div><div class=\"ds-flow-step ds-flow-result\"><span>Result</span><strong>The routine runs itself; people handle the edge cases</strong></div></div>",
+      "css": ".ds-flow { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); width: 100%; } .ds-flow-step { position: relative; padding: 19px 22px 0 0; border-top: 1px solid rgba(23,25,31,0.14); } .ds-flow-step::before { content: ''; position: absolute; top: -3.5px; left: 0; width: 6px; height: 6px; border-radius: 50%; background: #555c67; } .ds-flow-step span { display: block; margin-bottom: 8px; color: #555c67; font-family: 'JetBrains Mono Variable', 'JetBrains Mono', monospace; font-size: 0.58rem; letter-spacing: 0.13em; text-transform: uppercase; } .ds-flow-step strong { display: block; font-family: 'Archivo Variable', Archivo, sans-serif; font-size: 1.05rem; font-weight: 540; line-height: 1.28; letter-spacing: -0.02em; color: #33373f; } .ds-flow-result { border-top-color: rgba(49,91,255,0.45); } .ds-flow-result::before { background: #304fd8; box-shadow: 0 0 12px rgba(43,70,214,0.14); } .ds-flow-result strong { color: #304fd8; }"
+    },
+    {
+      "name": "Engineered Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Raised surface with navy-tinted layered shadow and top-edge highlight.",
+      "html": "<article class=\"ds-card\"><span class=\"ds-card-label\">02 / Automation</span><h3>Repeatable work handled</h3><p>Exceptions kept visible, people keep the call.</p></article>",
+      "css": ".ds-card { padding: 28px; border: 1px solid rgba(23,25,31,0.08); border-radius: 14px; background: radial-gradient(120% 130% at 12% 0%, rgba(255,255,255,0.85), transparent 46%), #fbfaf7; box-shadow: 0 1px 2px rgba(10,27,82,0.06), 0 8px 20px -10px rgba(10,27,82,0.18), inset 0 1px 0 rgba(255,255,255,0.85); transition: box-shadow 200ms cubic-bezier(0.23,1,0.32,1), transform 200ms cubic-bezier(0.23,1,0.32,1); font-family: 'Manrope Variable', Manrope, system-ui, sans-serif; color: #4e535d; } .ds-card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(10,27,82,0.06), 0 24px 48px -20px rgba(10,27,82,0.28), 0 60px 90px -50px rgba(43,70,214,0.28), inset 0 1px 0 rgba(255,255,255,0.85); } .ds-card-label { font-family: 'JetBrains Mono Variable', 'JetBrains Mono', monospace; font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: #555c67; } .ds-card h3 { margin: 12px 0 6px; font-family: 'Archivo Variable', Archivo, sans-serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.014em; color: #17191f; } .ds-card p { margin: 0; line-height: 1.65; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Control Room, Daylight",
+    "overview": "Omnitron looks like a well-run operations room at nine in the morning: bright, quiet and exact. Corporate tech that feels made in 2030, not a neon command deck. The ground is Warm Bone, the instruments are Omnitron Blue, and the heavy panels are Deep Ops Navy. Every screen implies someone is at the controls. Workflows end in a human decision, and the interface reads as instrumentation for that person, not as a machine running on its own.\n\nThe system is full-bleed and band-based. Each section is a plate that runs edge to edge, separated by color blocking rather than boxes: light ground, navy statement band, near-white reading section, navy again, then the one saturated Omnitron Blue call to action, closing on footer navy. A fine blueprint grid with soft light pools sits behind every plate, so even empty areas look instrumented rather than blank. Components are tactile and engineered. Pill controls lift slightly on hover and press in. Cards carry layered, navy-tinted shadows with a top-edge highlight, like machined parts under daylight.\n\nVisuals are literal and crisp. Processes are drawn as flow diagrams, numbered steppers and labelled nodes. 3D is welcome but rendered sharply (orthographic, no bloom or fog), never as soft abstract shapes. Copy stays short so the diagrams carry the explanation.",
+    "keyCharacteristics": [
+      "Full-bleed bands with deliberate tone blocking (bone → navy → paper → navy → blue CTA → footer navy).",
+      "A blueprint grid with light pools behind every section; dead space is textured, never blank.",
+      "One accent: Omnitron Blue. No orange or other warm accent.",
+      "A confident grotesque display (Archivo) with tight tracking, calm Manrope body text and JetBrains Mono uppercase labels.",
+      "Tactile pills, hairline structure, navy-tinted layered elevation.",
+      "Literal, crisp diagrams: numbered steps, flow lines with dots, the result step in blue."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Omnitron Blue is the only accent. Orange and other warm accents are retired. Never add a second hue for emphasis; use weight, size or the navy tone instead.", "section": "colors" },
+      { "name": "The Tone Scope Rule", "body": "A section never hard-codes colours. It picks a tone (`default`, `--paper`, `.tone-navy`, `.tone-blue`, footer) and every token inside it is re-scoped. Light cards may sit inside navy bands via `.tone-light`.", "section": "colors" },
+      { "name": "The One Blue Block Rule", "body": "Only the closing CTA band uses Omnitron Blue as a background. Every other band alternates between light and navy.", "section": "colors" },
+      { "name": "The Tight Grotesque Rule", "body": "Archivo headings track tight (-0.01em to -0.038em) and use balanced wrapping. Don't loosen tracking toward 0, and don't swap in a serif or a playful geometric display face.", "section": "typography" },
+      { "name": "The Mono Means Metadata Rule", "body": "JetBrains Mono is for labels, indexes and technical meta only, always uppercase and tracked. Never set sentences or body copy in mono.", "section": "typography" },
+      { "name": "The Tinted Shadow Rule", "body": "Every shadow is tinted navy or blue. A neutral grey `rgba(0,0,0,…)` drop shadow on a light surface is off-system.", "section": "elevation" },
+      { "name": "The Crisp Depth Rule", "body": "Depth comes from layered shadows, tone and parallax, never from blur. No bloom, fog or soft-focus 3D; scenes stay sharp and literal.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** pick a tone class for every new section and keep the light / navy alternation. Omnitron Blue as a background belongs to the closing CTA only.",
+      "**Do** fill wide gaps with the blueprint-grid backdrop or a larger visual instead of leaving blank gutters.",
+      "**Do** draw processes literally: numbered steps, flow lines with dots, labelled nodes, and the final step in blue.",
+      "**Do** tint every shadow navy or blue and add the top-edge highlight to raised surfaces.",
+      "**Do** keep hover motion behind `(hover: hover) and (pointer: fine)` and UI feedback under 300ms (press 120ms, UI 200ms, panels 280ms), with strong ease-out curves.",
+      "**Do** give every 3D or scroll scene a static fallback for small screens and reduced motion."
+    ],
+    "donts": [
+      "**Don't** reintroduce orange or any second accent hue.",
+      "**Don't** render concepts as abstract, blurry 3D (bloom, fog, soft blobs). Keep 3D orthographic and crisp.",
+      "**Don't** use a serif or playful geometric display face, or loosen Archivo's tight tracking.",
+      "**Don't** set body copy in JetBrains Mono, or use pure black text or neutral grey shadows.",
+      "**Don't** box sections in bordered containers. Bands are full-bleed and structure comes from hairlines.",
+      "**Don't** copy the dark terminal palette of the current omnitron.tech. Borrow its structure (steppers, dotted grids, 01/03 numbered pagination), not its colours."
+    ]
+  }
+}

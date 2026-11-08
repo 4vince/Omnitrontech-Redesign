@@ -18,10 +18,27 @@ html.js [data-reveal-scale] {
   transform: scale(0.96);
 }
 
+html.js [data-zoom] {
+  opacity: 0.4;
+  transform: scale(0.92);
+}
+
+/* Page entrance (initPageIntro). Hidden only while JS is booting, so there
+   is no flash of copy before the intro timeline takes over; the boot
+   fallback in each page's <head> drops .js if scripts never arrive. */
+html.js [data-intro] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+/* Animated elements: hint the compositor only where motion actually runs. */
+html.js .svc__visual,
+html.js .solutions-hero__visual {
+  will-change: transform, opacity;
+}
+
 /* Smooth the theme swap without transitioning layout. */
-.brand-mark,
 .site-nav::before,
-.card,
 .contact-form-card,
 .input,
 .textarea {
@@ -36,12 +53,14 @@ html.js [data-reveal-scale] {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 100ms !important;
     scroll-behavior: auto !important;
   }
 
   html.js [data-reveal],
-  html.js [data-reveal-scale] {
+  html.js [data-reveal-scale],
+  html.js [data-intro],
+  html.js [data-zoom] {
     opacity: 1;
     transform: none;
   }
@@ -50,25 +69,10 @@ html.js [data-reveal-scale] {
     transform: none;
   }
 
-  .hero-copy h1 .signal::after {
-    transform: scaleX(1);
-    animation: none;
-  }
-
-  .hero-fallback,
-  .scene-canvas {
+  .scene-canvas,
+  .hero-scene .scene-canvas {
     transition: none;
-  }
-
-  .scene-canvas {
-    display: none;
-  }
-
-  .hero-fallback {
-    opacity: 0.85;
-  }
-
-  .card {
     transform: none;
   }
+
 }

@@ -1,0 +1,117 @@
+/* ─────────────────────────────────────────────────────────────
+   BACKDROP: blueprint grid + light pools behind every section
+   Markup is injected by src/js/core/backdrop.js; parallax lives in
+   initParallax() (src/js/core/motion.js). Colours come from the tone
+   tokens (--grid-*, --pool-*), so the same layer reads correctly on
+   off-white, paper, navy, the blue CTA and the footer.
+
+   Layering: the host is an isolated stacking context and the backdrop
+   sits at z-index -1, i.e. above the host's own background but below all
+   of its content, with no z-index changes to existing children.
+   ───────────────────────────────────────────────────────────── */
+
+:where(.band, .svc, .solutions-hero, .contact-hero, .showcase, .cta-band, .site-footer) {
+  position: relative;
+}
+
+.has-backdrop {
+  isolation: isolate;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Blueprint grid: fine minor lines with a stronger major line every 4th
+   cell. Taller than the section so parallax never reveals an edge, and
+   faded top and bottom so each section reads as its own plate. */
+.backdrop__grid {
+  position: absolute;
+  inset: -12% 0;
+  background-image:
+    linear-gradient(to right, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-minor) 1px, transparent 1px);
+  background-size:
+    var(--grid-major-cell) var(--grid-major-cell),
+    var(--grid-major-cell) var(--grid-major-cell),
+    var(--grid-cell) var(--grid-cell),
+    var(--grid-cell) var(--grid-cell);
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 8%, #000 28%, #000 72%, transparent 92%);
+  mask-image: linear-gradient(to bottom, transparent 8%, #000 28%, #000 72%, transparent 92%);
+  will-change: transform;
+}
+
+/* Reading sections (long copy, FAQ answers, the contact intro): same grid,
+   quieter, so lines never compete with body text. Visual sections keep
+   full strength. */
+.band-problem > .backdrop .backdrop__grid,
+.band-faq > .backdrop .backdrop__grid,
+.contact-hero > .backdrop .backdrop__grid {
+  opacity: 0.55;
+}
+
+/* Light pools: crisp radial light (no blur filter), placed per section
+   by backdrop.js so they never repeat in the same spot. */
+.backdrop__pools {
+  position: absolute;
+  inset: -15% 0;
+  will-change: transform;
+}
+
+.backdrop__pools span {
+  position: absolute;
+  left: var(--px, 80%);
+  top: var(--py, 30%);
+  width: min(72vw, 1080px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--pool-a), transparent);
+  transform: translate(-50%, -50%);
+}
+
+.backdrop__pools span + span {
+  width: min(52vw, 760px);
+  background: radial-gradient(closest-side, var(--pool-b), transparent);
+}
+
+/* Pools only: the robot hero keeps its own grid layer (.hero-grid, faded in
+   on reveal). The handoff band (flat diagram) gets no backdrop at all. */
+.backdrop--pools-only .backdrop__grid {
+  display: none;
+}
+
+/* ─── Elevation on visual components ───────────────────────────
+   Layered tinted shadows + top-edge highlight. Tiltable cards add one
+   extra layer whose offset follows the tilt (--tilt-x / --tilt-y, set by
+   src/js/ui/tilt.js), so the light reads as fixed while the card turns. */
+.svc__visual,
+.problem-flow,
+.applied-flow,
+.contact-form-card {
+  box-shadow: var(--elev-2), var(--edge-hi);
+}
+
+[data-tilt] {
+  --tilt-x: 0;
+  --tilt-y: 0;
+  transition: box-shadow var(--dur-ui) var(--ease-out);
+}
+
+[data-tilt].is-tilting {
+  box-shadow:
+    var(--elev-3),
+    calc(var(--tilt-x) * -18px) calc(30px + var(--tilt-y) * -18px) 60px -34px rgba(10, 27, 82, 0.4),
+    var(--edge-hi);
+}
+
+/* Cards inside the diagrams sit one step lower. */
+.sv-card {
+  box-shadow: var(--elev-1), var(--edge-hi);
+}

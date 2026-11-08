@@ -14,74 +14,6 @@
   background: var(--bg);
 }
 
-.contact-hero__glow {
-  position: absolute;
-  right: -20vw;
-  top: -24vw;
-  z-index: 0;
-  width: 64vw;
-  max-width: 1100px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow-blue), transparent 68%);
-  filter: blur(16px);
-  pointer-events: none;
-}
-
-.contact-hero__ring {
-  position: absolute;
-  left: -24vw;
-  bottom: -38vw;
-  z-index: 0;
-  width: 58vw;
-  max-width: 960px;
-  aspect-ratio: 1;
-  border: 1px solid rgba(90, 125, 255, 0.16);
-  border-radius: 50%;
-  box-shadow: 0 0 90px rgba(49, 91, 255, 0.08);
-  pointer-events: none;
-}
-
-.contact-hero__axis {
-  position: absolute;
-  right: clamp(18px, 7vw, 120px);
-  top: 0;
-  bottom: 0;
-  z-index: 0;
-  width: 1px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--line-strong) 18%,
-    rgba(255, 122, 47, 0.34) 50%,
-    var(--line-strong) 82%,
-    transparent
-  );
-  pointer-events: none;
-}
-
-.contact-hero__axis::before,
-.contact-hero__axis::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--orange);
-  box-shadow: 0 0 12px var(--orange);
-  transform: translateX(-50%);
-}
-
-.contact-hero__axis::before {
-  top: 22%;
-}
-
-.contact-hero__axis::after {
-  bottom: 26%;
-  background: var(--blue-bright);
-  box-shadow: 0 0 12px var(--blue);
-}
 
 .contact-grid {
   display: grid;
@@ -111,11 +43,11 @@
   font-size: clamp(2.55rem, 4.6vw, 4.7rem);
   font-weight: 590;
   line-height: 0.96;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
 }
 
 .contact-intro h1 span {
-  color: var(--orange);
+  color: var(--blue);
 }
 
 .contact-intro > p {
@@ -155,8 +87,8 @@
 }
 
 .contact-detail a:hover {
-  color: var(--orange);
-  border-color: var(--orange);
+  color: var(--blue);
+  border-color: var(--blue);
 }
 
 .contact-detail span {
@@ -164,30 +96,57 @@
 }
 
 .contact-steps {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 8px;
   width: 100%;
   max-width: 400px;
   padding-top: 22px;
   border-top: 1px solid var(--line);
 }
 
+.contact-steps::before {
+  content: "";
+  position: absolute;
+  top: 40px;
+  bottom: 18px;
+  left: 16px;
+  width: 1px;
+  background: var(--line-strong);
+}
+
 .contact-step {
+  position: relative;
   display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 12px;
-  align-items: baseline;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding-block: 6px;
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.55;
 }
 
 .contact-step span {
-  color: var(--orange);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--blue);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.contact-step p {
+  padding-top: 5px;
 }
 
 .contact-form-card {
@@ -234,7 +193,7 @@
   max-width: 14ch;
   font-size: clamp(1.5rem, 2.2vw, 2rem);
   font-weight: 560;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.014em;
 }
 
 .contact-form-card__head .tag {
@@ -278,10 +237,6 @@
 
   .contact-intro {
     position: static;
-  }
-
-  .contact-hero__axis {
-    display: none;
   }
 
   .contact-intro h1 {

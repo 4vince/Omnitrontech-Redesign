@@ -1,7 +1,8 @@
-# Omnitron — full-bleed redesign
+# Omnitron — visual-first AI services site
 
-A multi-page Vite build of the Omnitron site: dark-first, full-bleed bands, a
-pinned cinematic hero, and a slower scroll-driven service sequence.
+A multi-page Vite site for SME owners and operations leads in Asia-Pacific.
+The visual system is light, off-white, and blue, with workflow-focused 3D and
+scroll-driven storytelling.
 
 ## Run it
 
@@ -16,14 +17,15 @@ npm run preview   # serve the production build
 
 - `/` — pinned hero sequence, problem, proof, FAQ, applied showcase, CTA, footer
 - `/ai-solutions/` — service index, operating rules, five service rows
-- `/contact/` — enquiry form with validation, service prefill and mailto fallback
+- `/contact/` — enquiry form with validation, optional subject, service prefill
+  and an email fallback when no form endpoint is configured
 
 ## Stack
 
 - Vite 8, vanilla ES modules
 - GSAP + ScrollTrigger, Lenis smooth scrolling
-- Three.js core scene on the desktop home page only (lazy-loaded)
-- Sora / Manrope / JetBrains Mono via Fontsource
+- Three.js workflow scenes (lazy-loaded when visible)
+- DM Sans / Manrope / JetBrains Mono via Fontsource
 - Phosphor icons
 
 ## Structure
@@ -53,7 +55,7 @@ src/
 
 ## Hero timing
 
-The desktop hero track is 1200vh. ScrollTrigger reads a target progress, and a
+The desktop hero track is 420vh. ScrollTrigger reads a target progress, and a
 GSAP ticker lerps toward it, so the crossfades and service panel stay smooth even
 with fast wheel input. Service copy starts entering around 43% and the panel
 settles by 61%. Touch, narrow screens, and `prefers-reduced-motion` use a static
@@ -61,7 +63,7 @@ stacked hero with a service switcher instead.
 
 ## Contact form
 
-The form validates on the client and always offers a prefilled `mailto:` link.
+The form validates on the client and offers a prefilled `mailto:` fallback.
 To wire a real inbox, set an endpoint in `.env`:
 
 ```bash
@@ -69,9 +71,9 @@ VITE_CONTACT_ENDPOINT=https://your-endpoint.example/contact
 ```
 
 The endpoint should accept a JSON `POST` with `name`, `email`, `subject`,
-`message`, `page`, and `sentAt`. Without an endpoint the form runs in demo mode:
-it validates, shows the success state, and explains that nothing was sent.
+`message`, `page`, and `sentAt`. Without an endpoint, the form explains that
+nothing was sent and provides a prefilled email link.
 
 ## Theme
 
-The site uses a fixed dark theme across all pages.
+The site uses a fixed light theme across all pages.

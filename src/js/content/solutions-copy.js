@@ -1,7 +1,5 @@
 export const solutionsPageCopy = {
   strategy: {
-    name: "Strategy & Consulting",
-    shortName: "Strategy",
     headline: "A practical plan for using AI.",
     outcome: "Know where AI can help, what it may cost, and what to do first.",
     summary:
@@ -41,8 +39,6 @@ export const solutionsPageCopy = {
     ],
   },
   automation: {
-    name: "Workflow Automation",
-    shortName: "Automation",
     headline: "Let routine work move forward.",
     outcome: "Give your team more time by automating repeatable tasks.",
     summary:
@@ -82,8 +78,6 @@ export const solutionsPageCopy = {
     ],
   },
   agentic: {
-    name: "AI Agents",
-    shortName: "AI agents",
     headline: "AI that can handle tasks in steps.",
     outcome: "Give multi-step tasks a clear path, with people in control.",
     summary:
@@ -133,8 +127,6 @@ export const solutionsPageCopy = {
     ],
   },
   experience: {
-    name: "Customer Support",
-    shortName: "Customer support",
     headline: "Faster support, with people in reach.",
     outcome: "Help customers sooner without losing the human touch.",
     summary:
@@ -174,8 +166,6 @@ export const solutionsPageCopy = {
     ],
   },
   data: {
-    name: "Data & Reporting",
-    shortName: "Data and reporting",
     headline: "See what is changing, sooner.",
     outcome: "Bring useful information together to make the next decision clearer.",
     summary:

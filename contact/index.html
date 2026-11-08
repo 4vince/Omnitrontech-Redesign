@@ -1,22 +1,22 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Contact — Omnitron</title>
+    <title>Contact | Omnitron</title>
     <meta name="description" content="Tell Omnitron what is slowing down. A person replies within two working days, usually sooner.">
-    <meta name="theme-color" content="#05070b">
+    <meta name="theme-color" content="#f6f5f1">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Contact — Omnitron">
+    <meta property="og:title" content="Contact | Omnitron">
     <meta property="og:description" content="One conversation about the work that should not need you. Replies within two working days.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script>
       (function () {
-        document.documentElement.dataset.theme = "dark";
-        document.documentElement.style.colorScheme = "dark";
+        document.documentElement.dataset.theme = "light";
+        document.documentElement.style.colorScheme = "light";
         document.documentElement.classList.add("js");
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", "#05070b");
+        if (meta) meta.setAttribute("content", "#f6f5f1");
         window.setTimeout(function () {
           if (!window.__omnitronBooted) document.documentElement.classList.remove("js");
         }, 4500);
@@ -29,22 +29,18 @@
 
     <main id="main" class="page-main">
       <section class="contact-hero" aria-labelledby="contact-title">
-        <span class="contact-hero__glow" data-parallax="70" aria-hidden="true"></span>
-        <span class="contact-hero__ring" data-parallax="-80" aria-hidden="true"></span>
-        <span class="contact-hero__axis" aria-hidden="true"></span>
 
         <div class="wrap contact-grid">
           <div class="contact-intro">
-            <span class="tag tag--orange tag--live">Contact / one inbox, one person</span>
-            <h1 id="contact-title">Let’s talk about <span>what is slowing down.</span></h1>
-            <p>No discovery deck required. Tell us where the week goes, what you have already tried, and what a good outcome would change. If we are not the right fit, we will say so.</p>
+            <h1 id="contact-title" data-intro>Let’s talk about <span>what is slowing down.</span></h1>
+            <p data-intro>No discovery deck required. Tell us where the week goes, what you have already tried, and what a good outcome would change. If we are not the right fit, we will say so.</p>
 
-            <div class="contact-details" aria-label="Contact details">
+            <div class="contact-details" aria-label="Contact details" data-intro>
               <div class="contact-detail">
                 <i class="ph ph-envelope-simple" aria-hidden="true"></i>
                 <div>
                   <a href="mailto:hello@omnitron.tech">hello@omnitron.tech</a>
-                  <span> — reaches a person, not a ticket queue</span>
+                  <span>reaches a person, not a ticket queue.</span>
                 </div>
               </div>
               <div class="contact-detail">
@@ -56,20 +52,17 @@
               <div class="contact-detail">
                 <i class="ph ph-clock" aria-hidden="true"></i>
                 <div>
-                  <span>Mon–Fri · 09:00–18:00 SGT · replies within two working days</span>
+                  <span>Mon-Fri, 09:00-18:00 SGT. Replies within two working days.</span>
                 </div>
               </div>
             </div>
 
-            <div class="contact-steps" aria-label="What happens after you write" data-contact-steps></div>
+            <ol class="contact-steps" aria-label="What happens after you write" data-contact-steps data-intro></ol>
           </div>
 
-          <div class="contact-form-card" data-contact-card>
+          <div class="contact-form-card" data-contact-card data-intro>
             <div class="contact-form-card__head">
-              <div>
-                <span class="mono">Enquiry / four fields</span>
-                <h2>Tell us what is not working.</h2>
-              </div>
+              <h2>Tell us what is not working.</h2>
               <span class="tag tag--blue">Reply in 2 days</span>
             </div>
 
@@ -86,8 +79,8 @@
               </div>
 
               <div class="field">
-                <label for="contact-subject">Subject</label>
-                <input class="input" id="contact-subject" name="subject" type="text" placeholder="Client intake is eating the week" autocomplete="off" required data-field>
+                <label for="contact-subject">Subject <span class="optional">(optional)</span></label>
+                <input class="input" id="contact-subject" name="subject" type="text" placeholder="Client intake is eating the week" autocomplete="off">
               </div>
 
               <div class="field">
@@ -103,6 +96,7 @@
               <div class="form-error" data-form-error role="alert" aria-live="assertive" tabindex="-1" hidden>
                 <i class="ph ph-warning-circle" aria-hidden="true"></i>
                 <span data-form-error-text>Something went wrong. Please try again, or email hello@omnitron.tech directly.</span>
+                <a class="form-error__link" data-form-error-link hidden>Open email draft</a>
               </div>
 
               <button class="btn btn--primary" type="submit">
@@ -110,7 +104,7 @@
                 <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>
               </button>
 
-              <p class="form-note" data-form-note>All four fields are required. Your message goes to one inbox, and nothing is stored on this site.</p>
+              <p class="form-note" data-form-note>Name, email, and a short message are required. Subject is optional.</p>
               <p class="contact-aside-note">
                 <i class="ph ph-shield-check" aria-hidden="true"></i>
                 <span>No newsletter, no CRM sequence. Your details are used to answer this enquiry only.</span>
@@ -122,9 +116,8 @@
 
       <hr class="hairline">
       <section class="cta-band" aria-labelledby="contact-cta-title">
-        <div class="wrap cta-inner">
+        <div class="wrap cta-inner" data-reveal>
           <div>
-            <span class="mono">Prefer email / same inbox</span>
             <h2 id="contact-cta-title">Not a form person? Write to us directly.</h2>
           </div>
           <a class="btn btn--primary" href="mailto:hello@omnitron.tech?subject=Website%20enquiry">

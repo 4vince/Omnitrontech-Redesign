@@ -44,8 +44,8 @@ h5,
 h6 {
   font-family: var(--font-display);
   font-weight: 600;
-  line-height: 1.04;
-  letter-spacing: -0.032em;
+  line-height: 1.08;
+  letter-spacing: -0.014em;
   text-wrap: balance;
 }
 
@@ -101,7 +101,7 @@ img {
 }
 
 :focus-visible {
-  outline: 2px solid var(--orange);
+  outline: 2px solid var(--blue);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -141,7 +141,7 @@ img {
 input,
 textarea,
 select {
-  caret-color: var(--orange);
+  caret-color: var(--blue);
 }
 
 input::placeholder,
@@ -193,12 +193,12 @@ html.lenis body {
   font-weight: 700;
   font-size: var(--fs-small);
   transform: translateY(-160%);
-  transition: transform var(--dur) var(--ease-out);
+  transition: transform var(--dur-ui) var(--ease-out);
 }
 
 .skip-link:focus-visible {
   transform: translateY(0);
-  outline-color: var(--orange);
+  outline-color: var(--blue);
 }
 
 .mono {
@@ -212,7 +212,7 @@ html.lenis body {
 }
 
 .signal {
-  color: var(--orange);
+  color: var(--blue);
 }
 
 .blue {
@@ -234,5 +234,5 @@ html.lenis body {
 /* Native form control color in dark mode */
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: var(--orange);
+  accent-color: var(--blue);
 }

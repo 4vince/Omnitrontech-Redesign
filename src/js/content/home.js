@@ -25,53 +25,74 @@ export const proofRows = [
   {
     sector: "Manufacturing",
     state: "Predictive maintenance pilot",
-    slot: "Reserved / 01",
+    slot: "Reserved",
   },
   {
     sector: "Financial services",
     state: "Reporting and exception automation",
-    slot: "Reserved / 02",
+    slot: "Reserved",
   },
   {
     sector: "HR & recruitment",
     state: "Candidate operations and scheduling",
-    slot: "Reserved / 03",
+    slot: "Reserved",
   },
   {
     sector: "Professional services",
     state: "Client intake, triage and hand-off",
-    slot: "Reserved / 04",
+    slot: "Reserved",
   },
 ];
 
+/*
+ * Each applied example carries a three-step flow rendered as a flat diagram.
+ * The last step is the "person decides" step: the system prepares the work,
+ * a human keeps the judgement call (brand promise, see hero subtext).
+ */
 export const appliedExamples = [
   {
     sector: "Manufacturing",
     title: "See the line before it stops.",
     body: "Predictive maintenance and yield signals built from the data your plant already produces.",
-    slot: "Applied / 01",
     icon: "ph-factory",
+    flow: [
+      { icon: "ph-gauge", label: "Machine readings", meta: "Sensors, PLC logs" },
+      { icon: "ph-warning-diamond", label: "Drift flagged", meta: "Pattern vs. baseline" },
+      { icon: "ph-wrench", label: "Service booked", meta: "Planner approves" },
+    ],
   },
   {
     sector: "Financial services",
     title: "Close the month without the scramble.",
     body: "Connected portfolios, automated reporting and exceptions flagged before they become a problem.",
-    slot: "Applied / 02",
     icon: "ph-chart-polar",
+    flow: [
+      { icon: "ph-bank", label: "Ledgers synced", meta: "Bank, ERP, sheets" },
+      { icon: "ph-magnifying-glass", label: "Exceptions isolated", meta: "Only the odd ones" },
+      { icon: "ph-file-text", label: "Report drafted", meta: "Controller signs off" },
+    ],
   },
   {
     sector: "HR & recruitment",
     title: "Keep candidates warm, not waiting.",
     body: "Screening, scheduling and onboarding steps that move without a recruiter chasing every thread.",
-    slot: "Applied / 03",
     icon: "ph-users-three",
+    flow: [
+      { icon: "ph-tray", label: "Application in", meta: "Job board, email" },
+      { icon: "ph-calendar-check", label: "Interview scheduled", meta: "Both calendars checked" },
+      { icon: "ph-handshake", label: "Shortlist ready", meta: "Recruiter decides" },
+    ],
   },
   {
     sector: "Logistics",
     title: "Catch the exception before it cascades.",
     body: "Route, inventory and supplier signals joined into one view, with the next action already queued.",
-    slot: "Applied / 04",
     icon: "ph-flow-arrow",
+    flow: [
+      { icon: "ph-truck", label: "Shipment delayed", meta: "Carrier update" },
+      { icon: "ph-package", label: "Stock impact checked", meta: "Orders at risk" },
+      { icon: "ph-paper-plane-tilt", label: "Customer notified", meta: "Ops lead approves" },
+    ],
   },
 ];
 

@@ -4,10 +4,6 @@ import { site } from "../content/site.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function wait(ms) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
 function errorId(input) {
   return `error-${input.name}`;
 }
@@ -52,6 +48,7 @@ function validateField(input) {
   const value = input.value.trim();
   const name = input.name;
 
+  if (!value && name === "subject") return "";
   if (!value) {
     const label = input.closest(".field")?.querySelector("label")?.textContent || "This field";
     return `Enter ${label.toLowerCase().replace("optional", "").replace(/[?.!]+$/, "").trim()}.`;
@@ -70,7 +67,7 @@ function buildMailto({ name, email, subject, message }) {
     "",
     message,
   ].join("\n");
-  return `mailto:${site.email}?subject=${encodeURIComponent(`Website enquiry: ${subject}`)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${site.email}?subject=${encodeURIComponent(subject ? `Website enquiry: ${subject}` : "Website enquiry")}&body=${encodeURIComponent(body)}`;
 }
 
 function escapeHtml(value) {
@@ -92,10 +89,10 @@ export function initContact() {
   if (stepsMount) {
     stepsMount.innerHTML = contactSteps
       .map(
-        (step) => `<div class="contact-step">
+        (step) => `<li class="contact-step">
           <span>${step.label}</span>
           <p>${step.body}</p>
-        </div>`,
+        </li>`,
       )
       .join("");
   }
@@ -109,7 +106,7 @@ export function initContact() {
   const formError = form.querySelector("[data-form-error]");
   const honeypot = form.querySelector("[data-honeypot]");
   const note = form.querySelector("[data-form-note]");
-  const endpoint = import.meta.env.VITE_CONTACT_ENDPOINT || "";
+  const endpoint = (import.meta.env.VITE_CONTACT_ENDPOINT || "").trim();
   const buttonMarkup = submit?.innerHTML || "Send message";
 
   // Prefill the subject from ?service=intelligent-automation.
@@ -121,9 +118,10 @@ export function initContact() {
   }
 
   if (note) {
+    const requirement = "Name, email, and a short message are required. Subject is optional.";
     note.textContent = requestedService
-      ? `Prefilled for ${requestedService.name}. Change it if you are asking about something else.`
-      : "All four fields are required. Your message goes to one inbox, and nothing is stored on this site.";
+      ? `Prefilled for ${requestedService.name}. Change it if needed. ${requirement}`
+      : requirement;
   }
 
   fields.forEach((input) => {
@@ -138,11 +136,16 @@ export function initContact() {
     });
   });
 
-  function showFormError(message) {
+  function showFormError(message, fallbackHref = "") {
     if (!formError) return;
     formError.hidden = false;
     const text = formError.querySelector("[data-form-error-text]");
     if (text) text.textContent = message;
+    const fallbackLink = formError.querySelector("[data-form-error-link]");
+    if (fallbackLink) {
+      fallbackLink.hidden = !fallbackHref;
+      if (fallbackHref) fallbackLink.href = fallbackHref;
+    }
     formError.focus?.();
   }
 
@@ -160,11 +163,6 @@ export function initContact() {
   }
 
   async function send(payload) {
-    if (!endpoint) {
-      await wait(1100);
-      return { simulated: true };
-    }
-
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 12000);
     try {
@@ -179,13 +177,12 @@ export function initContact() {
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(`Request failed with ${response.status}`);
-      return { simulated: false };
     } finally {
       window.clearTimeout(timeout);
     }
   }
 
-  function showSuccess(payload, { simulated }) {
+  function showSuccess(payload) {
     form.hidden = true;
     hideFormError();
 
@@ -196,7 +193,6 @@ export function initContact() {
       <span class="form-success__icon"><i class="ph ph-check" aria-hidden="true"></i></span>
       <h3 tabindex="-1" data-success-title>Message received.</h3>
       <p>Thank you, ${escapeHtml(payload.name.split(" ")[0])}. We will reply within two working days, usually sooner. If it is urgent, email <a href="mailto:${site.email}">${site.email}</a> directly.</p>
-      <p class="form-note">${simulated ? "Demo mode: this form is not yet connected to an inbox, so nothing was sent. " : ""}You can also <a class="text-link" href="${buildMailto(payload)}">open this message in your email app <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>.</p>
     `;
     card.append(success);
     const title = success.querySelector("[data-success-title]");
@@ -207,19 +203,7 @@ export function initContact() {
     event.preventDefault();
     hideFormError();
 
-    // A bot filling the hidden field gets no useful signal.
-    if (honeypot && honeypot.value.trim()) {
-      showSuccess(
-        {
-          name: "there",
-          email: "",
-          subject: "",
-          message: "",
-        },
-        { simulated: true },
-      );
-      return;
-    }
+    if (honeypot && honeypot.value.trim()) return;
 
     let firstInvalid = null;
     fields.forEach((input) => {
@@ -244,13 +228,23 @@ export function initContact() {
       message: form.elements.namedItem("message").value.trim(),
     };
 
+    if (!endpoint) {
+      showFormError(
+        "This form is not connected yet. Nothing was sent. Use this link to send your message by email.",
+        buildMailto(payload),
+      );
+      return;
+    }
+
     setBusy(true);
     try {
-      const result = await send(payload);
-      showSuccess(payload, result);
-    } catch {
+      await send(payload);
+      showSuccess(payload);
+    } catch (error) {
+      console.error("Could not submit the contact enquiry.", error);
       showFormError(
-        `Something went wrong, and your message is still here. Please try again, or email ${site.email} directly.`,
+        `Something went wrong, and your message is still here. Use this link to send it by email, or try again.`,
+        buildMailto(payload),
       );
       setBusy(false);
       submit?.focus();

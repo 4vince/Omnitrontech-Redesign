@@ -1,3 +1,10 @@
+import { gsap, ScrollTrigger } from "../core/motion.js";
+
+/**
+ * Page progress rail. Driven by a page-wide ScrollTrigger so it shares the
+ * Lenis/GSAP clock with every other scroll effect (no extra scroll listener,
+ * no per-frame layout reads).
+ */
 export function initScrollProgress() {
   const progress = document.createElement("div");
   progress.className = "scroll-progress";
@@ -11,37 +18,26 @@ export function initScrollProgress() {
   const fill = progress.querySelector("[data-progress-fill]");
   const marker = progress.querySelector("[data-progress-marker]");
   let height = progress.offsetHeight || 240;
-  let frame = 0;
 
-  function readHeight() {
-    height = progress.offsetHeight || 240;
-  }
+  const setFill = gsap.quickSetter(fill, "scaleY");
+  const setMarker = gsap.quickSetter(marker, "y", "px");
+  const setOpacity = gsap.quickSetter(progress, "opacity");
 
-  function paint() {
-    frame = 0;
-    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    const ratio = Math.min(1, Math.max(0, window.scrollY / max));
-    fill.style.transform = `scaleY(${ratio})`;
-    marker.style.transform = `translateY(${ratio * height}px)`;
-    progress.style.opacity = ratio > 0.002 ? "1" : "0";
-  }
+  const paint = (ratio) => {
+    setFill(ratio);
+    setMarker(ratio * height);
+    setOpacity(ratio > 0.002 ? 1 : 0);
+  };
 
-  function schedule() {
-    if (!frame) frame = requestAnimationFrame(paint);
-  }
-
-  window.addEventListener("scroll", schedule, { passive: true });
-  window.addEventListener("resize", () => {
-    readHeight();
-    schedule();
+  ScrollTrigger.create({
+    start: 0,
+    end: "max",
+    onUpdate: (self) => paint(self.progress),
+    onRefresh: (self) => {
+      height = progress.offsetHeight || 240;
+      paint(self.progress);
+    },
   });
-  if (typeof ResizeObserver !== "undefined") {
-    new ResizeObserver(() => {
-      readHeight();
-      schedule();
-    }).observe(document.body);
-  }
 
-  readHeight();
-  paint();
+  paint(0);
 }

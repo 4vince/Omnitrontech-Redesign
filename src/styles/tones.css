@@ -1,0 +1,140 @@
+/* ─────────────────────────────────────────────────────────────
+   SECTION TONES: deliberate color blocking
+   Modelled on Databricks' section rhythm (light hero → deep navy band →
+   warm off-white → navy …), translated to the confirmed Omnitron palette
+   (white / off-white / blue / grey; design brief v1.0).
+
+   A tone re-scopes the colour tokens for everything inside it, so every
+   component (buttons, tags, links, rows, form fields) adapts with no
+   per-component overrides. Blocks:
+
+     (default)    off-white  #f6f5f1  page ground (hero, handoff, showcase)
+     --paper      near-white #fdfcfa  light reading sections (problem, FAQ)
+     .tone-navy   deep navy  #0a1640  statement + proof bands, alt service rows
+     .tone-blue   brand blue #2b46d6  the closing CTA, the one saturated block
+     footer       ink navy   #060f2b  closes every page
+
+   .tone-light (in tokens.css) resets to the light tokens, so light
+   "cards" can sit inside a navy block, as Databricks does.
+   ───────────────────────────────────────────────────────────── */
+
+.tone-navy,
+.site-footer {
+  color-scheme: dark;
+
+  --bg: #0a1640;
+  --bg-2: #0c1a4a;
+  --bg-3: #0f1f55;
+  --surface: #0f1d4d;
+  --surface-2: #13245a;
+  --surface-3: #182b66;
+
+  --ink: #f3f5fb;
+  --ink-soft: #d0d7ea;
+  --muted: #aab5d1;
+  --muted-2: #9aa6c6;
+  --placeholder: #9aa6c6;
+
+  --line: rgba(214, 224, 255, 0.14);
+  --line-strong: rgba(214, 224, 255, 0.28);
+  --line-control: rgba(214, 224, 255, 0.42);
+  --line-soft: rgba(214, 224, 255, 0.08);
+
+  /* The accent lifts on navy so it keeps ≥ 6:1 contrast. */
+  --blue: #8aa3ff;
+  --blue-bright: #9fb3ff;
+  --blue-soft: #b3c3ff;
+
+  --glow-blue: rgba(110, 140, 255, 0.22);
+  --glow-blue-soft: rgba(110, 140, 255, 0.1);
+
+  --btn-bg: #3651f0;
+  --btn-ink: #f8f9ff;
+  --btn-bg-hover: #4763ff;
+
+  --field-bg: rgba(255, 255, 255, 0.05);
+  --field-bg-focus: rgba(138, 163, 255, 0.12);
+
+  --shadow-deep: 0 42px 90px -34px rgba(2, 6, 20, 0.8),
+    0 12px 34px -18px rgba(2, 6, 20, 0.6);
+  --shadow-card: 0 30px 70px -34px rgba(2, 6, 20, 0.75),
+    0 5px 20px -10px rgba(2, 6, 20, 0.5);
+  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --card-sheen: radial-gradient(120% 130% at 12% 0%, rgba(255, 255, 255, 0.06), transparent 44%);
+  --selection: rgba(138, 163, 255, 0.32);
+
+  /* Backdrop on navy: light-blue blueprint lines, brighter pools */
+  --grid-minor: rgba(138, 163, 255, 0.08);
+  --grid-major: rgba(138, 163, 255, 0.17);
+  /* Capped so muted text keeps >= 5:1 where both pools overlap. */
+  --pool-a: rgba(80, 110, 255, 0.18);
+  --pool-b: rgba(120, 150, 255, 0.09);
+  --elev-1: 0 1px 2px rgba(2, 6, 20, 0.3), 0 10px 24px -12px rgba(2, 6, 20, 0.6);
+  --elev-2: 0 2px 4px rgba(2, 6, 20, 0.3), 0 28px 56px -22px rgba(2, 6, 20, 0.75),
+    0 70px 110px -50px rgba(60, 90, 255, 0.4);
+  --elev-3: 0 4px 8px rgba(2, 6, 20, 0.35), 0 38px 72px -24px rgba(2, 6, 20, 0.8),
+    0 90px 130px -56px rgba(60, 90, 255, 0.5);
+  --edge-hi: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  background-color: var(--bg);
+  color: var(--ink);
+}
+
+/* Footer: one step deeper than the navy bands, so the page closes firmly. */
+.site-footer {
+  --bg: #060f2b;
+  --bg-2: #081234;
+}
+
+.tone-blue,
+.cta-band {
+  color-scheme: dark;
+
+  --bg: #2b46d6;
+  --bg-2: #2741c7;
+  --surface: #3550e0;
+
+  --ink: #f8f9ff;
+  --ink-soft: #e6ebff;
+  --muted: #d6deff;
+  --muted-2: #c3cdfb;
+
+  --line: rgba(255, 255, 255, 0.22);
+  --line-strong: rgba(255, 255, 255, 0.38);
+  --line-control: rgba(255, 255, 255, 0.55);
+  --line-soft: rgba(255, 255, 255, 0.12);
+
+  /* On the blue block the "accent" is the light tint. */
+  --blue: #dfe6ff;
+  --blue-bright: #eef2ff;
+
+  /* Light button on blue, dark-blue label: 9.7:1. */
+  --btn-bg: #f6f5f1;
+  --btn-ink: #0f2290;
+  --btn-bg-hover: #fdfdfb;
+
+  --field-bg: rgba(255, 255, 255, 0.1);
+
+  /* Backdrop on brand blue: white blueprint lines, pale pools */
+  --grid-minor: rgba(255, 255, 255, 0.08);
+  --grid-major: rgba(255, 255, 255, 0.16);
+  --pool-a: rgba(255, 255, 255, 0.07);
+  --pool-b: rgba(10, 22, 64, 0.22);
+
+  background-color: var(--bg);
+  color: var(--ink);
+}
+
+/* Tags carry their own translucent tint; re-point it at the tone. */
+.tone-navy .tag--blue {
+  border-color: rgba(138, 163, 255, 0.36);
+  background: rgba(138, 163, 255, 0.12);
+  color: var(--blue);
+}
+
+/* Navy bands: a soft top-edge highlight gives the block a crisp start
+   against the off-white above it, without a hard rule. */
+.tone-navy.band {
+  border-top-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(214, 224, 255, 0.08);
+}

@@ -18,40 +18,31 @@
   letter-spacing: -0.012em;
   line-height: 1;
   white-space: nowrap;
-  transition: background-color var(--dur) var(--ease-out),
-    color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+  transition: background-color var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out), border-color var(--dur-ui) var(--ease-out),
+    transform var(--dur-ui) var(--ease-out), box-shadow var(--dur-ui) var(--ease-out);
 }
 
 .btn .ph {
   font-size: 16px;
-  transition: transform 380ms var(--ease-out);
-}
-
-.btn:hover .ph {
-  transform: translate(2px, -2px);
-}
-
-.btn:active {
-  transform: translateY(1px) scale(0.985);
+  transition: transform var(--dur-ui) var(--ease-out);
 }
 
 .btn--primary {
   background: var(--btn-bg);
   color: var(--btn-ink);
-  box-shadow: 0 16px 38px -18px rgba(255, 122, 47, 0.72),
+  box-shadow: 0 18px 40px -22px rgba(23, 25, 31, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .btn--primary:hover {
   background: var(--btn-bg-hover);
-  box-shadow: 0 22px 50px -18px rgba(255, 122, 47, 0.82),
+  box-shadow: 0 24px 46px -22px rgba(23, 25, 31, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transform: translateY(-2px);
 }
 
 .btn--ghost {
-  border-color: var(--line-strong);
+  border-color: var(--line-control);
   background: transparent;
   color: var(--ink);
 }
@@ -59,7 +50,6 @@
 .btn--ghost:hover {
   border-color: var(--ink-soft);
   background: var(--field-bg);
-  transform: translateY(-2px);
 }
 
 .btn--light {
@@ -69,11 +59,36 @@
 
 .btn--light:hover {
   background: #fff;
-  transform: translateY(-2px);
+}
+
+/* Hover movement only where a real pointer hovers (touch fires false hovers
+   on tap and would leave buttons stuck lifted). */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover .ph,
+  .text-link:hover .ph {
+    transform: translate(2px, -2px);
+  }
+
+  .btn--primary:hover,
+  .btn--ghost:hover,
+  .btn--light:hover {
+    transform: translateY(-2px);
+  }
+
+  .tab:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Press: fast in (120ms), released over the 200ms base transition. 0,3,0
+   specificity so it beats the variant :hover rules while pressing. */
+.btn:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: var(--dur-press);
 }
 
 .btn--sm {
-  min-height: 42px;
+  min-height: 44px;
   padding-inline: 18px;
   font-size: 0.82rem;
 }
@@ -87,7 +102,8 @@
   align-items: center;
   gap: 8px;
   width: fit-content;
-  padding-bottom: 3px;
+  min-height: 44px;
+  padding-block: 7px;
   border-bottom: 1px solid var(--line-strong);
   font-size: 0.88rem;
   font-weight: 650;
@@ -97,17 +113,15 @@
 
 .text-link .ph {
   font-size: 13px;
-  transition: transform var(--dur) var(--ease-out);
+  transition: transform var(--dur-ui) var(--ease-out);
 }
 
 .text-link:hover {
-  color: var(--orange);
-  border-color: var(--orange);
+  color: var(--blue);
+  border-color: var(--blue);
 }
 
-.text-link:hover .ph {
-  transform: translate(2px, -2px);
-}
+
 
 .actions {
   display: flex;
@@ -129,19 +143,13 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 500;
   letter-spacing: 0.13em;
   line-height: 1.2;
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
-}
-
-.tag--orange {
-  border-color: rgba(255, 122, 47, 0.34);
-  background: rgba(255, 122, 47, 0.08);
-  color: var(--orange);
 }
 
 .tag--blue {
@@ -159,202 +167,10 @@
   box-shadow: 0 0 8px currentColor;
 }
 
-[data-theme="light"] .tag--orange {
-  border-color: rgba(201, 78, 16, 0.3);
-  background: rgba(201, 78, 16, 0.07);
-}
-
 [data-theme="light"] .tag--blue {
   border-color: rgba(31, 70, 214, 0.28);
   background: rgba(31, 70, 214, 0.07);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Cards
-   ───────────────────────────────────────────────────────────── */
-
-.card {
-  --lift: 0px;
-  --rx: 0deg;
-  --ry: 0deg;
-  --mx: 50%;
-  --my: 0%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 224px;
-  padding: clamp(22px, 2vw, 30px);
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--card-sheen), linear-gradient(158deg, var(--surface-2), var(--surface));
-  box-shadow: var(--shadow-card), var(--inset-top);
-  transform: perspective(1000px) translateY(var(--lift)) rotateX(var(--rx))
-    rotateY(var(--ry));
-  transform-style: preserve-3d;
-  transition: transform 520ms var(--ease-out), border-color var(--dur),
-    box-shadow 520ms var(--ease-out);
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    320px circle at var(--mx) var(--my),
-    rgba(255, 255, 255, 0.11),
-    transparent 66%
-  );
-  opacity: 0;
-  transition: opacity 300ms var(--ease-out);
-  pointer-events: none;
-}
-
-.card:hover {
-  --lift: -7px;
-  border-color: var(--line-strong);
-  box-shadow: 0 44px 90px -34px rgba(0, 0, 0, 0.92),
-    0 10px 26px -16px rgba(0, 0, 0, 0.72), var(--inset-top);
-}
-
-[data-theme="light"] .card:hover {
-  box-shadow: 0 40px 80px -34px rgba(32, 38, 54, 0.35),
-    0 10px 26px -16px rgba(32, 38, 54, 0.2), var(--inset-top);
-}
-
-.card:hover::before {
-  opacity: 1;
-}
-
-.card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.rail .card {
-  flex-basis: clamp(272px, 26vw, 360px);
-}
-
-.rail .card--chart {
-  flex-basis: clamp(340px, 34vw, 500px);
-}
-
-.card h3 {
-  font-size: clamp(1.2rem, 1.55vw, 1.5rem);
-  letter-spacing: -0.028em;
-}
-
-.card p {
-  flex: 1;
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.62;
-}
-
-.card__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--line-soft);
-  color: var(--muted-2);
-}
-
-.card__meta .ph {
-  font-size: 16px;
-  color: var(--orange);
-}
-
-.card--chart {
-  flex-basis: clamp(340px, 34vw, 500px);
-  min-height: 224px;
-  padding-right: 0;
-  overflow: hidden;
-  background: radial-gradient(
-      110% 100% at 100% 100%,
-      rgba(255, 122, 47, 0.13),
-      transparent 62%
-    ),
-    linear-gradient(158deg, rgba(49, 91, 255, 0.3), var(--surface) 72%);
-}
-
-.card--chart::after {
-  content: "";
-  position: absolute;
-  right: -20%;
-  bottom: -45%;
-  width: 70%;
-  aspect-ratio: 1;
-  border: 1px solid rgba(139, 162, 255, 0.22);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.chart-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  padding-right: clamp(22px, 2vw, 30px);
-}
-
-.chart-head strong {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 2.6vw, 2.6rem);
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1;
-}
-
-.chart-head .chart-delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--orange);
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-}
-
-.chart-head .chart-delta .ph {
-  font-size: 11px;
-}
-
-.chart-caption {
-  padding-right: clamp(22px, 2vw, 30px);
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.45;
-}
-
-.chart {
-  display: block;
-  width: calc(100% + 12%);
-  max-width: none;
-  height: auto;
-  margin: 0 -12% -26px -4%;
-  overflow: visible;
-}
-
-.chart path.line {
-  stroke: var(--orange);
-  stroke-width: 2.5;
-  fill: none;
-  filter: drop-shadow(0 0 8px rgba(255, 122, 47, 0.55));
-}
-
-.chart path.area {
-  fill: url(#chart-fill);
-}
-
-.chart circle {
-  fill: var(--orange);
-  filter: drop-shadow(0 0 8px rgba(255, 122, 47, 0.8));
+  color: var(--blue);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -368,8 +184,9 @@
 }
 
 .tab {
+  min-height: 44px;
   padding: 9px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-control);
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--muted);
@@ -383,16 +200,15 @@
 }
 
 .tab:hover {
-  border-color: var(--line-strong);
+  border-color: var(--line-control);
   color: var(--ink);
-  transform: translateY(-1px);
 }
 
 .tab[aria-selected="true"] {
-  border-color: var(--orange);
-  background: var(--orange);
-  color: var(--orange-ink);
-  box-shadow: 0 10px 26px -14px rgba(255, 122, 47, 0.7);
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #f6f5f1;
+  box-shadow: 0 10px 26px -14px rgba(43, 70, 214, 0.7);
 }
 
 .tab:focus-visible {
@@ -426,7 +242,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--muted-2);
-  transition: background-color var(--dur), box-shadow var(--dur);
+  transition: background-color var(--dur-ui), box-shadow var(--dur-ui);
 }
 
 .flow__step:not(:last-child)::after {
@@ -502,25 +318,25 @@
 }
 
 .faq-trigger:hover {
-  color: var(--orange);
+  color: var(--blue);
 }
 
 .faq-trigger .ph {
   flex: none;
   font-size: 17px;
   color: var(--muted);
-  transition: transform 420ms var(--ease-out), color var(--dur-fast);
+  transition: transform var(--dur-ui) var(--ease-out), color var(--dur-fast);
 }
 
 .faq-trigger[aria-expanded="true"] .ph {
   transform: rotate(45deg);
-  color: var(--orange);
+  color: var(--blue);
 }
 
 .faq-panel {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 460ms var(--ease-out);
+  transition: grid-template-rows var(--dur-panel) var(--ease-in-out);
 }
 
 .faq-panel > div {
@@ -537,6 +353,18 @@
   color: var(--muted);
   font-size: 0.93rem;
   line-height: 1.7;
+  /* closing: fade out quickly, no movement */
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 120ms var(--ease-out), transform 0s linear 120ms;
+}
+
+.faq-item.is-open .faq-panel p {
+  /* opening: fade + settle, slightly after the row starts growing */
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur-panel) var(--ease-out) 60ms,
+    transform var(--dur-panel) var(--ease-out) 60ms;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -583,11 +411,11 @@
   width: 100%;
   min-height: 50px;
   padding: 13px 15px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-control);
   border-radius: var(--radius-sm);
   background: var(--field-bg);
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: 1rem;
   line-height: 1.5;
   transition: border-color var(--dur-fast), background-color var(--dur-fast),
     box-shadow var(--dur-fast);
@@ -600,7 +428,7 @@
 
 .input:hover,
 .textarea:hover {
-  border-color: var(--line-strong);
+  border-color: var(--line-control);
 }
 
 .input:focus,
@@ -644,8 +472,8 @@
 }
 
 .form-note a:hover {
-  color: var(--orange);
-  border-color: var(--orange);
+  color: var(--blue);
+  border-color: var(--blue);
 }
 
 /* Honeypot: reachable by bots, invisible to people. */
@@ -675,6 +503,35 @@
 .form-error .ph {
   flex: none;
   margin-top: 2px;
+}
+
+.form-error__link {
+  flex: none;
+  margin-left: auto;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.form-error__link[hidden] {
+  display: none;
+}
+
+/* Errors arrive next to their field: a short fade + 4px drop. Plays on
+   insertion (field errors) and when [hidden] is removed (form error). */
+@media (prefers-reduced-motion: no-preference) {
+  .field-error,
+  .form-error {
+    animation: message-in 160ms var(--ease-out) both;
+  }
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .btn[aria-busy="true"] {
@@ -735,143 +592,38 @@
   color: var(--ink);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Orbit / core visual
-   ───────────────────────────────────────────────────────────── */
-
-.orbit {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  perspective: 1100px;
-  transform-style: preserve-3d;
-  pointer-events: none;
-}
-
-.orbit__glow {
-  position: absolute;
-  width: 76%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle closest-side,
-    var(--glow-blue),
-    transparent 68%
-  );
-  filter: blur(8px);
-}
-
-.orbit__ring {
-  position: absolute;
-  width: var(--ring, 62%);
-  aspect-ratio: 1;
-  border: 1px solid rgba(90, 125, 255, 0.3);
-  border-radius: 50%;
-  box-shadow: 0 0 40px rgba(49, 91, 255, 0.15),
-    inset 0 0 34px rgba(49, 91, 255, 0.1);
-  transform: rotateX(68deg) rotateZ(var(--tilt, 0deg));
-  transform-style: preserve-3d;
-}
-
-.orbit__ring:nth-child(3) {
-  width: calc(var(--ring, 62%) * 0.72);
-  border-color: rgba(90, 125, 255, 0.22);
-  transform: rotateX(64deg) rotateZ(calc(var(--tilt, 0deg) + 58deg));
-}
-
-.orbit__ring:nth-child(4) {
-  width: calc(var(--ring, 62%) * 0.46);
-  border-color: rgba(255, 122, 47, 0.22);
-  transform: rotateX(72deg) rotateZ(calc(var(--tilt, 0deg) - 42deg));
-}
-
-.orbit__core {
-  position: relative;
-  width: 24%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 29%,
-    #9db2ff,
-    #4f75ff 24%,
-    #2f57e8 48%,
-    #0d1e62 76%,
-    #050b26
-  );
-  box-shadow: 0 0 80px 10px rgba(49, 91, 255, 0.55),
-    inset -14px -18px 34px rgba(0, 0, 0, 0.55),
-    inset 8px 7px 18px rgba(255, 255, 255, 0.16);
-  animation: core-breathe 6s ease-in-out infinite;
-}
-
-.orbit__core::after {
-  content: "";
-  position: absolute;
-  inset: 7%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-}
-
-@keyframes core-breathe {
-  0%,
-  100% {
-    transform: scale(1);
+/* Success moment: the card rises in, the check badge pops (a small
+   overshoot, reserved for this one celebratory moment), then the text. */
+@media (prefers-reduced-motion: no-preference) {
+  .form-success {
+    animation: success-in var(--dur-reveal) var(--ease-out) both;
   }
-  50% {
-    transform: scale(1.035);
+
+  .form-success__icon {
+    animation: success-badge 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 80ms both;
+  }
+
+  .form-success h3 {
+    animation: success-in var(--dur-reveal) var(--ease-out) 120ms both;
+  }
+
+  .form-success p {
+    animation: success-in var(--dur-reveal) var(--ease-out) 160ms both;
   }
 }
 
-.orbit__chip {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-pill);
-  background: rgba(9, 14, 26, 0.74);
-  color: #eef2fb;
-  font-size: 0.69rem;
-  font-weight: 560;
-  line-height: 1;
-  white-space: nowrap;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.9),
-    0 0 20px -8px var(--glow-blue);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: background-color var(--dur), color var(--dur),
-    border-color var(--dur), transform 520ms var(--ease-out);
+@keyframes success-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }
 
-.orbit__chip::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--orange);
-  box-shadow: 0 0 8px var(--orange);
-}
-
-.orbit__chip.is-active {
-  border-color: var(--orange);
-  background: var(--orange);
-  color: var(--orange-ink);
-  transform: translate(-50%, -50%) scale(1.06);
-}
-
-.orbit__chip.is-active::before {
-  background: var(--orange-ink);
-  box-shadow: none;
-}
-
-.orbit--small .orbit__chip {
-  font-size: 0.62rem;
-  padding: 6px 10px;
+@keyframes success-badge {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }
 
 /* 3D-ish CSS core used on secondary pages */
@@ -910,7 +662,7 @@
 .core-mark__ring:nth-of-type(3) {
   width: 66%;
   transform: rotateX(64deg) rotateZ(72deg);
-  border-color: rgba(255, 122, 47, 0.2);
+  border-color: rgba(43, 70, 214, 0.2);
 }
 
 .core-mark__core {
@@ -957,17 +709,6 @@
 
 .scroll-hint .ph {
   font-size: 13px;
-  color: var(--orange);
+  color: var(--blue);
 }
 
-.icon-badge {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  color: var(--blue-bright);
-  font-size: 18px;
-  background: var(--field-bg);
-}

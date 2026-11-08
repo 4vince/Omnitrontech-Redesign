@@ -16,13 +16,12 @@ export const services = [
     name: "Strategy & Consulting",
     shortName: "Strategy",
     headline: "Navigate the Intelligence Age",
-    outcome: "A clear plan for where AI earns its keep.",
-    summary:
-      "We map the work, the tools and the constraints first, then build a costed roadmap with the governance to match.",
+    outcome: "A practical plan for where AI can help.",
+    summary: "Find useful AI work, estimate costs, and set clear safeguards.",
     description:
       "We start with how work actually moves through your business, not with a technology looking for a problem. You leave with a short list of decisions, a costed sequence and the safeguards to scale without creating new risk.",
     value:
-      "AI is not a plug-and-play solution; it is a paradigm shift. Our consulting practice aligns artificial intelligence with your core business objectives, identifies high-impact use cases, and establishes the ethical guardrails necessary for enterprise-scale adoption.",
+      "AI is not plug-and-play. Our consulting practice aligns AI with your business objectives, finds high-impact use cases, and sets the guardrails needed to scale safely.",
     icon: "ph-compass",
     tags: ["Opportunity map", "Costed roadmap", "Governance"],
     chips: ["Discovery", "Business case", "Roadmap", "Governance"],
@@ -72,16 +71,16 @@ export const services = [
     id: "automation",
     slug: "intelligent-automation",
     index: "02",
-    name: "Intelligent Automation",
+    name: "Workflow Automation",
     shortName: "Automation",
     headline: "Operations at the Speed of Light",
-    outcome: "Hours back every week, without adding headcount.",
+    outcome: "Repeatable work handled, with exceptions kept visible.",
     summary:
-      "We connect the tools you already use and automate the routine tasks, hand-offs and approvals that quietly eat the week.",
+      "Connect your tools and automate repeat tasks, approvals, and hand-offs.",
     description:
       "The work is rarely one big task. It is the ten small hand-offs around it. We automate the repeatable path end to end, keep people in control of the exceptions, and make every hand-off visible.",
     value:
-      "Automation is not just moving data; it is reliability. We engineer advanced workflows with built-in error handling and fallback logic. While agents think, automations do: executing your defined processes perfectly, every single time.",
+      "Automation is reliability. We engineer workflows with error handling and fallbacks, so routine work runs perfectly while people handle the exceptions.",
     icon: "ph-plugs-connected",
     tags: ["Workflow design", "System integration", "Exception handling"],
     chips: ["Intake", "Routing", "Approvals", "Exceptions"],
@@ -131,16 +130,16 @@ export const services = [
     id: "agentic",
     slug: "agentic-solutions",
     index: "03",
-    name: "Agentic Solutions",
-    shortName: "Agentic",
+    name: "AI Agents",
+    shortName: "AI agents",
     headline: "The Future of Digital Labor",
-    outcome: "Multi-step work that keeps moving on its own.",
+    outcome: "Multi-step tasks with people in control.",
     summary:
-      "Agents that take on multi-step work across your stack, check their own results and escalate at the right moment.",
+      "Agents handle approved tasks, check results, and escalate exceptions.",
     description:
       "Useful autonomy is bounded autonomy. We design agents around a real process, give them the context and permissions they need, and define exactly when a person must step in. No black boxes, no unsupervised spending.",
     value:
-      "True intelligence lies in agency. We engineer custom agentic systems capable of autonomous reasoning and decision-making: from a specialised research agent to a full-scale cognitive architecture, we build the brains that power your enterprise.",
+      "We engineer bounded agents that take on multi-step work, check their own results, and escalate at the right moment.",
     icon: "ph-robot",
     tags: ["Scoped autonomy", "Tool use", "Human escalation"],
     chips: ["Context", "Tool use", "Checks", "Escalation"],
@@ -203,16 +202,16 @@ export const services = [
     id: "experience",
     slug: "customer-experience",
     index: "04",
-    name: "Customer Experience",
-    shortName: "Experience",
+    name: "Customer Support",
+    shortName: "Customer support",
     headline: "Empathy at Infinite Scale",
-    outcome: "Support that scales without losing the human touch.",
+    outcome: "Faster customer answers with a human hand-off.",
     summary:
-      "A responsive layer around your customer conversations: faster answers, cleaner hand-offs and service that holds up on your busiest day.",
+      "Faster answers for customers, with a person ready for harder cases.",
     description:
       "Customers do not want a clever bot. They want the right answer, quickly, and a person when it matters. We connect your knowledge, channels and service team so the routine is fast and the human moments stay human.",
     value:
-      "Our CX agents do not just answer FAQs. They understand intent, handle complex dispute resolutions, and drive sales through personalised, context-aware conversations that feel indistinguishable from your best human agents.",
+      "Our CX agents understand intent, handle complex cases, and keep conversations context-aware and human-feeling.",
     icon: "ph-headset",
     tags: ["Service design", "Knowledge grounding", "Warm hand-off"],
     chips: ["Channels", "Knowledge", "Triage", "Hand-off"],
@@ -265,16 +264,16 @@ export const services = [
     id: "data",
     slug: "data-insights",
     index: "05",
-    name: "Data & Insights",
-    shortName: "Data",
+    name: "Data & Reporting",
+    shortName: "Data and reporting",
     headline: "Foresight, Not Hindsight",
-    outcome: "One clear view of what's working, and what to do next.",
+    outcome: "A clearer view of what changed and what to do next.",
     summary:
-      "We pull scattered data into one working view, label what is illustrative, and build reporting your team can actually use.",
+      "Bring scattered information together before decisions have to be made.",
     description:
       "Reporting should arrive before the decision, not after it. We clean and connect the sources you already have, define the few measures that matter, and build a view that shows what changed and where to look next.",
     value:
-      "Stop looking at the rear-view mirror. Our cognitive analytics engines ingest unstructured data such as emails, logs and market reports to generate forward-looking intelligence, spotting trends and anomalies before they impact the bottom line.",
+      "Our analytics engines turn scattered data into forward-looking signals that spot trends and anomalies before they impact the bottom line.",
     icon: "ph-chart-line-up",
     tags: ["Data modelling", "Decision views", "Honest reporting"],
     chips: ["Sources", "Model", "Signals", "Decisions"],
