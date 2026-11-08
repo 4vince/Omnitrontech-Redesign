@@ -1842,10 +1842,12 @@ body[data-page="solutions"] main .wrap {
   white-space: nowrap;
 }
 
+/* Tall enough that the card text renders at a readable size (the scene
+   scales the board to this box). */
 @media (min-width: 761px) {
   .solutions-hero__visual {
-    height: min(62svh, 640px);
-    min-height: 420px;
+    height: min(72svh, 720px);
+    min-height: 460px;
   }
 }
 

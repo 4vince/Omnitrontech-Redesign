@@ -13,13 +13,16 @@ import { applyPixelRatio, getRendererInfo } from "../core/scene-quality.js";
  * canvas-textured faces (toneMapped off), no bloom, fog or shadow maps.
  */
 
-const FRUSTUM_H = 7.2;
-const CARD_W = 3.5;
+const FRUSTUM_H = 7.0;
+const CARD_W = 3.3;
 const CARD_H = 1.55;
 const HUB_W = 2.8;
 const HUB_H = 1.3;
-const SLAB_DEPTH = 0.09;
-const TEX_SCALE = 200; // canvas pixels per world unit
+const SLAB_DEPTH = 0.16;
+const SLAB_BEVEL = 0.025;
+// Card artwork is laid out on a 200-px-per-unit design grid; textures are
+// rendered at the real on-screen density (see resize) and scaled to it.
+const DESIGN_SCALE = 200;
 
 const COLORS = {
   ink: "#17191f",
@@ -173,37 +176,82 @@ function wrapLines(ctx, text, maxWidth) {
   return lines;
 }
 
+/* Textures are drawn at the density they are shown at and sampled one to
+   one: no mipmaps (which soften text), plain linear filtering. */
 function canvasTexture(canvas, renderer) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace; // canvas colours are sRGB
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return texture;
 }
 
-function makeCardTexture(renderer, { index, name, outcome, iconKey }) {
-  const W = Math.round(CARD_W * TEX_SCALE);
-  const H = Math.round(CARD_H * TEX_SCALE);
+function designCanvas(width, height, scale) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not create a hero card texture.");
+  const k = scale / DESIGN_SCALE;
+  ctx.scale(k, k);
+  return { canvas, ctx, W: width * DESIGN_SCALE, H: height * DESIGN_SCALE };
+}
+
+/* A soft, navy-tinted drop shadow for a rounded card: blurred once into a
+   texture, laid on a plane behind the slab. */
+function makeShadowTexture(renderer, width, height) {
+  const margin = 0.45;
+  const scale = 60;
+  const W = Math.round((width + margin * 2) * scale);
+  const H = Math.round((height + margin * 2) * scale);
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Could not create a service card texture.");
+  if (!ctx) throw new Error("Could not create a card shadow.");
+  // Draw the card far off-canvas and keep only its blurred shadow.
+  const off = W * 2;
+  ctx.shadowColor = "rgba(10, 27, 82, 1)";
+  ctx.shadowBlur = 0.3 * scale;
+  ctx.shadowOffsetX = off;
+  roundRectPath(ctx, margin * scale - off, margin * scale, width * scale, height * scale, 0.15 * scale);
+  ctx.fillStyle = "#000";
+  ctx.fill();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return { texture, width: width + margin * 2, height: height + margin * 2 };
+}
+
+function makeCardTexture(renderer, { index, name, outcome, iconKey }, scale = DESIGN_SCALE) {
+  const { canvas, ctx, W, H } = designCanvas(CARD_W, CARD_H, scale);
 
   const pad = 36;
   roundRectPath(ctx, 2, 2, W - 4, H - 4, 30);
   ctx.fillStyle = "#ffffff";
   ctx.fill();
+  // A faint top sheen and an inner edge: reads as a finished card.
+  const sheen = ctx.createLinearGradient(0, 0, 0, H);
+  sheen.addColorStop(0, "rgba(238, 241, 252, 0.9)");
+  sheen.addColorStop(0.4, "rgba(255, 255, 255, 0)");
+  ctx.fillStyle = sheen;
+  ctx.fill();
   ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(23, 25, 31, 0.2)";
+  ctx.strokeStyle = "rgba(23, 25, 31, 0.18)";
+  ctx.stroke();
+  roundRectPath(ctx, 5, 5, W - 10, H - 10, 27);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
   ctx.stroke();
 
   // icon tile
-  roundRectPath(ctx, pad, pad - 6, 64, 64, 16);
+  roundRectPath(ctx, pad, pad - 6, 68, 68, 17);
   ctx.fillStyle = COLORS.blueTint;
   ctx.fill();
   ctx.save();
-  ctx.translate(pad + 32, pad + 26);
-  ctx.lineWidth = 4.5;
+  ctx.translate(pad + 34, pad + 28);
+  ctx.lineWidth = 4.8;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = COLORS.blue;
@@ -214,39 +262,40 @@ function makeCardTexture(renderer, { index, name, outcome, iconKey }) {
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "right";
   ctx.fillStyle = COLORS.blue;
-  ctx.font = '500 24px "JetBrains Mono Variable", ui-monospace, monospace';
-  ctx.fillText(index, W - pad, pad + 20);
+  ctx.font = '600 32px "JetBrains Mono Variable", ui-monospace, monospace';
+  ctx.fillText(index, W - pad, pad + 26);
 
   ctx.textAlign = "left";
   ctx.fillStyle = COLORS.ink;
-  ctx.font = '600 44px "Archivo Variable", Arial, sans-serif';
-  ctx.fillText(name, pad, 158);
+  ctx.font = '650 50px "Archivo Variable", Arial, sans-serif';
+  ctx.fillText(name, pad, 164);
 
   ctx.fillStyle = COLORS.muted;
-  ctx.font = '500 33px "Manrope Variable", Arial, sans-serif';
+  ctx.font = '500 37px "Manrope Variable", Arial, sans-serif';
   wrapLines(ctx, outcome, W - pad * 2)
     .slice(0, 2)
-    .forEach((line, i) => ctx.fillText(line, pad, 214 + i * 42));
+    .forEach((line, i) => ctx.fillText(line, pad, 218 + i * 45));
 
   return canvasTexture(canvas, renderer);
 }
 
-function makeHubTexture(renderer) {
-  const W = Math.round(HUB_W * TEX_SCALE);
-  const H = Math.round(HUB_H * TEX_SCALE);
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Could not create the hub card texture.");
+function makeHubTexture(renderer, scale = DESIGN_SCALE) {
+  const { canvas, ctx, W, H } = designCanvas(HUB_W, HUB_H, scale);
 
   roundRectPath(ctx, 0, 0, W, H, 30);
-  ctx.fillStyle = COLORS.blueDeep;
+  const ground = ctx.createLinearGradient(0, 0, 0, H);
+  ground.addColorStop(0, "#16307e");
+  ground.addColorStop(1, COLORS.blueDeep);
+  ctx.fillStyle = ground;
   ctx.fill();
+  roundRectPath(ctx, 3, 3, W - 6, H - 6, 27);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.stroke();
 
   ctx.save();
-  ctx.translate(W / 2, 62);
-  ctx.lineWidth = 4.5;
+  ctx.translate(W / 2, 58);
+  ctx.lineWidth = 4.8;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = COLORS.ctaMuted;
@@ -255,16 +304,16 @@ function makeHubTexture(renderer) {
 
   ctx.textAlign = "center";
   ctx.fillStyle = COLORS.ctaMuted;
-  ctx.font = '500 22px "JetBrains Mono Variable", ui-monospace, monospace';
-  ctx.fillText("YOUR BUSINESS", W / 2, 122);
+  ctx.font = '600 26px "JetBrains Mono Variable", ui-monospace, monospace';
+  ctx.fillText("YOUR BUSINESS", W / 2, 124);
 
   ctx.fillStyle = COLORS.ctaInk;
-  ctx.font = '600 44px "Archivo Variable", Arial, sans-serif';
-  ctx.fillText("Day-to-day work", W / 2, 176);
+  ctx.font = '650 48px "Archivo Variable", Arial, sans-serif';
+  ctx.fillText("Day-to-day work", W / 2, 180);
 
-  ctx.fillStyle = COLORS.ctaMuted;
-  ctx.font = '500 28px "Manrope Variable", Arial, sans-serif';
-  ctx.fillText("Requests · records · customers", W / 2, 222);
+  ctx.fillStyle = "#d3dbf5";
+  ctx.font = '500 31px "Manrope Variable", Arial, sans-serif';
+  ctx.fillText("Requests · records · customers", W / 2, 228);
 
   return canvasTexture(canvas, renderer);
 }
@@ -273,9 +322,9 @@ async function fontsReady() {
   if (!document.fonts?.load) return;
   try {
     await Promise.all([
-      document.fonts.load('600 44px "Archivo Variable"'),
-      document.fonts.load('500 33px "Manrope Variable"'),
-      document.fonts.load('500 24px "JetBrains Mono Variable"'),
+      document.fonts.load('650 50px "Archivo Variable"'),
+      document.fonts.load('500 37px "Manrope Variable"'),
+      document.fonts.load('600 28px "JetBrains Mono Variable"'),
     ]);
   } catch {
     /* fall back to the stack's system fonts */
@@ -321,6 +370,7 @@ export async function createSolutionsHeroScene(
     targetTiltY: 0,
     hovered: null,
     introStart: null,
+    texScale: DESIGN_SCALE,
   };
 
   const timer = new THREE.Timer();
@@ -341,24 +391,27 @@ export async function createSolutionsHeroScene(
   // No dot backplane here: the section's blueprint grid (backdrop.css) is the
   // backdrop, and a second pattern on top of it read as noise.
 
-  const shadowMaterial = new THREE.MeshBasicMaterial({
-    color: 0x17191f,
-    transparent: true,
-    opacity: 0.07,
-    depthWrite: false,
-  });
+  const shadows = {
+    card: makeShadowTexture(renderer, CARD_W, CARD_H),
+    hub: makeShadowTexture(renderer, HUB_W, HUB_H),
+  };
 
-  function makeSlabCard({ width, height, texture, slabColor }) {
+  function makeSlabCard({ width, height, texture, slabColor, shadowKind }) {
     const group = new THREE.Group();
 
-    const shape = roundRectShape(width, height, 0.15);
+    // A thick slab with a fine bevel: the edge catches the key light when
+    // the board tilts, so the cards read as objects, not stickers.
+    const shape = roundRectShape(width - SLAB_BEVEL * 2, height - SLAB_BEVEL * 2, 0.13);
     const slabGeometry = new THREE.ExtrudeGeometry(shape, {
-      depth: SLAB_DEPTH,
-      bevelEnabled: false,
-      curveSegments: 6,
+      depth: SLAB_DEPTH - SLAB_BEVEL * 2,
+      bevelEnabled: true,
+      bevelThickness: SLAB_BEVEL,
+      bevelSize: SLAB_BEVEL,
+      bevelSegments: 3,
+      curveSegments: 10,
     });
-    slabGeometry.translate(0, 0, -SLAB_DEPTH);
-    const slabMaterial = new THREE.MeshLambertMaterial({ color: slabColor });
+    slabGeometry.translate(0, 0, -SLAB_DEPTH + SLAB_BEVEL);
+    const slabMaterial = new THREE.MeshStandardMaterial({ color: slabColor, roughness: 0.55, metalness: 0 });
     const slab = new THREE.Mesh(slabGeometry, slabMaterial);
     group.add(slab);
 
@@ -366,11 +419,15 @@ export async function createSolutionsHeroScene(
       new THREE.PlaneGeometry(width, height),
       new THREE.MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false }),
     );
-    face.position.z = 0.003;
+    face.position.z = 0.004;
     group.add(face);
 
-    const shadow = new THREE.Mesh(new THREE.ShapeGeometry(shape, 6), shadowMaterial);
-    shadow.position.set(0.09, -0.13, -0.42);
+    const soft = shadows[shadowKind];
+    const shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(soft.width, soft.height),
+      new THREE.MeshBasicMaterial({ map: soft.texture, transparent: true, opacity: 0.2, depthWrite: false }),
+    );
+    shadow.position.set(0.1, -0.16, -0.5);
     group.add(shadow);
 
     return { group, slab, face, shadow };
@@ -382,6 +439,7 @@ export async function createSolutionsHeroScene(
     height: HUB_H,
     texture: makeHubTexture(renderer),
     slabColor: 0x10247e,
+    shadowKind: "hub",
   });
   board.add(hub.group);
 
@@ -398,6 +456,7 @@ export async function createSolutionsHeroScene(
         iconKey: service.id,
       }),
       slabColor: 0xd9deea,
+      shadowKind: "card",
     });
     card.face.userData.cardIndex = i;
     board.add(card.group);
@@ -406,7 +465,7 @@ export async function createSolutionsHeroScene(
     wireGeometry.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(6), 3));
     const wire = new THREE.Line(
       wireGeometry,
-      new THREE.LineBasicMaterial({ ...wireMaterialBase, opacity: 0.32 }),
+      new THREE.LineBasicMaterial({ ...wireMaterialBase, opacity: 0.45 }),
     );
     board.add(wire);
 
@@ -422,6 +481,12 @@ export async function createSolutionsHeroScene(
 
     return {
       service,
+      art: {
+        index: service.index,
+        name: service.name,
+        outcome: OUTCOMES[service.id] ?? service.outcome,
+        iconKey: service.id,
+      },
       ...card,
       wire,
       packet,
@@ -441,14 +506,15 @@ export async function createSolutionsHeroScene(
 
     if (state.layout === "ring") {
       hubHome.set(0, 0, 0);
-      const rx = 4.3;
-      const ry = 2.6;
+      const rx = 3.75;
+      const ry = 2.5;
       const angles = [90, 18, -54, -126, 162];
       cards.forEach((card, i) => {
         const a = THREE.MathUtils.degToRad(angles[i] ?? 90);
         card.home.set(Math.cos(a) * rx, Math.sin(a) * ry, 0);
       });
-      return rx + CARD_W / 2 + 0.2;
+      // Half extents the camera must fit: cards plus bob, lift and shadow.
+      return { halfW: rx + CARD_W / 2 + 0.2, halfH: ry + CARD_H / 2 + 0.35 };
     }
 
     hubHome.set(0, 2.75, 0);
@@ -459,7 +525,23 @@ export async function createSolutionsHeroScene(
       const isLastAlone = i === cards.length - 1 && cards.length % 2 === 1;
       card.home.set(isLastAlone ? 0 : i % 2 === 0 ? -col : col, rows[row] ?? -2.75, 0);
     });
-    return col + CARD_W / 2 + 0.15;
+    return { halfW: col + CARD_W / 2 + 0.15, halfH: 2.75 + CARD_H / 2 + 0.38 };
+  }
+
+  /* Device pixels per world unit as rendered: the card artwork is redrawn
+     at this density so text is sampled one to one (sharp), not shrunk. */
+  function syncTextureScale(cssHeight) {
+    const visibleH = FRUSTUM_H / camera.zoom;
+    const wanted = clamp(Math.round(((cssHeight * renderer.getPixelRatio()) / visibleH) * 1.05), 90, 480);
+    if (Math.abs(wanted - state.texScale) / state.texScale < 0.12) return;
+    state.texScale = wanted;
+    const swap = (face, texture) => {
+      face.material.map?.dispose();
+      face.material.map = texture;
+      face.material.needsUpdate = true;
+    };
+    swap(hub.face, makeHubTexture(renderer, wanted));
+    cards.forEach((card) => swap(card.face, makeCardTexture(renderer, card.art, wanted)));
   }
 
   function resize() {
@@ -467,7 +549,7 @@ export async function createSolutionsHeroScene(
     const height = canvas.clientHeight;
     if (!width || !height || state.disposed || state.contextLost) return;
 
-    const neededHalfW = layout();
+    const needed = layout();
     const halfH = FRUSTUM_H / 2;
     const halfW = halfH * (width / height);
     state.halfW = halfW;
@@ -475,11 +557,14 @@ export async function createSolutionsHeroScene(
     camera.right = halfW;
     camera.top = halfH;
     camera.bottom = -halfH;
-    camera.zoom = Math.min(1, halfW / neededHalfW);
+    // Fit the board in both directions, so no card (or its shadow) is cut
+    // off at the canvas edge.
+    camera.zoom = Math.min(1, halfW / needed.halfW, halfH / needed.halfH);
     camera.updateProjectionMatrix();
 
     renderer.setSize(width, height, false);
     applyPixelRatio(renderer);
+    syncTextureScale(height);
     draw(0);
   }
 
@@ -566,7 +651,9 @@ export async function createSolutionsHeroScene(
       card.group.position.set(card.home.x, card.home.y + bob, card.lift * 0.35);
       card.group.scale.setScalar(Math.max(0.001, card.appear) * (1 + card.lift * 0.04));
       card.slab.material.color.setHex(isHovered ? 0x2b46d6 : 0xd9deea);
-      card.shadow.position.set(0.09 + card.lift * 0.08, -0.13 - card.lift * 0.1, -0.42);
+      card.shadow.position.set(0.1 + card.lift * 0.1, -0.16 - card.lift * 0.14, -0.5);
+      card.shadow.scale.setScalar(1 + card.lift * 0.06);
+      card.shadow.material.opacity = 0.2 + card.lift * 0.06;
 
       // wire from hub to card, sitting behind both slabs
       const positions = card.wire.geometry.attributes.position;
@@ -574,7 +661,7 @@ export async function createSolutionsHeroScene(
       positions.setXYZ(1, card.group.position.x, card.group.position.y, -0.25);
       positions.needsUpdate = true;
       card.wire.geometry.computeBoundingSphere();
-      card.wire.material.opacity = (isHovered ? 0.75 : 0.32) * card.appear;
+      card.wire.material.opacity = (isHovered ? 0.85 : 0.45) * card.appear;
 
       // packet travels hub → card; it shows in the gap between the slabs
       const speed = isHovered ? 0.55 : 0.22;
