@@ -1,20 +1,25 @@
 import * as THREE from "three";
-import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { applyPixelRatio, getRendererInfo } from "../core/scene-quality.js";
 import { createHud, hudFontsReady } from "./robot-hud.js";
 import { createMatrixRain } from "./matrix-rain.js";
+import { buildBot, VISOR } from "./bot-model.js";
 import { BEATS, clamp01, pullAt, slideAt, smooth, turnAt } from "../home/robot-timing.js";
 
 /**
  * Homepage hero — "through the AI's eyes".
  *
- * A stylised robot wears a wraparound AR visor whose face is a live display
- * (robot-hud.js). At progress 0 the camera sits right up against the visor
- * so the display fills the screen; as progress runs to 1 the camera pulls
- * back through the visor frame, past the head and shoulders, and eases into
- * a slight three-quarter view with the robot on the right of the frame.
- * Behind it, faint columns of falling glyphs (matrix-rain.js).
+ * A floating toy robot (bot-model.js) reads a task display (robot-hud.js)
+ * that hangs in front of its screen face. At progress 0 the camera sits
+ * right up against the display so it fills the screen; as progress runs to
+ * 1 the camera pulls back, the display fades to reveal the robot's eyes,
+ * and the view eases into a slight three-quarter angle with the robot on
+ * the right. Behind it, faint columns of falling glyphs (matrix-rain.js).
+ *
+ * Once it is revealed the robot is never quite still (head and body bob
+ * out of phase, arms swing, antenna sways, eyes blink). When the visitor
+ * stops scrolling it goes idle: it drifts on a slow figure-8 and spins,
+ * looping until scrolling resumes, then hands straight back to its pose.
  *
  * Rendering stays crisp: no bloom, fog or shadow maps. Shell materials are
  * lit by a generated RoomEnvironment; the display is unlit (toneMapped off)
@@ -25,10 +30,6 @@ const lerp = THREE.MathUtils.lerp;
 const damp = (current, target, lambda, dt) => lerp(current, target, 1 - Math.exp(-lambda * dt));
 
 const FOV = 35;
-// A wide, gently curved visor: flat enough that at the start the display
-// covers the whole viewport instead of curving away at the edges.
-const VISOR = { radius: 2.2, height: 0.84, arc: THREE.MathUtils.degToRad(58), front: 1.42 };
-const VISOR_CENTER_Z = VISOR.front - VISOR.radius;
 /* Display redraw interval (s). Every frame while it fills the screen, where
    stepping would show; cheaper once it's a small panel on the visor. */
 function hudInterval(progress, layout) {
@@ -38,154 +39,85 @@ function hudInterval(progress, layout) {
   return 1 / 30;
 }
 
+/* Idle loop: how long without scrolling before the robot starts to roam,
+   and how fast it eases in / hands back (exit faster than entrance). */
+const IDLE_AFTER_MS = 1200;
+const IDLE_IN = 1.4;
+const IDLE_OUT = 6;
+// The intro run eases in faster: it should be underway the moment the
+// visitor is out of the display, not a second and a half later.
+const INTRO_IN = 4;
+
 /*
- * Livery: warm amber head and arms, the complement of the site's blue (and
- * the orange already in the globe logo), so the robot stands out against
- * the blue page instead of blending into it. Amber lives only here; the
- * page itself stays blue. Deep-navy body, warm-bone joints and visor frame,
- * soft navy-accent blue for the small lit details.
+ * The idle routine, a 13 s loop that starts on a greeting:
+ *
+ *   0.3 - 3.0   wave: the right claw lifts (ease-out), waves three times,
+ *               lowers (ease-in-out); the eyes squint happily meanwhile
+ *   3.2 - 8.2   fly around: a wide figure-8 swoop, banking into its turns,
+ *               heading where it is going, leaning in, thrusters up
+ *   8.6 - 10.2  backflip: hop with a full turn about its middle
+ *               (ease-in-out), thrust burst on take-off
+ *   10.6 - 12.6 spin: one full turn (ease-in-out)
+ *   12.6 - 13   settle, then the loop greets again
+ *
+ * Every beat starts and ends at rest, so beats and loops join seamlessly.
+ * Pure function of the routine clock; robot-scene blends it in by the idle
+ * weight so scrolling interrupts it at any point.
  */
-const COLORS = {
-  shell: 0xcc7a22, // amber: head + arms
-  body: 0x0f1d4d, // deep-ops-navy-raised: torso
-  trim: 0xefede6, // warm-bone-2: neck, joints, visor rims and caps
-  ears: 0x0a1640, // deep-ops-navy: ear modules, antenna
-  light: 0x8aa3ff, // navy-accent-lift: ear rings, antenna tip, chest light
-  seam: 0x24357a,
-  visorBack: 0x0a1023,
-};
+const ROUTINE_LENGTH = 13;
+const TAU = Math.PI * 2;
+const clampUnit = (v) => Math.min(1, Math.max(0, v));
+const span = (x, a, b) => clampUnit((x - a) / (b - a));
+const easeOut = (x) => 1 - (1 - x) ** 3;
+const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+/** Shortest equivalent angle, so blending a pose out unwinds the short way. */
+const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
-function cylinderArc(radius, height, arc, segments = 64) {
-  // Open arc centred on +Z so its outer face looks at the camera and the
-  // texture's u runs left → right as seen from the front.
-  return new THREE.CylinderGeometry(radius, radius, height, segments, 1, true, -arc / 2, arc);
+function idleRoutine(clock) {
+  const ph = clock % ROUTINE_LENGTH;
+  const pose = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, wave: 0, swing: 0, squint: 0, thrust: 0 };
+
+  // A gentle float under everything.
+  pose.y += Math.sin(clock * 0.9) * 0.12;
+
+  // Wave.
+  const lift = easeOut(span(ph, 0.3, 0.85)) * (1 - easeInOut(span(ph, 2.45, 3.0)));
+  pose.wave = lift;
+  pose.swing = Math.sin(span(ph, 0.85, 2.45) * Math.PI * 2 * 3) * 0.34 * lift;
+  pose.squint = lift;
+  pose.rz += 0.05 * lift; // a small friendly head-and-body tilt
+
+  // Fly around: positions are zero at both ends of the beat.
+  const fly = span(ph, 3.2, 8.2);
+  if (fly > 0 && fly < 1) {
+    const a = fly * TAU;
+    const env = Math.sin(fly * Math.PI); // 0 at both ends
+    pose.x += Math.sin(a) * 1.3;
+    pose.y += Math.sin(a * 2) * 0.42;
+    pose.z += (1 - Math.cos(a)) * 0.38;
+    const vx = Math.cos(a); // direction of travel across the frame
+    pose.rz += -vx * 0.22 * env; // bank into the turn
+    pose.ry += vx * 0.55 * env; // look where it is going
+    pose.rx += 0.14 * env; // lean in
+    pose.thrust += 0.55 * env;
+  }
+
+  // Backflip.
+  const hop = span(ph, 8.6, 10.2);
+  if (hop > 0 && hop < 1) {
+    pose.y += Math.sin(hop * Math.PI) * 0.9;
+    pose.rx += -TAU * easeInOut(span(ph, 8.75, 10.05));
+    pose.thrust += 0.9 * Math.sin(Math.min(1, hop * 2) * Math.PI);
+  }
+
+  // Spin.
+  pose.ry += TAU * easeInOut(span(ph, 10.6, 12.6));
+  return pose;
 }
 
-function buildRobot(hudTexture) {
-  const robot = new THREE.Group();
-  const head = new THREE.Group();
-  robot.add(head);
-
-  // Painted shells get a light clearcoat: a crisp highlight edge reads as a
-  // finished product rather than matte clay, without any bloom or glow.
-  const shell = new THREE.MeshPhysicalMaterial({
-    color: COLORS.shell,
-    roughness: 0.38,
-    metalness: 0,
-    clearcoat: 0.55,
-    clearcoatRoughness: 0.28,
-  });
-  const body = new THREE.MeshPhysicalMaterial({
-    color: COLORS.body,
-    roughness: 0.42,
-    metalness: 0.05,
-    clearcoat: 0.5,
-    clearcoatRoughness: 0.3,
-  });
-  const graphite = new THREE.MeshStandardMaterial({ color: COLORS.trim, roughness: 0.48, metalness: 0 });
-  const dark = new THREE.MeshStandardMaterial({ color: COLORS.ears, roughness: 0.45, metalness: 0.1 });
-  const blue = new THREE.MeshStandardMaterial({ color: COLORS.light, roughness: 0.32, metalness: 0.05 });
-  const seamMat = new THREE.MeshStandardMaterial({ color: COLORS.seam, roughness: 0.5 });
-
-  // Head
-  const skull = new THREE.Mesh(new RoundedBoxGeometry(2.4, 2.2, 2.1, 6, 0.48), shell);
-  head.add(skull);
-
-  // Visor: dark backing, live display face, graphite rims and end caps. The
-  // arcs are built around their own axis, so offset the group to put the
-  // front of the arc at z = VISOR.front.
-  const visor = new THREE.Group();
-  visor.position.z = VISOR_CENTER_Z;
-  head.add(visor);
-  const visorBack = new THREE.Mesh(
-    cylinderArc(VISOR.radius - 0.04, VISOR.height + 0.16, VISOR.arc + 0.05),
-    new THREE.MeshStandardMaterial({ color: COLORS.visorBack, roughness: 0.3, side: THREE.DoubleSide }),
-  );
-  visor.add(visorBack);
-
-  const display = new THREE.Mesh(
-    cylinderArc(VISOR.radius, VISOR.height, VISOR.arc),
-    new THREE.MeshBasicMaterial({ map: hudTexture, toneMapped: false }),
-  );
-  visor.add(display);
-
-  const rimGeometry = cylinderArc(VISOR.radius + 0.02, 0.07, VISOR.arc + 0.05);
-  [1, -1].forEach((side) => {
-    const rim = new THREE.Mesh(rimGeometry, graphite);
-    rim.position.y = side * (VISOR.height / 2 + 0.04);
-    visor.add(rim);
-  });
-  // Rims are open cylinders: render both faces so they read as solid bands.
-  graphite.side = THREE.DoubleSide;
-
-  const capGeometry = new RoundedBoxGeometry(0.16, VISOR.height + 0.2, 0.3, 3, 0.07);
-  [1, -1].forEach((side) => {
-    const angle = side * (VISOR.arc / 2 + 0.03);
-    const cap = new THREE.Mesh(capGeometry, graphite);
-    cap.position.set(Math.sin(angle) * VISOR.radius, 0, Math.cos(angle) * VISOR.radius);
-    cap.rotation.y = angle;
-    visor.add(cap);
-  });
-
-  // Ear modules with a blue ring
-  const earGeometry = new THREE.CylinderGeometry(0.38, 0.38, 0.24, 40);
-  const ringGeometry = new THREE.TorusGeometry(0.27, 0.035, 12, 40);
-  [1, -1].forEach((side) => {
-    const ear = new THREE.Mesh(earGeometry, dark);
-    ear.rotation.z = Math.PI / 2;
-    ear.position.set(side * 1.24, 0.05, -0.1);
-    head.add(ear);
-    const ring = new THREE.Mesh(ringGeometry, blue);
-    ring.rotation.y = Math.PI / 2;
-    ring.position.set(side * 1.37, 0.05, -0.1);
-    head.add(ring);
-  });
-
-  // Antenna
-  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.42, 12), dark);
-  antenna.position.set(0.55, 1.28, -0.2);
-  head.add(antenna);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 14), blue);
-  tip.position.set(0.55, 1.52, -0.2);
-  head.add(tip);
-
-  // Neck and upper torso
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.9, 32), graphite);
-  neck.position.y = -1.5;
-  robot.add(neck);
-
-  const torso = new THREE.Mesh(new RoundedBoxGeometry(3.1, 2.4, 1.8, 6, 0.6), body);
-  torso.position.y = -3.05;
-  robot.add(torso);
-
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.07, 12, 48), dark);
-  collar.rotation.x = Math.PI / 2;
-  collar.position.y = -1.88;
-  robot.add(collar);
-
-  // Shoulder joints and upper arms, so the silhouette reads as a figure.
-  const jointGeometry = new THREE.SphereGeometry(0.42, 32, 20);
-  const armGeometry = new THREE.CapsuleGeometry(0.36, 1.25, 8, 24);
-  [1, -1].forEach((side) => {
-    const joint = new THREE.Mesh(jointGeometry, graphite);
-    joint.position.set(side * 1.72, -2.22, 0);
-    robot.add(joint);
-    const arm = new THREE.Mesh(armGeometry, shell);
-    arm.position.set(side * 1.98, -3.2, 0.05);
-    arm.rotation.z = side * 0.14;
-    robot.add(arm);
-  });
-
-  // Chest status light + a thin panel seam
-  const emblem = new THREE.Mesh(new THREE.CircleGeometry(0.17, 32), blue);
-  emblem.position.set(-0.78, -2.45, 0.905);
-  robot.add(emblem);
-  const seam = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.035), seamMat);
-  seam.position.set(0, -2.95, 0.905);
-  robot.add(seam);
-
-  return { robot, head };
-}
+// Turns pivot about the robot's middle (between head and body), not the
+// top of its head, so the flip and spin read as physical.
+const ROUTINE_PIVOT = new THREE.Vector3(0, -1.1, 0);
 
 export async function createRobotScene(canvas, { animate = true } = {}) {
   await hudFontsReady();
@@ -216,6 +148,13 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
     lookY: 0,
     hudClock: 0,
     hudAccum: 1,
+    lastScroll: performance.now(),
+    idle: 0,
+    revealed: false,
+    intro: false,
+    idleClock: 0,
+    blinkAt: -10,
+    nextBlink: 2.5,
   };
 
   const timer = new THREE.Timer();
@@ -243,10 +182,12 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
   hud.draw(0);
   hudTexture.needsUpdate = true;
 
-  const { robot, head } = buildRobot(hudTexture);
+  const bot = buildBot(hudTexture);
+  const { root: robot, head } = bot;
   scene.add(robot);
+  // In the scene, not on the robot: the rain stays put while it roams.
   const rain = createMatrixRain();
-  robot.add(rain.mesh);
+  scene.add(rain.mesh);
 
   /* ── Camera path ─────────────────────────────────────────────────────
      Start: centred on the visor face, close enough that the display (not
@@ -255,6 +196,7 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
   const halfTan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
   const target = new THREE.Vector3();
   const offset = new THREE.Vector3();
+  const pivotOffset = new THREE.Vector3();
 
   function startDistance() {
     // "Cover" fit: close enough that the display fills both the height (just
@@ -267,12 +209,12 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
 
   function endFraming() {
     if (state.layout === "stacked") {
-      return { distance: 13, shift: 0, drop: 0.28, yaw: -0.22, pitch: 0.05 };
+      return { distance: 12.5, shift: 0, drop: 0.2, yaw: -0.22, pitch: 0.05 };
     }
     // shift / drop: where the robot ends up, as fractions of the visible
     // half-width / half-height (shift 0.36 → robot centred at ~68% across;
     // drop 0.35 → look target below the head so the torso is in frame).
-    return { distance: 11, shift: 0.36, drop: 0.35, yaw: -0.26, pitch: 0.06 };
+    return { distance: 12, shift: 0.36, drop: 0.22, yaw: -0.26, pitch: 0.06 };
   }
 
   function placeCamera() {
@@ -324,8 +266,12 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
 
     // Display: the canvas redraw + texture upload is the cost, so the rate
     // follows how much of the screen the display covers.
+    // The display fades as the camera leaves it, revealing the eyes.
+    const fade = state.layout === "stacked" ? 0 : 1 - smooth(0.24, 0.4, state.progress);
+    bot.display.material.opacity = fade;
+    bot.display.visible = fade > 0.005;
     rain.update(t);
-    if (state.animate) {
+    if (state.animate && bot.display.visible) {
       state.hudClock += dt;
       state.hudAccum += dt;
       if (state.hudAccum >= hudInterval(state.progress, state.layout)) {
@@ -342,7 +288,86 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
     state.lookY = damp(state.lookY, state.pointerY * follow, 3.5, step);
     head.rotation.y = state.lookX * 0.32;
     head.rotation.x = -state.lookY * 0.16;
-    head.position.y = state.animate ? Math.sin(t * 1.1) * 0.03 * follow : 0;
+
+    // Alive: head and body float as separate parts, slightly out of phase;
+    // arms swing from the shoulder; the antenna lags behind the head.
+    const live = state.animate ? follow : 0;
+    head.position.y = bot.rest.headY + Math.sin(t * 1.4 + 0.7) * 0.06 * live;
+    bot.body.position.y = bot.rest.bodyY + Math.sin(t * 1.4) * 0.08 * live;
+    bot.arms.forEach((arm, i) => {
+      const rest = arm.userData.rest;
+      arm.rotation.z = rest.z + Math.sin(t * 1.7 + i * 1.3) * 0.1 * live;
+      arm.rotation.x = rest.x + Math.sin(t * 1.2 + i) * 0.08 * live;
+    });
+    bot.antenna.rotation.z = Math.sin(t * 2.1 - 0.6) * 0.09 * live;
+    bot.antenna.rotation.x = Math.sin(t * 1.6) * 0.05 * live;
+
+    // Blink every few seconds: a quick close and open.
+    let lid = 1;
+    if (state.animate) {
+      if (t > state.nextBlink) {
+        state.blinkAt = t;
+        state.nextBlink = t + 2.6 + Math.random() * 3.4;
+      }
+      const b = (t - state.blinkAt) / 0.16;
+      if (b >= 0 && b < 1) lid = Math.max(0.08, Math.abs(1 - 2 * b));
+    }
+
+    // Idle: once revealed and the visitor has stopped scrolling, play the
+    // routine (wave, fly around, backflip, spin) on a loop. Its clock only
+    // runs while idle and resets once the robot is fully back, so every
+    // idle spell starts with the greeting.
+    //
+    // Intro: the moment the camera is out of the display (it has faded by
+    // ~p 0.5), the routine plays once from the greeting straight away, even
+    // while the visitor keeps scrolling. Going back into the display cancels
+    // it; coming out again replays it. After one full run, the routine only
+    // plays on stillness, as above.
+    const revealed = state.layout === "stacked" || state.progress >= 0.48;
+    if (revealed && !state.revealed && state.animate) {
+      state.intro = true;
+      state.idleClock = 0;
+    }
+    if (!revealed) state.intro = false;
+    state.revealed = revealed;
+    if (state.intro && state.idleClock >= ROUTINE_LENGTH) state.intro = false;
+
+    const still = performance.now() - state.lastScroll > IDLE_AFTER_MS;
+    const wantIdle = state.animate && revealed && (state.intro || (still && follow > 0.98)) ? 1 : 0;
+    const easeIn = state.intro ? INTRO_IN : IDLE_IN;
+    state.idle = damp(state.idle, wantIdle, wantIdle ? easeIn : IDLE_OUT, step);
+    if (!wantIdle && state.idle < 0.002) {
+      state.idle = 0;
+      state.idleClock = 0;
+    }
+    state.idleClock += step * state.idle;
+    const k = state.idle;
+    const pose = idleRoutine(state.idleClock);
+
+    // Whole-body pose, blended in by the idle weight; angles wrapped so a
+    // hand-back mid-flip or mid-spin unwinds the short way.
+    robot.rotation.set(wrapAngle(pose.rx) * k, wrapAngle(pose.ry) * k, pose.rz * k);
+    pivotOffset.copy(ROUTINE_PIVOT).applyEuler(robot.rotation);
+    robot.position
+      .set(pose.x * k, pose.y * k, pose.z * k)
+      .add(ROUTINE_PIVOT)
+      .sub(pivotOffset);
+
+    // The wave: right claw up and out, a little toward the viewer.
+    const waver = bot.arms[0];
+    // Lifted out to the side and toward the viewer, clear of the head, so
+    // the wave reads from the camera's three-quarter angle.
+    waver.rotation.z += (pose.wave * 1.6 + pose.swing) * k;
+    waver.rotation.x += -0.8 * pose.wave * k;
+
+    // Eyes: blinks, plus a happy squint while waving.
+    const squint = 1 - 0.45 * pose.squint * k;
+    bot.eyes.forEach((eye) => (eye.scale.y = Math.min(lid, squint)));
+
+    // Ion thrusters: the burn pushes as the body rises (leads its bob),
+    // runs hotter while it roams, and bursts on take-off and in flight.
+    bot.thrust.uTime.value = t;
+    bot.thrust.uThrust.value = 0.85 + 0.15 * Math.cos(t * 1.4) * live + (0.3 + pose.thrust) * k;
 
     placeCamera();
   }
@@ -404,8 +429,14 @@ export async function createRobotScene(canvas, { animate = true } = {}) {
     getStats: () => getRendererInfo(renderer),
     /** Scroll progress through the hero track, 0-1. */
     setProgress(progress) {
-      state.progress = clamp01(progress);
+      const next = clamp01(progress);
+      if (Math.abs(next - state.progress) > 1e-4) state.lastScroll = performance.now();
+      state.progress = next;
       if (!state.running) draw(0);
+    },
+    /** The page scrolled (any layout): restart the idle countdown. */
+    noteScroll() {
+      state.lastScroll = performance.now();
     },
     /** "pinned" for the desktop sequence, "stacked" for the static layout. */
     setLayout(layout) {

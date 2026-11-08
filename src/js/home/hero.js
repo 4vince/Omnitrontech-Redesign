@@ -236,6 +236,15 @@ export function initHero() {
     ).observe(stage);
   }
 
+  // Any scroll across the hero restarts the robot's idle countdown, in
+  // every layout (the stacked layout has no scrub driver to report it).
+  ScrollTrigger.create({
+    trigger: track,
+    start: "top bottom",
+    end: "bottom top",
+    onUpdate: () => scene?.noteScroll?.(),
+  });
+
   // While the hero is under the nav, the scrolled nav bar turns navy so it
   // belongs to the dark hero instead of sitting on it as a light strip.
   if (nav) {
