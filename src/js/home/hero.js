@@ -6,7 +6,6 @@ import {
   refreshMotion,
   ScrollTrigger,
 } from "../core/motion.js";
-import { initHeroAmbient } from "./hero-ambient.js";
 import { BEATS, titleAt } from "./robot-timing.js";
 
 /*
@@ -51,7 +50,8 @@ export function initHero() {
   const title = track?.querySelector("[data-hero-title]");
   const more = track?.querySelector("[data-hero-more]");
   const caption = track?.querySelector("[data-hero-caption]");
-  const grid = track?.querySelector("[data-hero-grid]");
+  const photo = track?.querySelector("[data-hero-photo]");
+  const nav = document.querySelector("#site-nav");
   if (!track || !stage || !canvas || !title || !more) return;
 
   let scene = null;
@@ -82,7 +82,23 @@ export function initHero() {
       .addLabel("pull", PULL)
       .addLabel("reveal", REVEAL)
       .to(caption, { opacity: 0, y: 16, duration: 0.07 }, 0.02)
-      .fromTo(grid, { opacity: 0 }, { opacity: 1, duration: 0.2 }, "reveal-=0.1")
+      // The headline starts on the light visor display (dark ink) and ends
+      // on the navy field (light ink). The display's edge sweeps under it
+      // between p ~0.44 and ~0.55, where no single colour reads on both
+      // sides, so it steps out for that sweep, changes ink while unseen,
+      // and lands again with the subline and CTAs at the reveal: the whole
+      // copy block arrives on navy together.
+      .to(title, { opacity: 0, duration: 0.03, ease: "power1.in" }, 0.41)
+      .fromTo(
+        title,
+        { "--h1-ink": "#17191f", "--h1-accent": "#2b46d6", "--h1-halo": "rgba(246, 245, 241, 0.9)" },
+        { "--h1-ink": "#f3f5fb", "--h1-accent": "#8aa3ff", "--h1-halo": "rgba(5, 11, 35, 0.5)", duration: 0.01 },
+        0.46,
+      )
+      .to(title, { opacity: 1, duration: 0.07, ease: "power2.out" }, "reveal-=0.01")
+      // The photo settles from slightly close to its full frame across the
+      // whole track: the room steps back with the camera.
+      .fromTo(photo, { scale: 1.12 }, { scale: 1, duration: 1, ease: "none" }, 0)
       .fromTo(more, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, "reveal")
       // Pad to exactly 1 so timeline progress maps 1:1 onto scroll progress.
       .set({}, {}, 1);
@@ -134,6 +150,9 @@ export function initHero() {
   });
 
   function applyMode() {
+    // Without the pinned lens opening the hero is navy from the first
+    // pixel, so the nav needs light ink even before it is scrolled.
+    nav?.classList.toggle("is-hero-static", staticMode());
     if (staticMode()) {
       teardownScroll();
       scene?.setLayout("stacked");
@@ -217,7 +236,23 @@ export function initHero() {
     ).observe(stage);
   }
 
-  initHeroAmbient(stage);
+  // While the hero is under the nav, the scrolled nav bar turns navy so it
+  // belongs to the dark hero instead of sitting on it as a light strip.
+  if (nav) {
+    // Starts before the track reaches the top, so it is already active at
+    // scroll 0 (a start exactly at 0 is not "active" until you scroll).
+    ScrollTrigger.create({
+      trigger: track,
+      start: "top bottom",
+      end: () => `bottom top+=${nav.offsetHeight || 76}`,
+      toggleClass: { targets: nav, className: "is-on-hero" },
+    });
+  }
+
+  // Phones never load the robot scene (so applyMode never runs there):
+  // set the nav's static-hero state up front, and keep it in sync.
+  nav?.classList.toggle("is-hero-static", staticMode());
+
 
   if (!staticMode()) setupScroll();
 

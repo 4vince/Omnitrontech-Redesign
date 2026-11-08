@@ -24,14 +24,22 @@ function exampleFlow(flow = []) {
 }
 
 function examplePanel(example, index) {
-  return `<article class="applied-panel" data-applied-panel data-index="${index}" aria-roledescription="slide" aria-label="${index + 1} of ${appliedExamples.length}: ${example.sector}">
+  return `<article class="applied-panel" id="applied-panel-${index}" data-applied-panel role="tabpanel" aria-labelledby="applied-tab-${index}">
     <div class="applied-panel__copy">
-      <span class="applied-panel__sector"><i class="ph ${example.icon}" aria-hidden="true"></i>${example.sector}</span>
       <h3 class="applied-panel__title">${example.title}</h3>
       <p class="applied-panel__body">${example.body}</p>
     </div>
     ${exampleFlow(example.flow)}
   </article>`;
+}
+
+function exampleTab(example, index) {
+  return `<button class="showcase-tab" id="applied-tab-${index}" type="button" role="tab" aria-selected="false" aria-controls="applied-panel-${index}" tabindex="-1" data-applied-tab="${index}">
+    <i class="ph ${example.icon}" aria-hidden="true"></i>
+    <span class="showcase-tab__label">${example.sector}</span>
+    <i class="ph ph-arrow-right showcase-tab__arrow" aria-hidden="true"></i>
+    <span class="showcase-tab__bar" aria-hidden="true"></span>
+  </button>`;
 }
 
 export function initHomeSections() {
@@ -80,92 +88,87 @@ export function initHomeSections() {
   initAppliedShowcase();
 }
 
+/*
+ * Applied examples: an industry index on the left (a real tab list) drives
+ * the panel on the right. The active tab's underline fills over the
+ * auto-advance interval, so the timing is visible instead of a counter.
+ * Choosing an industry yourself stops the auto-advance: you picked it, it
+ * should not move away from you.
+ */
+const ADVANCE_MS = 5200;
+
 function initAppliedShowcase() {
   const root = document.querySelector("[data-applied]");
   const stage = document.querySelector("[data-applied-stage]");
-  if (!root || !stage) return;
+  const index = document.querySelector("[data-applied-index]");
+  if (!root || !stage || !index) return;
 
-  const slides = appliedExamples.map(examplePanel);
-  stage.innerHTML = slides.join("");
+  stage.innerHTML = appliedExamples.map(examplePanel).join("");
+  index.innerHTML = appliedExamples.map(exampleTab).join("");
+  index.style.setProperty("--advance", `${ADVANCE_MS}ms`);
   const panels = [...stage.querySelectorAll("[data-applied-panel]")];
+  const tabs = [...index.querySelectorAll("[data-applied-tab]")];
   const total = panels.length;
-
-  const countLabel = document.querySelector("[data-applied-count]");
-  const track = document.querySelector("[data-applied-track]");
-  const prevButton = document.querySelector("[data-applied-prev]");
-  const nextButton = document.querySelector("[data-applied-next]");
   const pauseButton = document.querySelector("[data-showcase-toggle]");
 
   let active = 0;
   let paused = false;
   let timer = 0;
 
-  // dir: +1 = forward (next / auto-advance), -1 = back. Slides travel in
-  // the direction you moved, including the wrap from the last to the first.
-  function render(index, { instant = false, dir = 1, from = -1 } = {}) {
-    panels.forEach((panel, panelIndex) => {
-      const isActive = panelIndex === index;
+  function render(next, { instant = false, from = -1 } = {}) {
+    const dir = from < 0 || next > from || (from === total - 1 && next === 0) ? 1 : -1;
+    tabs.forEach((tab, i) => {
+      const isActive = i === next;
+      tab.setAttribute("aria-selected", String(isActive));
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+    panels.forEach((panel, i) => {
+      const isActive = i === next;
       panel.classList.toggle("is-active", isActive);
+      panel.hidden = false;
       panel.setAttribute("aria-hidden", String(!isActive));
       if (prefersReducedMotion() || instant) {
-        gsap.set(panel, { opacity: isActive ? 1 : 0, x: 0 });
+        gsap.set(panel, { opacity: isActive ? 1 : 0, y: 0 });
         return;
       }
       if (isActive) {
-        // Enter from the side we're travelling toward.
         gsap.fromTo(
           panel,
-          { opacity: 0, x: 24 * dir },
-          { opacity: 1, x: 0, duration: 0.5, ease: "power3.out", overwrite: true },
+          { opacity: 0, y: 14 * dir },
+          { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", overwrite: true },
         );
-      } else if (panelIndex === from) {
-        // Leave toward the side we came from; quicker than the enter so the
-        // two slides don't sit double-exposed.
-        gsap.to(panel, { opacity: 0, x: -24 * dir, duration: 0.35, ease: "power3.out", overwrite: true });
+      } else if (i === from) {
+        gsap.to(panel, { opacity: 0, y: -10 * dir, duration: 0.3, ease: "power3.out", overwrite: true });
       } else {
-        gsap.set(panel, { opacity: 0, x: 0, overwrite: true });
+        gsap.set(panel, { opacity: 0, y: 0, overwrite: true });
       }
     });
-
-    if (countLabel) {
-      countLabel.textContent = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
-      // Roll the number in the travel direction so it's tied to the change.
-      if (!instant && !prefersReducedMotion()) {
-        countLabel.animate(
-          [
-            { opacity: 0, transform: `translateY(${6 * dir}px)` },
-            { opacity: 1, transform: "translateY(0)" },
-          ],
-          { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
-        );
-      }
-    }
-    if (track) track.style.setProperty("--progress", String((index + 1) / total));
   }
 
-  function goTo(index, dir = 1) {
+  function goTo(next) {
     const from = active;
-    active = (index + total) % total;
-    render(active, { dir, from });
+    active = (next + total) % total;
+    if (active !== from) render(active, { from });
+  }
+
+  // Restart the active tab's fill so it always matches the live timer.
+  function runProgress(on) {
+    index.classList.remove("is-running");
+    if (!on) return;
+    void index.offsetWidth;
+    index.classList.add("is-running");
   }
 
   function scheduleAdvance() {
     window.clearTimeout(timer);
-    if (paused || prefersReducedMotion()) return;
+    const running = !paused && !prefersReducedMotion() && root.classList.contains("is-visible");
+    runProgress(running);
+    if (!running) return;
     timer = window.setTimeout(() => {
-      goTo(active + 1, 1);
+      goTo(active + 1);
       scheduleAdvance();
-    }, 5200);
+    }, ADVANCE_MS);
   }
-
-  prevButton?.addEventListener("click", () => {
-    goTo(active - 1, -1);
-    scheduleAdvance();
-  });
-  nextButton?.addEventListener("click", () => {
-    goTo(active + 1, 1);
-    scheduleAdvance();
-  });
 
   function renderPauseButton() {
     if (!pauseButton) return;
@@ -175,20 +178,44 @@ function initAppliedShowcase() {
     pauseButton.setAttribute("aria-label", paused ? "Resume auto-advance" : "Pause auto-advance");
     pauseButton.toggleAttribute("data-paused", paused);
   }
-  renderPauseButton();
 
-  pauseButton?.addEventListener("click", () => {
-    paused = !paused;
+  function setPaused(value) {
+    paused = value;
     renderPauseButton();
-    if (paused) window.clearTimeout(timer);
-    else scheduleAdvance();
+    scheduleAdvance();
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("click", () => {
+      goTo(i);
+      setPaused(true);
+    });
   });
 
-  // Hold the slide while someone is reading it: pointer over the panels or
-  // keyboard focus inside them (WCAG 2.2.2). Resume only once both leave.
+  // Tab-list keyboard pattern: arrows move and select, Home/End jump.
+  index.addEventListener("keydown", (event) => {
+    const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+    let next = null;
+    if (event.key in keys) next = active + keys[event.key];
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = total - 1;
+    if (next === null) return;
+    event.preventDefault();
+    goTo(next);
+    tabs[active].focus();
+    setPaused(true);
+  });
+
+  pauseButton?.addEventListener("click", () => setPaused(!paused));
+
+  // Hold while someone is reading or using it: pointer over, or focus
+  // inside (WCAG 2.2.2). Resume only once both leave.
   let hovering = false;
   let focused = false;
-  const hold = () => window.clearTimeout(timer);
+  const hold = () => {
+    window.clearTimeout(timer);
+    runProgress(false);
+  };
   const release = () => {
     if (!hovering && !focused) scheduleAdvance();
   };
@@ -210,14 +237,15 @@ function initAppliedShowcase() {
     release();
   });
 
+  renderPauseButton();
   render(active, { instant: true });
 
   if (typeof IntersectionObserver !== "undefined") {
     new IntersectionObserver(
       ([entry]) => {
         root.classList.toggle("is-visible", entry.isIntersecting);
-        if (entry.isIntersecting) scheduleAdvance();
-        else window.clearTimeout(timer);
+        if (entry.isIntersecting && !hovering && !focused) scheduleAdvance();
+        else hold();
       },
       { threshold: 0.2 },
     ).observe(root);

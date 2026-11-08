@@ -217,8 +217,8 @@ export function createHud({ scale = 1 } = {}) {
   }
 
   // No counters here: the page promises "no invented numbers", so the bar
-  // states the working arrangement instead of fake throughput. The dot is
-  // steady; the task flow below is the only motion in the HUD.
+  // states the working arrangement instead of fake throughput. The task
+  // flow below is the only motion in the HUD.
   function statusBar() {
     const y = 150;
     const label = "AI PREPARES · YOU DECIDE";
@@ -230,10 +230,6 @@ export function createHud({ scale = 1 } = {}) {
     ctx.textAlign = "right";
     ctx.fillStyle = C.blue;
     ctx.fillText(label, HUD_W * 0.765 - 56, y);
-    const w = ctx.measureText(label).width;
-    ctx.beginPath();
-    ctx.arc(HUD_W * 0.765 - 56 - w - 18, y, 6, 0, Math.PI * 2);
-    ctx.fill();
   }
 
   // Static telemetry outside the centre band (seen once zoomed out). It is

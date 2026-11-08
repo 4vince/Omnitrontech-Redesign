@@ -81,8 +81,8 @@
   background: radial-gradient(closest-side, var(--pool-b), transparent);
 }
 
-/* Pools only: the robot hero keeps its own grid layer (.hero-grid, faded in
-   on reveal). The handoff band (flat diagram) gets no backdrop at all. */
+/* Pools only, for a host that brings its own structure. (The homepage hero
+   and the handoff band get no backdrop at all; see core/backdrop.js.) */
 .backdrop--pools-only .backdrop__grid {
   display: none;
 }
@@ -99,6 +99,7 @@
 }
 
 [data-tilt] {
+  --tilt-shadow: rgba(10, 27, 82, 0.4);
   --tilt-x: 0;
   --tilt-y: 0;
   transition: box-shadow var(--dur-ui) var(--ease-out);
@@ -107,7 +108,7 @@
 [data-tilt].is-tilting {
   box-shadow:
     var(--elev-3),
-    calc(var(--tilt-x) * -18px) calc(30px + var(--tilt-y) * -18px) 60px -34px rgba(10, 27, 82, 0.4),
+    calc(var(--tilt-x) * -18px) calc(30px + var(--tilt-y) * -18px) 60px -34px var(--tilt-shadow),
     var(--edge-hi);
 }
 

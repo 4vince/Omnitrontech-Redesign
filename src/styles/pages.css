@@ -38,15 +38,18 @@
   }
 }
 
+/* Two lines on desktop: "Let's talk about / what is slowing down." The
+   accent clause starts its own line; narrow screens still wrap freely. */
 .contact-intro h1 {
-  max-width: 12ch;
-  font-size: clamp(2.55rem, 4.6vw, 4.7rem);
+  max-width: none;
+  font-size: clamp(2.55rem, 3.4vw, 3.9rem);
   font-weight: 590;
   line-height: 0.96;
   letter-spacing: -0.02em;
 }
 
 .contact-intro h1 span {
+  display: block;
   color: var(--blue);
 }
 
@@ -214,7 +217,7 @@
   align-items: flex-start;
   gap: 8px;
   color: var(--muted-2);
-  font-size: 0.72rem;
+  font-size: var(--fs-small);
   line-height: 1.55;
 }
 

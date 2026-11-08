@@ -89,6 +89,25 @@
   border-bottom-color: var(--line);
 }
 
+/* Over the navy hero the scrolled bar turns navy glass, with light ink,
+   so it reads as part of the hero instead of a light strip across it.
+   With a static hero (tablets, phones, reduced motion) the hero is navy
+   from the top, so the unscrolled nav takes the light ink too. On desktop
+   the opening frame is the light visor display, so it keeps dark ink
+   until scrolled. */
+.site-nav.is-on-hero.is-scrolled,
+.site-nav.is-on-hero.is-hero-static {
+  color-scheme: dark;
+  --ink: #f3f5fb;
+  --ink-soft: #d0d7ea;
+  --muted: #aab5d1;
+  --line: rgba(214, 224, 255, 0.14);
+  --line-strong: rgba(214, 224, 255, 0.28);
+  --line-control: rgba(214, 224, 255, 0.42);
+  --blue: #8aa3ff;
+  --nav-bg: rgba(7, 15, 46, 0.72);
+}
+
 .site-nav.is-sheet-open::before {
   opacity: 0;
 }

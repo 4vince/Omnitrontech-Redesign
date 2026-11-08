@@ -125,6 +125,16 @@
   color: var(--ink);
 }
 
+/* A light card sitting on a navy band (the service visuals) keeps its
+   light surface tokens but casts a near-black shadow: a navy-tinted
+   shadow on navy reads as a glow, not depth. */
+.tone-navy .tone-light {
+  --tilt-shadow: rgba(2, 6, 20, 0.55);
+  --elev-1: 0 1px 2px rgba(2, 6, 20, 0.3), 0 10px 24px -12px rgba(2, 6, 20, 0.6);
+  --elev-2: 0 2px 4px rgba(2, 6, 20, 0.3), 0 28px 56px -22px rgba(2, 6, 20, 0.7);
+  --elev-3: 0 4px 8px rgba(2, 6, 20, 0.35), 0 38px 72px -24px rgba(2, 6, 20, 0.75);
+}
+
 /* Tags carry their own translucent tint; re-point it at the tone. */
 .tone-navy .tag--blue {
   border-color: rgba(138, 163, 255, 0.36);

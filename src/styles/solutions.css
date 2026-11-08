@@ -49,9 +49,11 @@ body[data-page="solutions"] main .wrap {
   min-width: 0;
 }
 
+/* Two lines on desktop ("AI that clears / routine work."), sized to the
+   copy column like the homepage hero, not to the viewport. */
 .solutions-hero h1 {
-  max-width: 12ch;
-  font-size: clamp(3.15rem, 7.5vw, 7.4rem);
+  max-width: 15ch;
+  font-size: clamp(2.9rem, 4.9vw, 5.4rem);
   font-weight: 560;
   line-height: 0.93;
   letter-spacing: -0.01em;
@@ -1290,13 +1292,6 @@ body[data-page="solutions"] main .wrap {
   gap: clamp(18px, 2.4vw, 28px);
 }
 
-.solutions-hero h1 {
-  max-width: 10ch;
-  font-size: clamp(3.1rem, 6.7vw, 6.6rem);
-  line-height: 0.96;
-  letter-spacing: -0.02em;
-}
-
 .solutions-hero__lead {
   max-width: 34ch;
   font-size: clamp(0.98rem, 1.15vw, 1.1rem);
@@ -1866,5 +1861,14 @@ body[data-page="solutions"] main .wrap {
     overflow: visible;
     clip-path: none;
     white-space: normal;
+  }
+}
+
+/* Phones never load the overview scene, so the hero visual would be an
+   empty box holding a tiny icon row that repeats the service index right
+   below it. Drop it; the index is the navigation there. */
+@media (max-width: 760px) {
+  .solutions-hero__visual {
+    display: none;
   }
 }

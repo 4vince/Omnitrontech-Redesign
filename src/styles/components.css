@@ -462,7 +462,7 @@
 
 .form-note {
   color: var(--muted-2);
-  font-size: 0.72rem;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 

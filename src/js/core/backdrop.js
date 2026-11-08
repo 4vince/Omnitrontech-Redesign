@@ -8,10 +8,11 @@
  */
 
 const TARGETS = [
-  ".hero-stage",
+  // .hero-stage is deliberately absent: the homepage hero has its own
+  // photographic backdrop, and pools under it would never be seen.
   ".band",
-  // .handoff-stage is deliberately absent: its video background stands on
-  // its own, with no grid or light pools over it.
+  // .handoff-stage is deliberately absent too: the flat stage diagram
+  // stands on its own, with no grid or light pools over it.
   ".showcase",
   ".solutions-hero",
   ".svc",
@@ -45,8 +46,6 @@ export function initBackdrops() {
     const backdrop = document.createElement("div");
     backdrop.className = "backdrop";
     backdrop.setAttribute("aria-hidden", "true");
-    // Pools only (no grid): the robot hero has its own grid layer.
-    if (host.matches(".hero-stage")) backdrop.classList.add("backdrop--pools-only");
 
     const [[ax, ay], [bx, by]] = PLACEMENTS[index % PLACEMENTS.length];
     backdrop.innerHTML = `<div class="backdrop__grid"></div>

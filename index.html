@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Omnitron | AI systems for modern business</title>
     <meta name="description" content="Omnitron designs and builds AI systems that take repeat work off your team, connect the tools you already use, and leave the judgement calls with your people.">
-    <meta name="theme-color" content="#f6f5f1">
+    <meta name="theme-color" content="#0a1640">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Omnitron | AI systems for modern business">
     <meta property="og:description" content="Five AI service lines, one system underneath. Built in Singapore for modern business across Asia-Pacific.">
@@ -16,7 +16,7 @@
         document.documentElement.style.colorScheme = "light";
         document.documentElement.classList.add("js");
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", "#f6f5f1");
+        if (meta) meta.setAttribute("content", "#0a1640");
         window.setTimeout(function () {
           if (!window.__omnitronBooted) document.documentElement.classList.remove("js");
         }, 4500);
@@ -28,12 +28,20 @@
     <header id="site-nav" class="site-nav" data-page="home"></header>
 
     <main id="main" class="page-main">
-      <section class="hero-track" data-hero-track aria-labelledby="hero-title">
+      <section class="hero-track tone-navy" data-hero-track aria-labelledby="hero-title">
         <div class="hero-stage" data-hero-stage>
+          <!-- Backdrop: Singapore, Marina Bay at dusk, from a working office.
+               Scrims in CSS keep the copy readable; hero.js eases it from
+               slightly close to full frame as the camera steps back. -->
+          <div class="hero-photo" data-hero-photo aria-hidden="true">
+            <picture>
+              <source type="image/webp" srcset="/images/hero-singapore-office-960.webp 960w, /images/hero-singapore-office-1672.webp 1672w" sizes="100vw">
+              <img src="/images/hero-singapore-office-1672.jpg" alt="" width="1672" height="941" decoding="async" fetchpriority="high">
+            </picture>
+          </div>
           <!-- Robot scene: the camera starts inside the robot's visor (whose
                display shows the AI at work) and pulls back to reveal it.
                Driven by src/js/home/hero.js + src/js/visuals/robot-scene.js. -->
-          <div class="hero-grid" data-hero-grid aria-hidden="true"></div>
           <div class="hero-scene" aria-hidden="true">
             <canvas class="scene-canvas" data-scene-canvas></canvas>
             <div class="hero-fallback" data-hero-fallback></div>
@@ -91,11 +99,12 @@
       </section>
 
       <section class="band band-problem" aria-labelledby="problem-title">
+        <span class="thread" aria-hidden="true"></span>
         <div class="wrap problem-grid">
           <div class="problem-head" data-reveal>
             <h2 id="problem-title">The business runs. <span>You carry the gaps.</span></h2>
             <p>Most teams do not need another dashboard. They need the hand-offs between tools and people to stop eating the week.</p>
-            <a class="text-link" href="/ai-solutions/">See the five service lines <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
+            <a class="text-link" href="/ai-solutions/">Explore AI solutions <i class="ph ph-arrow-down-right" aria-hidden="true"></i></a>
           </div>
           <div class="problem-content" data-reveal>
             <figure class="problem-flow" data-float data-tilt>
@@ -130,6 +139,7 @@
       </section>
 
       <section class="band band-handoff" aria-labelledby="handoff-title">
+        <span class="thread" aria-hidden="true"></span>
         <!-- Flat stage diagram, driven by src/js/home/handoff.js. Desktop pins
              and steps through the three stages; smaller screens and reduced
              motion show every stage with its own still diagram. -->
@@ -172,33 +182,24 @@
       </section>
 
       <section class="showcase" aria-labelledby="showcase-title">
-
-        <div class="wrap showcase-top">
-          <div class="showcase-heading" data-reveal>
-            <h2 id="showcase-title">Where the system <span>meets the work.</span></h2>
-            <p>Patterns we build around, by industry. Example flows, not client case studies.</p>
-          </div>
-          <div class="showcase-meta mono" data-reveal>
-            <span data-applied-count aria-live="polite">01 / 04</span>
+        <span class="thread" aria-hidden="true"></span>
+        <div class="wrap showcase-grid" data-applied>
+          <div class="showcase-side">
+            <div class="showcase-heading" data-reveal>
+              <h2 id="showcase-title">Where the system <span>meets the work.</span></h2>
+              <p>Patterns we build around, by industry. Example flows, not client case studies.</p>
+            </div>
+            <div class="showcase-index" role="tablist" aria-label="Industries" aria-orientation="vertical" data-applied-index></div>
             <button class="showcase-motion-toggle" type="button" data-showcase-toggle aria-label="Pause auto-advance">Pause</button>
           </div>
-        </div>
-
-        <div class="showcase-panels" data-applied aria-label="Applied examples" aria-roledescription="carousel">
-          <div class="showcase-panels__stage" data-applied-stage data-float></div>
-          <div class="showcase-panels__rail">
-            <button class="showcase-panels__arrow" type="button" data-applied-prev aria-label="Previous example">
-              <i class="ph ph-arrow-left" aria-hidden="true"></i>
-            </button>
-            <span class="showcase-panels__track" data-applied-track aria-hidden="true"></span>
-            <button class="showcase-panels__arrow" type="button" data-applied-next aria-label="Next example">
-              <i class="ph ph-arrow-right" aria-hidden="true"></i>
-            </button>
+          <div class="showcase-panels">
+            <div class="showcase-panels__stage" data-applied-stage></div>
           </div>
         </div>
       </section>
 
       <section class="band band-proof tone-navy" aria-labelledby="proof-title">
+        <span class="thread" aria-hidden="true"></span>
         <div class="wrap proof-grid">
           <div class="proof-head" data-reveal>
             <h2 id="proof-title">No borrowed logos. <span>No invented numbers.</span></h2>
@@ -215,6 +216,7 @@
       </section>
 
       <section class="band band-faq" aria-labelledby="faq-title">
+        <span class="thread" aria-hidden="true"></span>
         <div class="wrap faq-grid">
           <div class="faq-head" data-reveal>
             <h2 id="faq-title">What most people ask first.</h2>
@@ -225,8 +227,10 @@
       </section>
 
       <section class="cta-band cta-band--home" aria-labelledby="cta-title">
+        <span class="thread" aria-hidden="true"></span>
         <div class="wrap cta-home" data-reveal>
           <div class="cta-home__lead">
+            <span class="thread-end" aria-hidden="true"><i class="ph ph-user-check"></i></span>
             <h2 id="cta-title">Ready to get the repeat work off your team?</h2>
             <div class="cta-home__actions">
               <a class="btn btn--primary" href="/contact/">

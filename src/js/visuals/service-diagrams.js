@@ -65,7 +65,7 @@ function strategy() {
     <section class="sv-card sv-strategy__cost">
       <span class="sv-label">${icon("ph-coins")} What it may cost</span>
       <dl class="sv-rows">
-        <div><dt>Set-up</dt><dd>S$12–18k</dd></div>
+        <div><dt>Set-up</dt><dd>S$12-18k</dd></div>
         <div><dt>Running cost</dt><dd>S$600 / mo</dd></div>
         <div><dt>Time saved</dt><dd class="sv-good">22 hrs / week</dd></div>
       </dl>
@@ -79,7 +79,7 @@ function strategy() {
       <span class="sv-label">${icon("ph-flag")} What to do first</span>
       <ol class="sv-timeline">
         <li class="is-now"><span>Month 1</span>Pilot: automate invoice entry</li>
-        <li><span>Month 2–3</span>Measure results, agree data rules</li>
+        <li><span>Month 2-3</span>Measure results, agree data rules</li>
         <li><span>Month 4+</span>Expand to customer emails</li>
       </ol>
     </section>
@@ -87,11 +87,13 @@ function strategy() {
 
   return frame({
     title: `${icon("ph-compass")} AI opportunity plan`,
-    status: pill("Ready to review", "blue"),
+    // The cost figures are an example of what a plan contains, not a
+    // client result or a quote (PRODUCT.md: never invent pricing/metrics).
+    status: pill("Example figures", "blue"),
     body,
     steps: ["Discovery", "Business case", "Roadmap", "Governance"],
     label:
-      "An AI opportunity plan: a value-versus-effort map that marks invoice entry as the place to start, an estimate of set-up cost, running cost, time saved and payback, and a first-steps roadmap.",
+      "An AI opportunity plan: a value-versus-effort map that marks invoice entry as the place to start, example figures for set-up cost, running cost, time saved and payback, and a first-steps roadmap.",
   });
 }
 
@@ -163,7 +165,7 @@ function agentic() {
           .join("")}
         <li class="sv-checklist__gate" style="--i:3">
           <span class="sv-check sv-check--wait">${icon("ph-hand")}</span>
-          <span>Offer a S$40 delivery credit<small>Paused — over the agent's S$25 limit</small></span>
+          <span>Offer a S$40 delivery credit<small>Paused: over the agent's S$25 limit</small></span>
           <em>Payments</em>
         </li>
       </ol>

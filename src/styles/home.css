@@ -22,30 +22,59 @@
   height: 100svh;
   overflow: hidden;
   isolation: isolate;
-  background: var(--bg);
+  /* Stand-in for the shader until (or unless) WebGL is up: the same
+     navy depth, without the light pool, which only the shader can draw
+     with real falloff and grain. */
+  background: linear-gradient(180deg, #050b23 0%, #0a1640 100%);
 }
 
-/* Dot field behind the revealed robot; fades in with the reveal. */
-.hero-grid {
+/* The photograph. Three scrims sit over it: a left-hand fall-off so the
+   copy column always reads, a short top shade under the nav, and a
+   bottom fade into the next band's exact navy so there is no seam. */
+.hero-photo {
   position: absolute;
   inset: 0;
   z-index: 0;
-  /* Same blueprint grid as every section backdrop (backdrop.css). */
-  background-image:
-    linear-gradient(to right, var(--grid-major) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px),
-    linear-gradient(to right, var(--grid-minor) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-minor) 1px, transparent 1px);
-  background-size:
-    var(--grid-major-cell) var(--grid-major-cell),
-    var(--grid-major-cell) var(--grid-major-cell),
-    var(--grid-cell) var(--grid-cell),
-    var(--grid-cell) var(--grid-cell);
-  background-position: center top;
-  -webkit-mask-image: radial-gradient(70% 72% at 66% 52%, #000 35%, transparent 85%);
-  mask-image: radial-gradient(70% 72% at 66% 52%, #000 35%, transparent 85%);
-  opacity: 0;
+  overflow: hidden;
   pointer-events: none;
+  transform-origin: 62% 55%;
+}
+
+/* <picture> is inline by default; it must fill the stage or the image
+   keeps its own aspect ratio and stops short with a hard edge. */
+.hero-photo picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 50%;
+}
+
+/* Below 900px the copy spans the full width over the skyline, so the
+   shade is even across, still fading to the next band's navy. */
+@media (max-width: 899px) {
+  .hero-photo img {
+    object-position: 70% 40%;
+  }
+
+  .hero-photo::after {
+    background:
+      linear-gradient(180deg, rgba(5, 11, 35, 0.72) 0%, rgba(5, 11, 35, 0.6) 45%, rgba(5, 11, 35, 0.5) 70%, #0a1640 100%);
+  }
+}
+
+.hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 11, 35, 0.9) 0%, rgba(5, 11, 35, 0.62) 32%, rgba(5, 11, 35, 0.12) 62%, rgba(5, 11, 35, 0.2) 100%),
+    linear-gradient(180deg, rgba(5, 11, 35, 0.55) 0%, transparent 22%, transparent 62%, #0a1640 100%);
 }
 
 .hero-scene {
@@ -114,22 +143,26 @@
   gap: clamp(20px, 2.8vh, 30px);
 }
 
+/* Two lines on desktop ("Make room for work / that matters."): sized to
+   the column rather than to the viewport's full width. */
 .hero-copy h1 {
-  max-width: 13ch;
-  font-size: clamp(3.1rem, 6vw, 6.2rem);
+  max-width: 18ch;
+  /* Ink, accent and halo are variables so hero.js can carry the headline
+     from the light visor display (dark ink) onto the navy field (light
+     ink) as the camera pulls back. Defaults are the navy state. */
+  color: var(--h1-ink, var(--ink));
+  font-size: clamp(3rem, 5vw, 5.2rem);
   font-weight: 630;
   line-height: 0.99;
   letter-spacing: -0.016em;
   text-wrap: balance;
-  /* Keeps the headline legible while it crosses the lens display. */
-  text-shadow: 0 2px 22px rgba(246, 245, 241, 0.9);
+  text-shadow: 0 2px 24px var(--h1-halo, rgba(5, 11, 35, 0.5));
 }
 
 .hero-copy h1 .signal {
   position: relative;
-  color: var(--blue);
+  color: var(--h1-accent, var(--blue));
 }
-
 
 .hero-copy__more > p {
   max-width: 44ch;
@@ -158,40 +191,6 @@
   white-space: nowrap;
   transform: translateX(-50%);
   pointer-events: none;
-}
-
-/* Cursor-reactive ambient wash, confined to the hero so it enhances the
-   visual without ever drifting over copy on other sections. */
-.hero-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
-  width: 620px;
-  height: 620px;
-  margin: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(43, 70, 214, 0.22) 0%,
-    rgba(43, 70, 214, 0.08) 46%,
-    transparent 72%
-  );
-  filter: blur(6px);
-  mix-blend-mode: multiply;
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-html[data-theme="dark"] .hero-glow {
-  background: radial-gradient(
-    circle,
-    rgba(90, 130, 255, 0.3) 0%,
-    rgba(90, 130, 255, 0.12) 46%,
-    transparent 72%
-  );
-  mix-blend-mode: screen;
 }
 
 /* Shared canvas base for Three.js scenes on the page (hero + handoff band). */
@@ -589,7 +588,8 @@ html[data-theme="dark"] .hero-glow {
   min-height: min(46svh, 440px);
   padding-block: clamp(28px, 4.5vw, 52px);
   background: var(--bg);
-  border-top: 1px solid var(--line);
+  /* No top rule: the navy hero's light field resolves into this exact
+     navy, so the two read as one dark opening. */
 }
 
 .bridge-inner {
@@ -1026,16 +1026,6 @@ html[data-theme="dark"] .hero-glow {
   border-top: 1px solid var(--line);
 }
 
-.showcase-top {
-  position: relative;
-  z-index: var(--z-content);
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: clamp(24px, 4vw, 60px);
-  padding-top: clamp(56px, 8vh, 104px);
-}
-
 .showcase-heading {
   display: flex;
   flex-direction: column;
@@ -1058,26 +1048,6 @@ html[data-theme="dark"] .hero-glow {
   color: var(--muted);
   font-size: var(--fs-lead);
   line-height: 1.6;
-}
-
-.showcase-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 9px;
-  flex: none;
-  padding-bottom: 5px;
-  text-align: right;
-  color: var(--muted);
-}
-
-.showcase-meta > span:first-child {
-  color: var(--blue-deep);
-}
-
-/* Inline-block so the counter can roll (transforms skip inline boxes). */
-.showcase-meta [data-applied-count] {
-  display: inline-block;
 }
 
 /* A real 44px target: the visible label stays small mono, the hit area
@@ -1165,21 +1135,6 @@ html[data-theme="dark"] .hero-glow {
   flex-direction: column;
   align-items: flex-start;
   gap: clamp(14px, 1.8vh, 22px);
-}
-
-.applied-panel__sector {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--blue);
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 560;
-  letter-spacing: -0.01em;
-}
-
-.applied-panel__sector .ph {
-  font-size: 20px;
 }
 
 /* Flat flow diagram: three steps on a vertical spine. The last step is the
@@ -1289,54 +1244,6 @@ html[data-theme="dark"] .hero-glow {
   line-height: 1.6;
 }
 
-.showcase-panels__rail {
-  display: flex;
-  align-items: center;
-  gap: clamp(16px, 2vw, 28px);
-  padding-inline: var(--gut);
-}
-
-.showcase-panels__arrow {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex: none;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  color: var(--ink);
-  font-size: 16px;
-  transition: border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
-}
-
-.showcase-panels__arrow:hover,
-.showcase-panels__arrow:focus-visible {
-  border-color: var(--blue);
-  color: var(--blue);
-}
-
-.showcase-panels__arrow:active {
-  transform: scale(0.96);
-  transition-duration: var(--dur-press);
-}
-
-.showcase-panels__track {
-  position: relative;
-  flex: 1 1 auto;
-  height: 1px;
-  background: var(--line);
-}
-
-.showcase-panels__track::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--blue);
-  transform: scaleX(var(--progress, 0));
-  transform-origin: left center;
-  transition: transform var(--dur-reveal) var(--ease-out);
-}
-
 /* ─── Closing CTA: its own blue band, the last thing before the footer ──
    The ask on the left, what happens after you send it on the right. */
 
@@ -1426,7 +1333,7 @@ html[data-theme="dark"] .hero-glow {
   }
 
   .hero-copy h1 {
-    font-size: clamp(2.7rem, 5.6vw, 4.7rem);
+    font-size: clamp(2.6rem, 4.9vw, 4.4rem);
   }
 
   .problem-grid,
@@ -1499,7 +1406,7 @@ html[data-theme="dark"] .hero-glow {
     flex-direction: column;
     height: auto;
     min-height: 0;
-    /* clip, not hidden: the 620px cursor glow (.hero-glow) must not widen
+    /* clip, not hidden: nothing absolutely placed in the hero may widen
        the page on phones, and clip creates no scroll container. */
     overflow: visible;
     overflow-x: clip;
@@ -1546,10 +1453,6 @@ html[data-theme="dark"] .hero-glow {
     margin-top: clamp(-96px, -9vw, -40px);
   }
 
-  .hero-grid {
-    opacity: 1;
-  }
-
   .scene-canvas {
     display: block;
   }
@@ -1590,17 +1493,6 @@ html[data-theme="dark"] .hero-glow {
 
   .showcase {
     min-height: auto;
-  }
-
-  .showcase-top {
-    flex-direction: column;
-    align-items: flex-start;
-    padding-top: 84px;
-  }
-
-  .showcase-meta {
-    align-items: flex-start;
-    text-align: left;
   }
 
   .showcase-heading h2 {
@@ -1646,12 +1538,6 @@ html[data-theme="dark"] .hero-glow {
 
   .hero-scene {
     display: none;
-  }
-
-  .hero-grid {
-    -webkit-mask-image: radial-gradient(90% 60% at 50% 40%, #000 20%, transparent 80%);
-    mask-image: radial-gradient(90% 60% at 50% 40%, #000 20%, transparent 80%);
-    opacity: 0.7;
   }
 
   .hero-copy .actions {
@@ -1798,44 +1684,378 @@ html[data-theme="dark"] .hero-glow {
   }
 }
 
-/* Compact finale for short desktop viewports so the headline, rail, CTA and
-   footer stay within roughly one screen. Taller screens keep the airier set. */
-@media (min-width: 900px) and (max-height: 980px) {
-  .showcase-top {
-    padding-top: clamp(48px, 7vh, 66px);
-  }
-
-  .showcase-heading {
-    gap: 12px;
-  }
-
-  .showcase-heading h2 {
-    font-size: clamp(1.9rem, 3.3vw, 3.1rem);
-  }
-
-  .showcase-heading p {
-    font-size: 0.98rem;
-    line-height: 1.52;
-  }
-
-  .showcase-panels {
-    min-height: clamp(240px, 32vh, 340px);
-    padding-block: 18px 22px;
-  }
-
-  .applied-panel__title {
-    font-size: clamp(1.7rem, 3vw, 2.6rem);
-  }
-
-  .applied-panel__body {
-    font-size: 0.92rem;
-    line-height: 1.52;
-  }
-
-}
-
 @media (prefers-reduced-motion: reduce) {
   .applied-panel {
     transition: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Shared split grid + the hand-off thread
+   Every split section sits on one 12-column grid: copy in 1-5, content
+   in 7-12. Column 6 is the same channel in every section, and the
+   thread runs down it: one request's route through the page, with a
+   stop level with each section's heading (sticky headings carry their
+   stop down the line as you read), ending at "You approve" in the CTA.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --split-gap: clamp(20px, 2.2vw, 32px);
+}
+
+.problem-grid,
+.handoff-layout,
+.showcase-grid,
+.proof-grid,
+.faq-grid,
+.cta-home {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--split-gap);
+  row-gap: clamp(36px, 5vw, 64px);
+}
+
+.problem-head,
+.handoff-copy,
+.showcase-side,
+.proof-head,
+.faq-head,
+.cta-home__lead {
+  position: relative;
+  grid-column: 1 / span 5;
+}
+
+.problem-content,
+.handoff-figure,
+.showcase-panels,
+.proof-grid > :last-child,
+.faq-grid > [data-faq],
+.cta-home__next {
+  grid-column: 7 / -1;
+}
+
+/* The proof heading travels with its ledger like the problem and FAQ
+   headings do. */
+.proof-head {
+  position: sticky;
+  top: calc(var(--nav-h) + 44px);
+}
+
+/* Column 6's centre, measured from the section edge (100% = section
+   width): the same arithmetic the grid uses, so the line always sits
+   in the channel. */
+.thread {
+  --thread-x: calc(
+    var(--pad) + (100% - 2 * var(--pad) - 11 * var(--split-gap)) * 5.5 / 12 + 5 * var(--split-gap)
+  );
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--thread-x);
+  z-index: 1;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+
+/* Blue fills down each segment as the section passes through view, so
+   the route reads as travelled, not drawn. Static where scroll-driven
+   animation isn't supported or motion is reduced. */
+.thread::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--blue);
+  opacity: 0.55;
+  transform-origin: top;
+}
+
+/* The route has a start and an end. It begins at the problem heading's
+   stop (band padding + half the heading's first line), not at the band
+   edge, and stops at "You approve" instead of running on into the
+   footer. Both offsets mirror the paddings set on those sections. */
+.band-problem > .thread {
+  top: calc(clamp(56px, 8vw, 110px) + var(--fs-h2) * 0.52);
+}
+
+.cta-band--home > .thread {
+  bottom: auto;
+  height: calc(clamp(80px, 11vw, 160px) + var(--fs-h2) * 0.52);
+}
+
+.cta-home {
+  align-items: start;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .thread::after {
+      animation: thread-fill linear both;
+      animation-timeline: view();
+      animation-range: entry 10% exit 40%;
+    }
+  }
+}
+
+@keyframes thread-fill {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* A stop on the route, level with the heading's first line. Placed from
+   the 5-column head: one gap plus half a column past its right edge. */
+.problem-head::after,
+.handoff-copy::after,
+.showcase-side::after,
+.proof-head::after,
+.faq-head::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--fs-h2) * 0.52);
+  left: calc(100% + var(--split-gap) + (100% - 4 * var(--split-gap)) / 10);
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--blue);
+  border-radius: 50%;
+  background: var(--bg);
+  translate: -50% -50%;
+}
+
+.band-problem .problem-head::after,
+.band-faq .faq-head::after {
+  background: var(--paper);
+}
+
+/* The end of the route: the person who decides. */
+.thread-end {
+  position: absolute;
+  top: calc(var(--fs-h2) * 0.52);
+  left: calc(100% + var(--split-gap) + (100% - 4 * var(--split-gap)) / 10);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  color: var(--btn-ink);
+  font-size: 20px;
+  box-shadow: 0 10px 24px -12px rgba(6, 15, 43, 0.5);
+  translate: -50% -50%;
+}
+
+/* ─── Applied examples: industry index + panel ─────────────── */
+
+.showcase {
+  display: block;
+  min-height: 0;
+  padding-block: clamp(72px, 9vw, 128px);
+}
+
+.showcase-grid {
+  align-items: start;
+}
+
+.showcase-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.showcase-index {
+  display: grid;
+  width: 100%;
+  margin-top: clamp(28px, 4vh, 44px);
+  border-top: 1px solid var(--line);
+}
+
+.showcase-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 60px;
+  padding-block: 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+  font-weight: 560;
+  letter-spacing: -0.012em;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.showcase-tab > .ph:first-child {
+  font-size: 20px;
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.showcase-tab__arrow {
+  font-size: 16px;
+  opacity: 0;
+  translate: -6px 0;
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    translate var(--dur-ui) var(--ease-out);
+}
+
+.showcase-tab:hover {
+  color: var(--ink);
+}
+
+/* Rows read as choices: the arrow hints on hover, and a press nudges the
+   label like any other control on the page. */
+@media (hover: hover) and (pointer: fine) {
+  .showcase-tab:hover .showcase-tab__arrow {
+    opacity: 0.45;
+    translate: 0 0;
+  }
+}
+
+.showcase-tab__label {
+  transition: translate var(--dur-press) var(--ease-out);
+}
+
+.showcase-tab:active .showcase-tab__label {
+  translate: 2px 0;
+}
+
+.showcase-tab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.showcase-tab[aria-selected="true"] {
+  color: var(--ink);
+}
+
+.showcase-tab[aria-selected="true"] > .ph:first-child,
+.showcase-tab[aria-selected="true"] .showcase-tab__arrow {
+  color: var(--blue);
+}
+
+.showcase-tab[aria-selected="true"] .showcase-tab__arrow {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* The active row's rule fills over the auto-advance interval. Held,
+   paused or reduced motion: it simply shows full. */
+.showcase-tab__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.showcase-tab[aria-selected="true"] .showcase-tab__bar {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .showcase-index.is-running .showcase-tab[aria-selected="true"] .showcase-tab__bar {
+    animation: tab-fill var(--advance, 5200ms) linear both;
+  }
+}
+
+@keyframes tab-fill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.showcase-side .showcase-motion-toggle {
+  margin-top: 20px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+}
+
+.showcase-panels {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 0;
+  padding-block: 0;
+}
+
+.showcase-panels__stage {
+  display: grid;
+}
+
+.applied-panel {
+  grid-area: 1 / 1;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: clamp(24px, 3vw, 36px);
+  padding-inline: 0;
+}
+
+.applied-panel__title {
+  max-width: 18ch;
+  font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+}
+
+/* ─── Below 900px: one column, no thread ───────────────────── */
+
+@media (max-width: 899px) {
+  .problem-grid,
+  .handoff-layout,
+  .showcase-grid,
+  .proof-grid,
+  .faq-grid,
+  .cta-home {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .problem-head,
+  .handoff-copy,
+  .showcase-side,
+  .proof-head,
+  .faq-head,
+  .cta-home__lead,
+  .problem-content,
+  .handoff-figure,
+  .showcase-panels,
+  .proof-grid > :last-child,
+  .faq-grid > [data-faq],
+  .cta-home__next {
+    grid-column: 1 / -1;
+  }
+
+  .proof-head {
+    position: relative;
+    top: auto;
+  }
+
+  .thread,
+  .thread-end,
+  .problem-head::after,
+  .handoff-copy::after,
+  .showcase-side::after,
+  .proof-head::after,
+  .faq-head::after {
+    display: none;
   }
 }
