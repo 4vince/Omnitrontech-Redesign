@@ -273,7 +273,7 @@ export async function createServiceStage(
   const envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
   scene.environment = envTexture;
-  scene.environmentIntensity = dark ? 0.5 : 0.6;
+  scene.environmentIntensity = dark ? 0.5 : 0.45;
 
   // Strong warm key over a weak cool fill: clear light, side and shadow
   // faces on every block, which is what makes the shapes read.
@@ -290,6 +290,28 @@ export async function createServiceStage(
   scene.add(sun);
   // Lights must sit on the label layer too, or the second pass is unlit.
   hemi.layers.enableAll();
+
+  // Rim light: a cool light from behind and above that traces the far
+  // edges of every block, separating shapes from the section behind them
+  // (most needed on the navy bands). No shadow: it only shapes edges.
+  const rim = new THREE.DirectionalLight(dark ? 0x9db2ff : 0xdfe6ff, dark ? 1.5 : 0.9);
+  rim.position.set(4, 7, -10);
+  rim.layers.enableAll();
+  scene.add(rim);
+
+  // Contact light: straight overhead, barely bright, with a very soft
+  // shadow. Its job is the shadow, a soft pool right under each object
+  // that grounds it (the cheap stand-in for ambient occlusion).
+  const top = new THREE.DirectionalLight(0xffffff, 0.25);
+  top.position.set(0.4, 14, 0.6);
+  top.castShadow = true;
+  top.shadow.mapSize.set(1024, 1024);
+  top.shadow.radius = 14;
+  top.shadow.bias = -0.0006;
+  top.shadow.normalBias = 0.03;
+  top.shadow.intensity = dark ? 0.55 : 0.4;
+  Object.assign(top.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
+  scene.add(top);
   sun.layers.enableAll();
 
   // Shadows fall straight onto the section background: no visible floor.
@@ -309,10 +331,17 @@ export async function createServiceStage(
   const textures = new Set();
 
   /** A canvas texture painted at `scale` px per world unit. */
+  // Label and board textures follow the screen's pixel density: sharp on
+  // 2x displays without spending 2x memory on 1x ones. Capped to stay
+  // within every GPU's texture limit.
+  const density = Math.min(1.35, Math.max(0.85, (window.devicePixelRatio || 1) * 0.7));
+  const maxTex = Math.min(4096, renderer.capabilities.maxTextureSize);
+
   function texture(w, h, paint, scale = 340) {
     const c = document.createElement("canvas");
-    c.width = Math.max(8, Math.round(w * scale));
-    c.height = Math.max(8, Math.round(h * scale));
+    const k = Math.min(density, maxTex / Math.max(w * scale, h * scale));
+    c.width = Math.max(8, Math.round(w * scale * k));
+    c.height = Math.max(8, Math.round(h * scale * k));
     const ctx = c.getContext("2d");
     if (!ctx) throw new Error("Could not paint a service visual texture.");
     paint(ctx, c.width, c.height);
@@ -323,8 +352,53 @@ export async function createServiceStage(
     return tex;
   }
 
+  /*
+   * Blocks: soft-touch plastic with a thin clear coat, so rounded edges
+   * catch a crisp highlight from the studio environment. A fresnel term
+   * (injected into the standard physical shader) adds a faint rim where
+   * a surface turns away from the camera: silhouettes read on light and
+   * on navy sections alike. One shared uniform set and one cache key, so
+   * every block still compiles to a single shader program.
+   */
+  const rimUniforms = {
+    uRimColor: { value: new THREE.Color(dark ? 0x8fa6ff : 0xffffff) },
+    uRimStrength: { value: dark ? 0.32 : 0.1 },
+    uRimPower: { value: 2.6 },
+  };
+
+  function withRim(material) {
+    material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, rimUniforms);
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          uniform vec3 uRimColor;
+          uniform float uRimStrength;
+          uniform float uRimPower;`,
+        )
+        .replace(
+          "#include <emissivemap_fragment>",
+          `#include <emissivemap_fragment>
+          float rimFacing = saturate(dot(normal, normalize(vViewPosition)));
+          totalEmissiveRadiance += uRimColor * pow(1.0 - rimFacing, uRimPower) * uRimStrength;`,
+        );
+    };
+    material.customProgramCacheKey = () => "svx-rim";
+    return material;
+  }
+
   function mat(color, extra = {}) {
-    return new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0, ...extra });
+    return withRim(
+      new THREE.MeshPhysicalMaterial({
+        color,
+        roughness: 0.48,
+        metalness: 0,
+        clearcoat: 0.35,
+        clearcoatRoughness: 0.32,
+        ...extra,
+      }),
+    );
   }
 
   /*
@@ -444,6 +518,14 @@ export async function createServiceStage(
 
   const kit = { THREE, root, scene, camera, renderer, texture, mat, box, outline, card, tile, line, faceCamera, dark };
   const api = build(kit);
+
+  // Fit the key light's shadow frustum to this scene, not a fixed box:
+  // the same 2048 map then covers less ground and the shadows sharpen.
+  {
+    const reach = Math.max(api.frame.w, api.frame.h) * 0.62 + 1;
+    Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach });
+    sun.shadow.camera.updateProjectionMatrix();
+  }
 
   const state = {
     animate: Boolean(animate),
