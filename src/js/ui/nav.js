@@ -20,7 +20,7 @@ function navLink(item, page, className = "nav-link") {
 function brandMarkup({ compact = false } = {}) {
   return `<a class="brand" href="/" aria-label="Omnitron home">
     <span class="brand-mark" aria-hidden="true">
-      <img src="/Neon%20Orbital%20Globe%20Interface.png" alt="">
+      <img src="/omnitron-mark.png" alt="">
     </span>
     <span>Omnitron</span>
     ${compact ? "" : ""}
@@ -32,6 +32,8 @@ export function renderNav(mount = document.querySelector("#site-nav")) {
 
   const page = currentPage();
   mount.dataset.page = page;
+  // On the contact page the CTA jumps to the form instead of reloading it.
+  const ctaHref = page === "contact" ? "#contact-form" : site.cta.href;
   mount.innerHTML = `
     <div class="wrap nav-inner">
       ${brandMarkup()}
@@ -39,7 +41,7 @@ export function renderNav(mount = document.querySelector("#site-nav")) {
         ${site.nav.map((item) => navLink(item, page)).join("")}
       </nav>
       <div class="nav-actions">
-        <a class="btn btn--primary btn--sm nav-cta" href="${site.cta.href}">
+        <a class="btn btn--primary btn--sm nav-cta" href="${ctaHref}">
           ${site.cta.label}
           <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
         </a>
@@ -76,7 +78,7 @@ export function renderNav(mount = document.querySelector("#site-nav")) {
         .join("")}
     </nav>
     <div class="mobile-sheet__foot">
-      <a class="btn btn--primary" href="${site.cta.href}">
+      <a class="btn btn--primary" href="${ctaHref}">
         ${site.cta.label}
         <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
       </a>

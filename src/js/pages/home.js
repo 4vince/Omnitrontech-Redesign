@@ -45,9 +45,11 @@ function exampleTab(example, index) {
 export function initHomeSections() {
   const problemMount = document.querySelector("[data-problems]");
   if (problemMount) {
+    // In the mirrored band the heading sits right, so the rows start left.
+    const flipped = Boolean(problemMount.closest(".is-flip"));
     problemMount.innerHTML = problems
       .map(
-        (problem, i) => `<article class="problem-row problem-row--${i % 2 ? "left" : "right"}">
+        (problem, i) => `<article class="problem-row problem-row--${(i % 2 === 0) === flipped ? "left" : "right"}">
           <span class="problem-row__stop" aria-hidden="true"></span>
           <span class="problem-row__icon"><i class="ph ${problem.icon}" aria-hidden="true"></i></span>
           <div class="problem-row__body">

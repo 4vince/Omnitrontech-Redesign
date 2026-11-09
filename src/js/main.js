@@ -15,10 +15,6 @@ import {
 } from "./core/motion.js";
 import { initBackdrops } from "./core/backdrop.js";
 import { initTheme } from "./core/theme.js";
-import { initContact } from "./pages/contact.js";
-import { initHandoff } from "./home/handoff.js";
-import { initHomeSections } from "./pages/home.js";
-import { initSolutions } from "./pages/solutions.js";
 import { initFaq } from "./ui/faq.js";
 import { initFooter } from "./ui/footer.js";
 import { initNav } from "./ui/nav.js";
@@ -39,11 +35,23 @@ initTheme();
 initFaq();
 initScrollProgress();
 
-if (page === "home") initHomeSections();
-if (page === "solutions") initSolutions(lenis);
-if (page === "contact") initContact();
-
-if (page === "home") initHandoff();
+// Each page loads only its own module, so no page ships another's code.
+if (page === "home") {
+  const [{ initHomeSections }, { initHandoff }] = await Promise.all([
+    import("./pages/home.js"),
+    import("./home/handoff.js"),
+  ]);
+  initHomeSections();
+  initHandoff();
+}
+if (page === "solutions") {
+  const { initSolutions } = await import("./pages/solutions.js");
+  initSolutions(lenis);
+}
+if (page === "contact") {
+  const { initContact } = await import("./pages/contact.js");
+  initContact();
+}
 
 // Backdrops must exist before parallax measures them, and after the
 // page modules have rendered their sections (AI Solutions rows).

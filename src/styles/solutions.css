@@ -54,7 +54,7 @@ body[data-page="solutions"] main .wrap {
 .solutions-hero h1 {
   max-width: 15ch;
   font-size: clamp(2.9rem, 4.9vw, 5.4rem);
-  font-weight: 560;
+  font-weight: 630;
   line-height: 0.93;
   letter-spacing: -0.01em;
   text-wrap: balance;
@@ -1387,7 +1387,7 @@ body[data-page="solutions"] main .wrap {
 }
 
 .solutions-index__name {
-  font-size: clamp(0.7rem, 0.86vw, 0.9rem);
+  font-size: clamp(0.78rem, 0.86vw, 0.9rem);
   line-height: 1.25;
 }
 
@@ -1683,7 +1683,7 @@ body[data-page="solutions"] main .wrap {
   }
 
   .solutions-index__name {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .svc,

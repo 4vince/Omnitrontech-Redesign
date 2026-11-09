@@ -254,6 +254,40 @@
   .contact-form-card {
     max-width: 720px;
   }
+
+  /* One column: the form comes straight after the heading and its line,
+     and the contact facts and next steps follow it, so a phone visitor
+     reaches the form in one screen instead of two. */
+  .contact-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .contact-intro {
+    display: contents;
+  }
+
+  .contact-intro h1 {
+    order: 1;
+  }
+
+  .contact-intro > p {
+    order: 2;
+    margin-top: calc(-1 * clamp(16px, 4vw, 34px));
+  }
+
+  .contact-form-card {
+    order: 3;
+  }
+
+  .contact-details {
+    order: 4;
+  }
+
+  .contact-steps {
+    order: 5;
+  }
 }
 
 @media (max-width: 899px) {

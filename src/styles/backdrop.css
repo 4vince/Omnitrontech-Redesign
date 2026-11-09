@@ -10,7 +10,7 @@
    of its content, with no z-index changes to existing children.
    ───────────────────────────────────────────────────────────── */
 
-:where(.band, .svc, .solutions-hero, .contact-hero, .showcase, .cta-band, .site-footer) {
+:where(.band, .svc, .svx, .solutions-hero, .contact-hero, .showcase, .cta-band, .site-footer) {
   position: relative;
 }
 

@@ -16,6 +16,7 @@ const TARGETS = [
   ".showcase",
   ".solutions-hero",
   ".svc",
+  ".svx",
   ".contact-hero",
   ".cta-band",
   ".site-footer",

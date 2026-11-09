@@ -213,3 +213,41 @@ export const solutionsPageLabels = {
   roster: "Examples of AI assistants",
   stack: "Tools and technology we work with",
 };
+
+/*
+ * What each 3D service scene shows, step by step. The captions sit under
+ * the scene and light up in time with it (src/js/visuals/service-scenes/),
+ * so they describe the picture literally. Keep them short.
+ */
+export const solutionsSceneCaptions = {
+  strategy: [
+    "Every task mapped by value and effort",
+    "The quick win is picked",
+    "Data rules set around it",
+    "A rollout plan from pilot to next task",
+  ],
+  automation: [
+    "Requests arrive from email, scans and forms",
+    "Details are read and matched",
+    "Unusual cases go to a person",
+    "Records update on their own",
+  ],
+  agentic: [
+    "The agent takes the goal",
+    "It works through approved tools",
+    "It stops at its limits",
+    "A person approves, then it carries on",
+  ],
+  experience: [
+    "Questions arrive on every channel",
+    "Answers come from your own help content",
+    "Sensitive cases go to a person, with the chat",
+    "Routine questions are answered",
+  ],
+  data: [
+    "Your systems stream into one clean view",
+    "The usual range is learned",
+    "An unusual change stands out",
+    "The team hears about it early",
+  ],
+};

@@ -14,7 +14,7 @@ export function initFooter() {
         <div class="footer-brand">
           <a class="brand" href="/" aria-label="Omnitron home">
             <span class="brand-mark" aria-hidden="true">
-              <img src="/Neon%20Orbital%20Globe%20Interface.png" alt="">
+              <img src="/omnitron-mark.png" alt="">
             </span>
             <span>Omnitron</span>
           </a>

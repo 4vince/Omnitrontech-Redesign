@@ -1,0 +1,317 @@
+/* ─────────────────────────────────────────────────────────────
+   AI SOLUTIONS: visual-first service sections
+   Markup: rowMarkup() in src/js/pages/solutions.js
+   Scenes: src/js/visuals/service-scenes/*.js
+
+   The 3D scene is the section. The service title sits over its top band,
+   captions that follow the scene's story run along its bottom, and the
+   details wait underneath. The scene's camera leaves those two bands
+   clear (padTop / padBottom in service-scenes/kit.js), so keep the head
+   and captions within roughly the top 22% and bottom 10% of the stage.
+
+   Phones and browsers without WebGL get the flat diagram of the same
+   service instead (service-visuals.css).
+   ───────────────────────────────────────────────────────────── */
+
+.svx {
+  position: relative;
+  overflow: clip;
+  padding-top: clamp(28px, 4vh, 52px);
+}
+
+.svx__stage {
+  position: relative;
+  height: min(92svh, 940px);
+  min-height: 640px;
+  margin-inline: var(--pad);
+}
+
+.svx__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform-origin: 50% 60%;
+  transition: opacity 900ms var(--ease-out);
+}
+
+.svx__stage.has-webgl .svx__canvas {
+  opacity: 1;
+}
+
+/* Title over the top band of the scene */
+.svx__head {
+  position: absolute;
+  top: clamp(8px, 2vh, 24px);
+  left: 0;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  max-width: min(64%, 920px);
+  pointer-events: none;
+}
+
+/* Title placement walks the page: start, end, center (ALIGN in solutions.js) */
+.svx--end .svx__head {
+  right: 0;
+  left: auto;
+  justify-items: end;
+  text-align: right;
+}
+
+.svx--center .svx__head {
+  right: 0;
+  left: 0;
+  max-width: min(78%, 980px);
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+
+.svx__head h2 {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.svx__outcome {
+  max-width: 40ch;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.5;
+}
+
+/* Captions: what the scene is showing right now */
+.svx__captions {
+  position: absolute;
+  right: 64px;
+  bottom: clamp(8px, 2vh, 22px);
+  left: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 32px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.svx__captions li {
+  position: relative;
+  padding-top: 14px;
+  color: var(--muted-2);
+  font-size: clamp(0.78rem, 0.9vw, 0.92rem);
+  font-weight: 560;
+  line-height: 1.4;
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.svx__captions li::before,
+.svx__captions li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.svx__captions li::before {
+  background: var(--line);
+}
+
+.svx__captions li::after {
+  background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.svx__captions li.is-done {
+  color: var(--ink-soft);
+}
+
+.svx__captions li.is-done::after {
+  transform: scaleX(1);
+}
+
+.svx__captions li.is-active {
+  color: var(--ink);
+}
+
+.svx__captions li.is-active::after {
+  animation: svx-step var(--step-dur, 3s) linear forwards;
+}
+
+@keyframes svx-step {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Pause control at the end of the captions row */
+.svx__toggle {
+  position: absolute;
+  right: 0;
+  bottom: clamp(8px, 2vh, 22px);
+  z-index: 2;
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: border-color var(--dur-ui) var(--ease-out), color var(--dur-ui) var(--ease-out);
+}
+
+.tone-navy .svx__toggle {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.svx__toggle .ph {
+  font-size: 18px;
+}
+
+.svx__toggle:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.svx__toggle:active {
+  transform: scale(0.96);
+}
+
+.svx__stage.has-webgl:not(.is-static) .svx__toggle {
+  display: grid;
+}
+
+/* Reduced motion: one still frame, every caption at full strength. */
+.svx__stage.is-static .svx__captions li {
+  color: var(--ink-soft);
+}
+
+.svx__stage.is-static .svx__captions li::after {
+  transform: scaleX(1);
+  opacity: 0.5;
+}
+
+/* Until the scene is up (or if it never comes) */
+.svx__fallback {
+  display: none;
+}
+
+.svx__stage:not(.has-webgl) .svx__captions {
+  visibility: hidden;
+}
+
+.svx__stage.is-fallback .svx__fallback,
+html:not(.js) .svx__fallback {
+  position: absolute;
+  inset: 24% 0 4%;
+  display: grid;
+  margin: 0;
+}
+
+/* Details underneath the scene */
+.svx__info {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  align-items: start;
+  gap: clamp(20px, 4vw, 64px);
+  padding: clamp(20px, 3vh, 36px) var(--pad) clamp(56px, 9vh, 104px);
+}
+
+.svx__info > .text-link {
+  margin-top: 4px;
+}
+
+@media (max-width: 1000px) {
+  .svx__stage {
+    height: min(80svh, 760px);
+    min-height: 560px;
+  }
+
+  .svx__head {
+    max-width: 80%;
+  }
+
+  .svx__captions li {
+    font-size: 0.74rem;
+  }
+}
+
+/* Phones: the flat diagram stands in for the scene, all in normal flow. */
+@media (max-width: 760px) {
+  .svx {
+    padding-top: 48px;
+  }
+
+  .svx__stage {
+    display: grid;
+    gap: 24px;
+    height: auto;
+    min-height: 0;
+    margin-inline: var(--pad);
+  }
+
+  .svx__canvas,
+  .svx__captions {
+    display: none;
+  }
+
+  /* Grid items default to min-width: auto; let the diagram shrink to the
+     phone width instead of pushing past it. */
+  .svx__stage > *,
+  .svx__fallback > .sv {
+    min-width: 0;
+  }
+
+  .svx__head,
+  .svx--end .svx__head,
+  .svx--center .svx__head {
+    position: static;
+    max-width: none;
+    margin-inline: 0;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .svx__head h2 {
+    font-size: clamp(2.2rem, 10vw, 3.2rem);
+  }
+
+  .svx__fallback,
+  .svx__stage.is-fallback .svx__fallback {
+    position: static;
+    display: grid;
+    margin: 0;
+  }
+
+  .svx__info {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    gap: 12px;
+    padding-bottom: 56px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svx__canvas,
+  .svx__captions li {
+    transition: none;
+  }
+
+  .svx__captions li.is-active::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+}

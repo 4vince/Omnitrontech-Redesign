@@ -34,11 +34,11 @@ const pill = (text, tone = "") =>
 /* 01 — Strategy & Consulting: where AI helps, what it costs, what comes first */
 function strategy() {
   const tasks = [
-    { name: "Invoice entry", x: 18, y: 22, pick: true },
-    { name: "Customer emails", x: 44, y: 30 },
-    { name: "Weekly reports", x: 26, y: 62 },
-    { name: "Contract review", x: 76, y: 20 },
-    { name: "Stock forecasts", x: 72, y: 70 },
+    { name: "Invoice entry", x: 14, y: 16, pick: true },
+    { name: "Customer emails", x: 40, y: 46 },
+    { name: "Weekly reports", x: 12, y: 84 },
+    { name: "Contract review", x: 80, y: 30 },
+    { name: "Stock forecasts", x: 82, y: 64 },
   ];
 
   const body = `<div class="sv-strategy">
@@ -65,12 +65,12 @@ function strategy() {
     <section class="sv-card sv-strategy__cost">
       <span class="sv-label">${icon("ph-coins")} What it may cost</span>
       <dl class="sv-rows">
-        <div><dt>Set-up</dt><dd>S$12-18k</dd></div>
-        <div><dt>Running cost</dt><dd>S$600 / mo</dd></div>
-        <div><dt>Time saved</dt><dd class="sv-good">22 hrs / week</dd></div>
+        <div><dt>Set-up</dt><dd>Fixed range</dd></div>
+        <div><dt>Running cost</dt><dd>Agreed upfront</dd></div>
+        <div><dt>Time saved</dt><dd class="sv-good">Measured in the pilot</dd></div>
       </dl>
       <div class="sv-meter">
-        <span>Pays back in ~5 months</span>
+        <span>Payback estimated before you commit</span>
         <i><b></b></i>
       </div>
     </section>
@@ -87,9 +87,9 @@ function strategy() {
 
   return frame({
     title: `${icon("ph-compass")} AI opportunity plan`,
-    // The cost figures are an example of what a plan contains, not a
-    // client result or a quote (PRODUCT.md: never invent pricing/metrics).
-    status: pill("Example figures", "blue"),
+    // No prices or results here: the real range comes after a discovery
+    // call (PRODUCT.md: never invent pricing or metrics).
+    status: pill("Example plan", "blue"),
     body,
     steps: ["Discovery", "Business case", "Roadmap", "Governance"],
     label:
@@ -125,11 +125,11 @@ function automation() {
       <span class="sv-label">Result</span>
       <div class="sv-outcome sv-outcome--done">
         ${icon("ph-check-circle")}
-        <div><strong>138</strong><span>Approved &amp; recorded today</span></div>
+        <div><strong>Most</strong><span>Approved &amp; recorded automatically</span></div>
       </div>
       <div class="sv-outcome sv-outcome--person">
         ${icon("ph-user-focus")}
-        <div><strong>3</strong><span>Need a person: amount over S$5,000</span></div>
+        <div><strong>A few</strong><span>Need a person: amount over your limit</span></div>
       </div>
     </div>
   </div>`;
@@ -140,7 +140,7 @@ function automation() {
     body,
     steps: ["Intake", "Routing", "Approvals", "Exceptions"],
     label:
-      "An automated invoice workflow: emails, scanned invoices and web forms are read, matched to purchase orders, sent for approval and recorded. 138 went through automatically today and 3 unusual ones were passed to a person.",
+      "An automated invoice workflow: emails, scanned invoices and web forms are read, matched to purchase orders, sent for approval and recorded. Most go through automatically; unusual ones are passed to a person.",
   });
 }
 
@@ -213,7 +213,7 @@ function experience() {
         It's on its way. The courier shows delivery tomorrow before 6pm, here's your tracking link.
         <small>${icon("ph-book-open")} From: order #20417 · Shipping policy</small>
       </div>
-      <div class="sv-meta" style="--i:2">${icon("ph-lightning")} Answered in 9 seconds · Resolved</div>
+      <div class="sv-meta" style="--i:2">${icon("ph-lightning")} Answered in seconds · Resolved</div>
     </section>
 
     <section class="sv-card sv-support__handoff">
@@ -293,7 +293,7 @@ function data() {
 
   return frame({
     title: `${icon("ph-chart-line-up")} Weekly operations view`,
-    status: pill("Updated 2 min ago", "good"),
+    status: pill("Example figures", "blue"),
     body,
     steps: ["Sources", "Model", "Signals", "Decisions"],
     label:

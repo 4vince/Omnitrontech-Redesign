@@ -105,7 +105,7 @@
   --ink-soft: #33373f;
   --muted: #4e535d;
   --muted-2: #555c67;
-  --placeholder: #5f6672;
+  --placeholder: #737a86; /* 4.6:1: reads as a hint, not as filled-in text */
 
   /* Lines — visible at rest without competing with content */
   --line: rgba(23, 25, 31, 0.14);
@@ -127,8 +127,8 @@
 
   --danger: #c23a2e;
   --danger-bg: rgba(194, 58, 46, 0.08);
-  --success: #1d8a5f;
-  --success-bg: rgba(29, 138, 95, 0.08);
+  --success: #157650; /* 5.4:1 on white; was #1d8a5f (4.3:1) */
+  --success-bg: rgba(21, 118, 80, 0.08);
 
   --cta-bg: #0a1b52;
   --cta-bg-2: #10247e;
