@@ -224,7 +224,7 @@ export function initReveal() {
  *   cards  [data-float] visual components drift ahead of the text
  *          (y 40 → -40px)
  * Plus the older per-element [data-parallax="px"] hook.
- * Pinned stages (robot hero, handoff band) keep static backdrops.
+ * The hero and the pinned handoff band keep static backdrops.
  * Reduced motion: none of this runs; the layers simply sit still.
  */
 export function initParallax() {

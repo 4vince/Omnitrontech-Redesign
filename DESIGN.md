@@ -139,6 +139,8 @@ The system is full-bleed and band-based. Each section is a plate that runs edge 
 
 Visuals are literal and crisp. Processes are drawn as flow diagrams, numbered steppers and labelled nodes. 3D is welcome but rendered sharply (orthographic, no bloom or fog), never as soft abstract shapes. Copy stays short so the diagrams carry the explanation.
 
+The one exception is the home hero figure: a holographic brain running on a CPU (`src/js/visuals/brain-scene.js`, modelled on `public/Holographic AI Brain Over CPU Platform.png`), glowing (bloom) in cobalt with small amber sparks for the neural nodes, on a transparent canvas over the Singapore office photograph with faint glyph rain behind it. The exception covers that figure only.
+
 **Key Characteristics:**
 - Full-bleed bands with deliberate tone blocking (bone → navy → paper → navy → blue CTA → footer navy).
 - A blueprint grid with light pools behind every section; dead space is textured, never blank.
@@ -201,7 +203,7 @@ A restrained daylight palette: warm bone neutrals, cool charcoal ink, a single s
 
 The layout is full-bleed: wrappers span the viewport (`max-width: 100%`) and the fluid gutter (`clamp(16px, 2.4vw, 44px)`) is the only inset. Text width is capped per block with `ch` values, so wide screens gain composition, not longer lines. Hairlines run edge to edge outside the wrappers. Sections are tall plates with generous vertical padding (service rows use `clamp(84px, 11vw, 172px)`), and the 76px nav is fixed above them. The spacing scale runs from 0.375rem to 7.5rem in eight steps.
 
-Two-column compositions pair copy with a substantial visual (around 0.82fr / 1.18fr on service rows). The visual is sized to fill its side so no wide blank gutter remains. Service rows use a sticky left rail with an outlined index numeral. The home hero is a pinned scroll sequence.
+Two-column compositions pair copy with a substantial visual (around 0.82fr / 1.18fr on service rows). The visual is sized to fill its side so no wide blank gutter remains. Service rows use a sticky left rail with an outlined index numeral. The home hero is one full screen over the office photograph: headline column left, the 3D brain figure on the right; it powers on after the copy lands, then runs a seven-second thought cycle.
 
 Breakpoints are content-driven, clustering around 1180px, 1000px, 960px (nav collapses into the mobile sheet), 760px, 560px and 480px. Below about 900px, columns stack, WebGL scenes switch to static fallbacks, and every control keeps a 44px minimum target.
 
@@ -218,7 +220,7 @@ Depth is layered and tinted. Shadows are navy-tinted, never neutral grey, and st
 ### Named Rules
 **The Tinted Shadow Rule.** Every shadow is tinted navy or blue. A neutral grey `rgba(0,0,0,…)` drop shadow on a light surface is off-system.
 
-**The Crisp Depth Rule.** Depth comes from layered shadows, tone and parallax, never from blur. No bloom, fog or soft-focus 3D; scenes stay sharp and literal.
+**The Crisp Depth Rule.** Depth comes from layered shadows, tone and parallax, never from blur. No bloom, fog or soft-focus 3D; scenes stay sharp and literal. (Home hero excepted; see Overview.)
 
 ## Shapes
 
@@ -275,8 +277,8 @@ The form language pairs soft pills with gently rounded panels. Interactive contr
 - **Do** give every 3D or scroll scene a static fallback for small screens and reduced motion.
 
 ### Don't:
-- **Don't** reintroduce orange or any second accent hue.
-- **Don't** render concepts as abstract, blurry 3D (bloom, fog, soft blobs). Keep 3D orthographic and crisp.
+- **Don't** reintroduce orange or any second accent hue in UI. (The home hero's amber neural sparks are part of its image, not a UI accent.)
+- **Don't** render concepts as abstract, blurry 3D (bloom, fog, soft blobs). Keep 3D orthographic and crisp, outside the home hero.
 - **Don't** use a serif or playful geometric display face, or loosen Archivo's tight tracking.
 - **Don't** set body copy in JetBrains Mono, or use pure black text or neutral grey shadows.
 - **Don't** box sections in bordered containers. Bands are full-bleed and structure comes from hairlines.

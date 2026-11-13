@@ -91,10 +91,8 @@
 
 /* Over the navy hero the scrolled bar turns navy glass, with light ink,
    so it reads as part of the hero instead of a light strip across it.
-   With a static hero (tablets, phones, reduced motion) the hero is navy
-   from the top, so the unscrolled nav takes the light ink too. On desktop
-   the opening frame is the light visor display, so it keeps dark ink
-   until scrolled. */
+   The hero is navy from its first pixel, so hero.js sets is-hero-static
+   and the unscrolled nav takes the light ink too. */
 .site-nav.is-on-hero.is-scrolled,
 .site-nav.is-on-hero.is-hero-static {
   color-scheme: dark;

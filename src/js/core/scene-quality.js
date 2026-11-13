@@ -8,21 +8,17 @@ const DEFAULT_PIXEL_RATIO_CAP = 1.35;
  *  - renderer info counters for frame-cost checks.
  */
 
-// The homepage robot is the one scene that fills the first screen and is
-// read up close (the visor display carries text), so it gets a higher cap
-// on larger screens. Phones never render it (hero.js), and it is the only
-// WebGL scene running while it is on screen.
-const HERO_PIXEL_RATIO_CAP = 2;
+// The homepage hero (brain-scene.js) runs bloom, so it sets its own ratio
+// against a pixel budget instead of using this cap.
 
-export function getPixelRatioCap({ hero = false } = {}) {
+export function getPixelRatioCap() {
   if (window.innerWidth < 760) return 1;
-  if (hero) return window.innerWidth < 1200 ? 1.5 : HERO_PIXEL_RATIO_CAP;
   if (window.innerWidth < 1200) return 1.25;
   return DEFAULT_PIXEL_RATIO_CAP;
 }
 
-export function applyPixelRatio(renderer, options) {
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, getPixelRatioCap(options)));
+export function applyPixelRatio(renderer) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, getPixelRatioCap()));
 }
 
 export function getRendererInfo(renderer) {

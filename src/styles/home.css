@@ -2,29 +2,26 @@
    HOME — pinned workflow experience
    ───────────────────────────────────────────────────────────── */
 
-/* ─── Hero: "through the AI's eyes" (src/js/home/hero.js) ────────────
-   The stage pins for the length of the track while the camera pulls back
-   out of the robot's visor. Copy positions here are the resting layout;
-   hero.js scrubs the headline in from the centre of the lens. */
+/* ─── Hero: brain on a processor (src/js/home/hero.js) ───────────────
+   One full screen over the Singapore office photograph. The 3D figure
+   sits on a transparent canvas on the right; the headline column holds
+   the left. */
 
 .hero-track {
   position: relative;
   width: 100%;
-  /* p 0.9-1 is a short hold before the pin releases; keep it short. */
-  height: 300vh;
   background: var(--bg);
 }
 
 .hero-stage {
-  position: sticky;
-  top: 0;
+  position: relative;
   width: 100%;
   height: 100svh;
+  min-height: 640px;
+  max-height: 1200px;
   overflow: hidden;
   isolation: isolate;
-  /* Stand-in for the shader until (or unless) WebGL is up: the same
-     navy depth, without the light pool, which only the shader can draw
-     with real falloff and grain. */
+  /* Stand-in until the photograph arrives. */
   background: linear-gradient(180deg, #050b23 0%, #0a1640 100%);
 }
 
@@ -37,7 +34,6 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  transform-origin: 62% 55%;
 }
 
 /* <picture> is inline by default; it must fill the stage or the image
@@ -53,19 +49,6 @@
   height: 100%;
   object-fit: cover;
   object-position: 62% 50%;
-}
-
-/* Below 900px the copy spans the full width over the skyline, so the
-   shade is even across, still fading to the next band's navy. */
-@media (max-width: 899px) {
-  .hero-photo img {
-    object-position: 70% 40%;
-  }
-
-  .hero-photo::after {
-    background:
-      linear-gradient(180deg, rgba(5, 11, 35, 0.72) 0%, rgba(5, 11, 35, 0.6) 45%, rgba(5, 11, 35, 0.5) 70%, #0a1640 100%);
-  }
 }
 
 .hero-photo::after {
@@ -84,56 +67,30 @@
   pointer-events: none;
 }
 
-/* Scene entrance: a quick settle from slightly zoomed-in, echoing the
-   zoom-out the scroll is about to play (not a slow pure fade). */
+/* Scene entrance: a slow settle from slightly close, in step with the
+   camera easing back as the figure powers on. */
 .hero-scene .scene-canvas {
-  transform: scale(1.04);
+  transform: scale(1.03);
   transition:
-    opacity 400ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 500ms cubic-bezier(0.23, 1, 0.32, 1);
+    opacity 900ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 1800ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .has-webgl .hero-scene .scene-canvas {
   transform: none;
 }
 
-.hero-fallback {
-  display: none;
-}
-
-.has-fallback .hero-fallback {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: calc(var(--nav-h) + 24px) var(--pad) 40px;
-}
-
-.hero-fallback canvas {
-  width: min(100%, 1100px);
-  height: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-}
-
 .hero-copy {
   position: absolute;
   left: var(--gut);
-  top: 50%;
+  top: 52%;
   z-index: 8;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: clamp(20px, 2.8vh, 30px);
-  width: min(700px, 48vw);
+  width: min(700px, 46vw);
   transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.hero-copy__title,
-.hero-copy__more {
-  pointer-events: auto;
-  will-change: transform, opacity;
 }
 
 .hero-copy__more {
@@ -143,56 +100,29 @@
   gap: clamp(20px, 2.8vh, 30px);
 }
 
-/* Two lines on desktop ("Make room for work / that matters."): sized to
+/* Two lines on desktop ("Make room for / work that matters."): sized to
    the column rather than to the viewport's full width. */
 .hero-copy h1 {
-  max-width: 18ch;
-  /* Ink, accent and halo are variables so hero.js can carry the headline
-     from the light visor display (dark ink) onto the navy field (light
-     ink) as the camera pulls back. Defaults are the navy state. */
-  color: var(--h1-ink, var(--ink));
-  font-size: clamp(3rem, 5vw, 5.2rem);
+  max-width: 16ch;
+  color: var(--ink);
+  font-size: clamp(3rem, 4.8vw, 5rem);
   font-weight: 630;
   line-height: 0.99;
   letter-spacing: -0.016em;
   text-wrap: balance;
-  text-shadow: 0 2px 24px var(--h1-halo, rgba(5, 11, 35, 0.5));
+  text-shadow: 0 2px 28px rgba(3, 8, 32, 0.55);
 }
 
 .hero-copy h1 .signal {
   position: relative;
-  color: var(--h1-accent, var(--blue));
+  color: var(--blue);
 }
 
 .hero-copy__more > p {
-  max-width: 44ch;
+  max-width: 40ch;
   color: var(--muted);
   font-size: clamp(1.02rem, 1.25vw, 1.16rem);
   line-height: 1.62;
-}
-
-/* Caption + scroll cue, shown while the camera is still inside the lens. */
-.hero-lens-caption {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(16px, 3vh, 30px);
-  z-index: 9;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 16px;
-  border: 1px solid rgba(43, 70, 214, 0.22);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.9);
-  /* The light pill sits inside the navy hero, where --blue is the pale
-     dark-theme blue; use the light-theme blue so it reads (7:1). */
-  color: #2b46d6;
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  pointer-events: none;
 }
 
 /* Shared canvas base for Three.js scenes on the page (hero + handoff band). */
@@ -1331,7 +1261,7 @@
 
 @media (max-width: 1100px) {
   .hero-copy {
-    width: min(660px, 58vw);
+    width: min(560px, 50vw);
   }
 
   .hero-copy h1 {
@@ -1346,10 +1276,6 @@
 }
 
 @media (max-width: 899px), (prefers-reduced-motion: reduce) {
-  .hero-track {
-    height: auto;
-  }
-
   /* Handoff: no pin. Every step opens, each with its own still diagram. */
   .handoff-track {
     height: auto;
@@ -1398,76 +1324,6 @@
   .cta-home {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
-  }
-
-  /* Copy leads, the robot follows: the scene comes first in the source
-     (it is the pinned backdrop on desktop), so reorder it here. */
-  .hero-stage {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    min-height: 0;
-    /* clip, not hidden: nothing absolutely placed in the hero may widen
-       the page on phones, and clip creates no scroll container. */
-    overflow: visible;
-    overflow-x: clip;
-    padding-top: calc(var(--nav-h) + 42px);
-    padding-bottom: 48px;
-  }
-
-  .hero-copy {
-    order: 1;
-  }
-
-  .hero-scene {
-    order: 2;
-  }
-
-  .hero-copy {
-    position: relative;
-    left: auto;
-    top: auto;
-    width: 100%;
-    max-width: 760px;
-    padding-inline: var(--pad);
-    transform: none;
-    gap: 22px;
-    pointer-events: auto;
-  }
-
-  .hero-copy h1 {
-    max-width: 12ch;
-    font-size: clamp(2.65rem, 9.4vw, 4.35rem);
-  }
-
-  .hero-copy > p,
-  .hero-copy__more > p {
-    max-width: 38ch;
-  }
-
-  .hero-scene {
-    position: relative;
-    inset: auto;
-    height: clamp(340px, 82vw, 560px);
-    /* The canvas frames the robot with headroom above the antenna; pull it
-       up under the buttons so no dead band opens between copy and robot. */
-    margin-top: clamp(-96px, -9vw, -40px);
-  }
-
-  .scene-canvas {
-    display: block;
-  }
-
-  .hero-lens-caption {
-    display: none;
-  }
-
-  .has-fallback .hero-fallback {
-    position: relative;
-    inset: auto;
-    height: 100%;
-    padding: 0 var(--pad);
   }
 
   .problem-grid,
@@ -1530,16 +1386,78 @@
   }
 }
 
-/* Phones: no robot (hero.js never loads it). The hero is the promise and
-   the two actions, sized so both buttons land in the first screen. */
-@media (max-width: 639px) {
+/* Tablets: copy first, then the figure, centred, below it. */
+@media (max-width: 899px) {
   .hero-stage {
-    padding-top: calc(var(--nav-h) + 28px);
-    padding-bottom: 56px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    /* clip, not hidden: nothing absolutely placed in the hero may widen
+       the page, and clip creates no scroll container. */
+    overflow: visible;
+    overflow-x: clip;
+    padding-top: calc(var(--nav-h) + 42px);
+  }
+
+  .hero-copy {
+    order: 1;
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    max-width: 760px;
+    padding-inline: var(--pad);
+    transform: none;
+    gap: 22px;
+  }
+
+  .hero-copy h1 {
+    max-width: 12ch;
+    font-size: clamp(2.65rem, 9.4vw, 4.35rem);
+  }
+
+  .hero-copy__more > p {
+    max-width: 38ch;
   }
 
   .hero-scene {
+    order: 2;
+    position: relative;
+    inset: auto;
+    height: clamp(320px, 64vw, 520px);
+    margin-top: clamp(-40px, -4vw, -16px);
+  }
+
+  /* The copy spans the full width over the skyline: the shade is even
+     across, still fading to the next band's navy. */
+  .hero-photo img {
+    object-position: 70% 40%;
+  }
+
+  .hero-photo::after {
+    background:
+      linear-gradient(180deg, rgba(5, 11, 35, 0.72) 0%, rgba(5, 11, 35, 0.6) 45%, rgba(5, 11, 35, 0.5) 70%, #0a1640 100%);
+  }
+}
+
+/* Phones: no 3D figure (hero.js never downloads Three.js). The hero is
+   the photograph, the promise and both actions in the first screen. */
+@media (max-width: 639px) {
+  .hero-scene {
     display: none;
+  }
+
+  .hero-stage {
+    padding-bottom: 56px;
+  }
+}
+
+/* Phones: copy spacing and stacked actions. */
+@media (max-width: 639px) {
+  .hero-stage {
+    padding-top: calc(var(--nav-h) + 28px);
   }
 
   .hero-copy .actions {

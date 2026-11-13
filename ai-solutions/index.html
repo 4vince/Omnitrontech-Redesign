@@ -28,7 +28,15 @@
     <header id="site-nav" class="site-nav" data-page="solutions"></header>
 
     <main id="main" class="page-main">
-      <section class="solutions-hero" aria-labelledby="solutions-title">
+      <section class="solutions-hero tone-navy" data-solutions-hero aria-labelledby="solutions-title">
+        <!-- Backdrop: an AI operations lab at dusk. Scrims in CSS keep the
+             copy (bottom left) readable over it. -->
+        <div class="solutions-hero__photo" data-solutions-photo aria-hidden="true">
+          <picture>
+            <source type="image/webp" srcset="/images/solutions-ops-lab-960.webp 960w, /images/solutions-ops-lab-1672.webp 1672w" sizes="100vw">
+            <img src="/images/solutions-ops-lab-1672.jpg" alt="" width="1672" height="941" decoding="async" fetchpriority="high">
+          </picture>
+        </div>
         <div class="wrap solutions-hero__inner">
           <div class="solutions-hero__copy">
             <h1 id="solutions-title" data-intro>AI that clears <span>routine work.</span></h1>

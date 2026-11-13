@@ -31,23 +31,19 @@
       <section class="hero-track tone-navy" data-hero-track aria-labelledby="hero-title">
         <div class="hero-stage" data-hero-stage>
           <!-- Backdrop: Singapore, Marina Bay at dusk, from a working office.
-               Scrims in CSS keep the copy readable; hero.js eases it from
-               slightly close to full frame as the camera steps back. -->
+               Scrims in CSS keep the copy readable. -->
           <div class="hero-photo" data-hero-photo aria-hidden="true">
             <picture>
               <source type="image/webp" srcset="/images/hero-singapore-office-960.webp 960w, /images/hero-singapore-office-1672.webp 1672w" sizes="100vw">
               <img src="/images/hero-singapore-office-1672.jpg" alt="" width="1672" height="941" decoding="async" fetchpriority="high">
             </picture>
           </div>
-          <!-- Robot scene: the camera starts inside the robot's visor (whose
-               display shows the AI at work) and pulls back to reveal it.
-               Driven by src/js/home/hero.js + src/js/visuals/robot-scene.js. -->
+          <!-- The figure: a holographic brain running on a processor, with
+               glyph rain behind it, on a transparent canvas over the photo.
+               Driven by src/js/home/hero.js + src/js/visuals/brain-scene.js. -->
           <div class="hero-scene" aria-hidden="true">
             <canvas class="scene-canvas" data-scene-canvas></canvas>
-            <div class="hero-fallback" data-hero-fallback></div>
           </div>
-
-          <p class="hero-lens-caption mono" data-hero-caption aria-hidden="true">You&rsquo;re looking through the AI&rsquo;s eyes</p>
 
           <div class="hero-copy" data-hero-copy>
             <div class="hero-copy__title" data-hero-title>

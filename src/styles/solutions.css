@@ -33,6 +33,50 @@ body[data-page="solutions"] main .wrap {
   background: var(--bg);
 }
 
+/* The photograph sits under the backdrop grid (z-index -1) and every
+   child. Scrims: a left fall-off for the copy column, a bottom shade where
+   the copy sits, a short top shade under the nav, and a fade into the
+   first service row. */
+.solutions-hero__photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.solutions-hero__photo picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.solutions-hero__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 45%;
+}
+
+.solutions-hero__photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 11, 35, 0.86) 0%, rgba(5, 11, 35, 0.55) 34%, rgba(5, 11, 35, 0.1) 64%, rgba(5, 11, 35, 0.25) 100%),
+    linear-gradient(180deg, rgba(5, 11, 35, 0.5) 0%, transparent 20%, transparent 45%, rgba(5, 11, 35, 0.7) 82%, #0a1640 100%);
+}
+
+/* Over a photograph the blueprint grid only needs to whisper, and the
+   light pools would wash out its dusk sky. */
+.solutions-hero .backdrop__grid {
+  opacity: 0.32;
+}
+
+.solutions-hero .backdrop__pools {
+  display: none;
+}
+
 .solutions-hero__inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 0.34fr);
@@ -149,7 +193,7 @@ body[data-page="solutions"] main .wrap {
   width: 100%;
   height: 100%;
   opacity: 0;
-  /* Same entrance as the homepage robot: quick fade + settle from 1.04. */
+  /* Scene entrance: quick fade + settle from 1.04. */
   transform: scale(1.04);
   transition:
     opacity var(--dur-reveal) var(--ease-out),

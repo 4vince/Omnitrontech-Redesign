@@ -98,7 +98,21 @@ function initHeroExit() {
   const hero = document.querySelector(".solutions-hero");
   const visual = hero?.querySelector("[data-solutions-visual]");
   const copy = hero?.querySelector(".solutions-hero__copy");
+  const photo = hero?.querySelector("[data-solutions-photo]");
   if (!hero || !visual || !copy) return;
+
+  // The hero is a dark photograph from the first pixel: while it is under
+  // the nav, the nav takes light ink (layout.css, as on the home hero).
+  const nav = document.querySelector("#site-nav");
+  if (nav) {
+    nav.classList.add("is-hero-static");
+    ScrollTrigger.create({
+      trigger: hero,
+      start: "top bottom",
+      end: () => `bottom top+=${nav.offsetHeight || 76}`,
+      toggleClass: { targets: nav, className: "is-on-hero" },
+    });
+  }
 
   const mm = gsap.matchMedia();
   mm.add(`${MOTION_OK} and (min-width: 761px)`, () => {
@@ -108,7 +122,9 @@ function initHeroExit() {
         scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true },
       })
       .to(visual, { yPercent: -12, scale: 0.94, opacity: 0.15 }, 0)
-      .to(copy, { y: -70, opacity: 0.2 }, 0);
+      .to(copy, { y: -70, opacity: 0.2 }, 0)
+      // The room pushes in slowly behind them.
+      .fromTo(photo, { scale: 1 }, { scale: 1.06 }, 0);
   });
 }
 
