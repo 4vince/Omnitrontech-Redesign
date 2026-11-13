@@ -20,7 +20,7 @@ function navLink(item, page, className = "nav-link") {
 function brandMarkup({ compact = false } = {}) {
   return `<a class="brand" href="/" aria-label="Omnitron home">
     <span class="brand-mark" aria-hidden="true">
-      <img src="/omnitron-mark.png" alt="">
+      <img src="/omnitron-mark.png" alt="" width="34" height="34">
     </span>
     <span>Omnitron</span>
     ${compact ? "" : ""}
@@ -104,11 +104,35 @@ export function initNav(lenis) {
   const links = sheet.querySelectorAll("a");
   let lastFocused = null;
 
+  // Dark bands (navy, the blue CTA, the footer): while one sits under the
+  // bar, the bar turns navy glass with light ink instead of laying a light
+  // strip across it. One rect read per dark band per scroll; few bands.
+  // Queried per call: service rows and the footer render after the nav.
+  const DARK = ".tone-navy, .tone-blue, .site-footer";
   const setScrolled = () => {
     header.classList.toggle("is-scrolled", window.scrollY > 28);
+    const probe = (header.offsetHeight || 76) / 2;
+    const onDark = [...document.querySelectorAll(DARK)].some((band) => {
+      const r = band.getBoundingClientRect();
+      return r.top <= probe && r.bottom > probe;
+    });
+    header.classList.toggle("is-on-dark", onDark);
   };
   setScrolled();
-  window.addEventListener("scroll", setScrolled, { passive: true });
+  // At most one check per frame, however often scroll fires.
+  let queued = false;
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        setScrolled();
+      });
+    },
+    { passive: true },
+  );
 
   const focusables = () =>
     [...sheet.querySelectorAll("a[href], button:not([disabled])")].filter(

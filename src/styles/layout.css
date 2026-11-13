@@ -94,7 +94,8 @@
    The hero is navy from its first pixel, so hero.js sets is-hero-static
    and the unscrolled nav takes the light ink too. */
 .site-nav.is-on-hero.is-scrolled,
-.site-nav.is-on-hero.is-hero-static {
+.site-nav.is-on-hero.is-hero-static,
+.site-nav.is-on-dark.is-scrolled {
   color-scheme: dark;
   --ink: #f3f5fb;
   --ink-soft: #d0d7ea;
@@ -103,7 +104,7 @@
   --line-strong: rgba(214, 224, 255, 0.28);
   --line-control: rgba(214, 224, 255, 0.42);
   --blue: #8aa3ff;
-  --nav-bg: rgba(7, 15, 46, 0.72);
+  --nav-bg: rgba(7, 15, 46, 0.96); /* holds even where the blur is unavailable */
 }
 
 .site-nav.is-sheet-open::before {

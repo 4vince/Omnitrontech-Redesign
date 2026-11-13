@@ -6,13 +6,14 @@ import {
   prefersReducedMotion,
   refreshMotion,
   ScrollTrigger,
+  scrollToTarget,
 } from "../core/motion.js";
-import { BEATS, photoAt, titleAt } from "./hero-timing.js";
+import { photoAt, titleAt } from "./hero-timing.js";
 
 /*
  * Homepage hero — "inside the AI's mind".
  *
- * Desktop with full motion: the stage pins for a 300vh track, and one
+ * Desktop with full motion: the stage pins for a 200vh track, and one
  * scroll clock (createScrubDriver over .hero-track) drives two things:
  *   - the brain scene (visuals/brain-scene.js): the camera starts inside
  *     the glass brain, among its amber network, and pulls back out through
@@ -21,13 +22,15 @@ import { BEATS, photoAt, titleAt } from "./hero-timing.js";
  *     progress so copy and 3D can never drift apart
  *
  * Beats (progress p, 0-1; BEATS in hero-timing.js):
- *   0    - 0.08  inside: the network surrounds the centred headline,
- *                 caption + scroll cue visible, the photograph hidden
- *   0.08 - 0.55  pull-back: the headline glides to the left column (it
+ *   0    - 0.08  inside: the network surrounds the centred copy block
+ *                 (headline, subline and both CTAs, so the offer and the
+ *                 next step are there from the first frame), with a
+ *                 "Skip intro" control; the photograph is hidden
+ *   0.08 - 0.55  pull-back: the copy glides to the left column (it
  *                 leads), the camera crosses the cortex wall, the brain
  *                 resolves and slides right (it follows), the office
  *                 photograph fades up behind it
- *   0.55 - 0.9   reveal: subline + CTAs rise in
+ *   0.55 - 0.9   rest: the brain settles right of the copy
  *   0.9  - 1     short hold, then the pin releases into the bridge band
  *
  * Tablets (640-899px) stack: copy first, then the figure centred, no pin.
@@ -38,20 +41,19 @@ import { BEATS, photoAt, titleAt } from "./hero-timing.js";
 
 const PHONE = window.matchMedia("(max-width: 639px)");
 
-const { reveal: REVEAL } = BEATS;
-const START_SCALE = 0.92;
-const START_Y = 0.46; // headline centre at p=0, as a fraction of stage height
+const START_SCALE = 0.94;
+const START_Y = 0.5; // copy-block centre at p=0, as a fraction of stage height
 
 export function initHero() {
   const track = document.querySelector("[data-hero-track]");
   const stage = track?.querySelector("[data-hero-stage]");
   const canvas = track?.querySelector("[data-scene-canvas]");
-  const title = track?.querySelector("[data-hero-title]");
-  const more = track?.querySelector("[data-hero-more]");
+  const glide = track?.querySelector("[data-hero-glide]");
   const caption = track?.querySelector("[data-hero-caption]");
+  const skip = track?.querySelector("[data-hero-skip]");
   const photo = track?.querySelector("[data-hero-photo]");
   const nav = document.querySelector("#site-nav");
-  if (!track || !stage || !canvas || !title || !more) return;
+  if (!track || !stage || !canvas || !glide) return;
 
   let scene = null;
   let started = false;
@@ -64,14 +66,14 @@ export function initHero() {
   const openingMode = () => isDesktop() && !prefersReducedMotion() && !failed;
   const layout = () => (isDesktop() ? "pinned" : "stacked");
 
-  /* Where the headline sits at p=0: centred, a little above the middle.
-     Measured against its resting (left-column) position. */
+  /* Where the copy block sits at p=0: centred on the stage. Measured
+     against its resting (left-column) position. */
   function measureCenter() {
-    const previous = title.style.transform;
-    title.style.transform = "none";
+    const previous = glide.style.transform;
+    glide.style.transform = "none";
     const s = stage.getBoundingClientRect();
-    const r = title.getBoundingClientRect();
-    title.style.transform = previous;
+    const r = glide.getBoundingClientRect();
+    glide.style.transform = previous;
     center.x = s.left + s.width / 2 - (r.left + r.width / 2);
     center.y = s.top + s.height * START_Y - (r.top + r.height / 2);
   }
@@ -80,19 +82,18 @@ export function initHero() {
     measureCenter();
     timeline = gsap.timeline({ paused: true, defaults: { ease: "none" } });
     timeline
-      .addLabel("reveal", REVEAL)
-      .fromTo(caption, { xPercent: -50, y: 0, opacity: 1 }, { xPercent: -50, y: 16, opacity: 0, duration: 0.07 }, 0.02)
+      // autoAlpha, so "Skip intro" leaves the tab order once it has faded.
+      .fromTo(caption, { y: 0, autoAlpha: 1 }, { y: 16, autoAlpha: 0, duration: 0.07 }, 0.03)
       // The shade that keeps the headline legible over the network lifts
       // once the brain has cleared the left column.
-      .fromTo(stage, { "--hero-scrim": 1 }, { "--hero-scrim": 0, duration: 0.2 }, 0.42)
-      .fromTo(more, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, "reveal")
+      .fromTo(stage, { "--hero-scrim": 1 }, { "--hero-scrim": 0, duration: 0.2 }, 0.44)
       // Pad to exactly 1 so timeline progress maps 1:1 onto scroll progress.
       .set({}, {}, 1);
   }
 
-  const setTitleX = gsap.quickSetter(title, "x", "px");
-  const setTitleY = gsap.quickSetter(title, "y", "px");
-  const setTitleScale = gsap.quickSetter(title, "scale");
+  const setTitleX = gsap.quickSetter(glide, "x", "px");
+  const setTitleY = gsap.quickSetter(glide, "y", "px");
+  const setTitleScale = gsap.quickSetter(glide, "scale");
   const setPhotoOpacity = photo ? gsap.quickSetter(photo, "opacity") : () => {};
   const setPhotoScale = photo ? gsap.quickSetter(photo, "scale") : () => {};
 
@@ -111,8 +112,6 @@ export function initHero() {
     if (timeline) {
       timeline.progress(p);
       placeLayers(p);
-      // Keep the CTAs out of the tab order until they are actually visible.
-      more.inert = p < REVEAL;
     }
     scene?.setProgress(p);
   }
@@ -130,9 +129,8 @@ export function initHero() {
     driver = null;
     timeline?.revert();
     timeline = null;
-    gsap.set(title, { clearProps: "transform" });
+    gsap.set(glide, { clearProps: "transform" });
     if (photo) gsap.set(photo, { clearProps: "opacity,transform" });
-    more.inert = false;
   }
 
   // Layout changes (resize, fonts) move the headline's resting position.
@@ -229,6 +227,12 @@ export function initHero() {
       { threshold: 0.01 },
     ).observe(stage);
   }
+
+  // Skip intro: land on the resting composition at the end of the pin.
+  skip?.addEventListener("click", () => {
+    const end = track.getBoundingClientRect().top + window.scrollY + track.offsetHeight - window.innerHeight;
+    scrollToTarget(end, { duration: 1.4 });
+  });
 
   // The pin and the headline's start position are set up straight away,
   // so the first screen is already "inside" while the scene loads.

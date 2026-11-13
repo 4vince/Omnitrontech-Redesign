@@ -71,8 +71,14 @@ export function initSmoothScroll() {
   return lenis;
 }
 
-/** Smoothly scroll to an element or selector, clearing the fixed nav. */
+/** Smoothly scroll to an element or selector (clearing the fixed nav), or
+ *  to an absolute scroll position when given a number. */
 export function scrollToTarget(target, { offset = navOffset(), duration = 1.2 } = {}) {
+  if (typeof target === "number") {
+    if (lenis) lenis.scrollTo(target, { duration, easing: easeOutQuart });
+    else window.scrollTo({ top: target, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    return;
+  }
   const el = typeof target === "string" ? document.querySelector(target) : target;
   if (!el) return;
   if (lenis) {

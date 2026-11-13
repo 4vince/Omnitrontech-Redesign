@@ -105,7 +105,7 @@
   --ink-soft: #33373f;
   --muted: #4e535d;
   --muted-2: #555c67;
-  --placeholder: #737a86; /* 4.6:1: reads as a hint, not as filled-in text */
+  --placeholder: #626976; /* 4.8:1 on the field tint: a hint, not filled-in text */
 
   /* Lines — visible at rest without competing with content */
   --line: rgba(23, 25, 31, 0.14);

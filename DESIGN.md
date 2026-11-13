@@ -139,10 +139,12 @@ The system is full-bleed and band-based. Each section is a plate that runs edge 
 
 Visuals are literal and crisp. Processes are drawn as flow diagrams, numbered steppers and labelled nodes. 3D is welcome but rendered sharply (orthographic, no bloom or fog), never as soft abstract shapes. Copy stays short so the diagrams carry the explanation.
 
-The one exception is the home hero figure: a holographic brain running on a CPU (`src/js/visuals/brain-scene.js`, modelled on `public/Holographic AI Brain Over CPU Platform.png`), glowing (bloom) in cobalt with small amber sparks for the neural nodes, on a transparent canvas over the Singapore office photograph with faint glyph rain behind it. The exception covers that figure only.
+**Dusk heroes, daylight body.** The two product heroes (Home and AI Solutions) open at dusk: real office photography in deep navy under left-hand scrims, light ink, a single Omnitron Blue primary action. Daylight returns on the very next band, a light plate with no rule, and the body of every page stays in the bone / paper / navy alternation below. Contact opens in daylight. The dusk is the view from the control room before the day starts; it is never extended into the body.
+
+The one exception to the crisp-3D rule is the home hero figure: a holographic brain running on a CPU (`src/js/visuals/brain-scene.js`, modelled on `public/Holographic AI Brain Over CPU Platform.png`), glowing (bloom) in cobalt with small amber sparks for the neural nodes, on a transparent canvas over the Singapore office photograph with faint glyph rain behind it. The exception covers that figure only.
 
 **Key Characteristics:**
-- Full-bleed bands with deliberate tone blocking (bone → navy → paper → navy → blue CTA → footer navy).
+- Full-bleed bands with deliberate tone blocking (dusk hero → bone → paper → navy → blue CTA → footer navy).
 - A blueprint grid with light pools behind every section; dead space is textured, never blank.
 - One accent: Omnitron Blue. No orange or other warm accent.
 - A confident grotesque display (Archivo) with tight tracking, calm Manrope body text and JetBrains Mono uppercase labels.
@@ -174,6 +176,8 @@ A restrained daylight palette: warm bone neutrals, cool charcoal ink, a single s
 ### Named Rules
 **The One Signal Rule.** Omnitron Blue is the only accent. Orange and other warm accents are retired. Never add a second hue for emphasis; use weight, size or the navy tone instead.
 
+**The Scene Palette Exception.** Inside the AI Solutions service scenes (`src/js/visuals/service-scenes/`), colour carries meaning: each kind of object (source, step, check, result) keeps one muted hue so a diagram reads at a glance. Those hues live only inside the scene canvas; the UI around them (type, controls, links) stays on the One Signal Rule.
+
 **The Tone Scope Rule.** A section never hard-codes colours. It picks a tone (`default`, `--paper`, `.tone-navy`, `.tone-blue`, footer) and every token inside it is re-scoped. Light cards may sit inside navy bands via `.tone-light`.
 
 **The One Blue Block Rule.** Only the closing CTA band uses Omnitron Blue as a background. Every other band alternates between light and navy.
@@ -203,7 +207,7 @@ A restrained daylight palette: warm bone neutrals, cool charcoal ink, a single s
 
 The layout is full-bleed: wrappers span the viewport (`max-width: 100%`) and the fluid gutter (`clamp(16px, 2.4vw, 44px)`) is the only inset. Text width is capped per block with `ch` values, so wide screens gain composition, not longer lines. Hairlines run edge to edge outside the wrappers. Sections are tall plates with generous vertical padding (service rows use `clamp(84px, 11vw, 172px)`), and the 76px nav is fixed above them. The spacing scale runs from 0.375rem to 7.5rem in eight steps.
 
-Two-column compositions pair copy with a substantial visual (around 0.82fr / 1.18fr on service rows). The visual is sized to fill its side so no wide blank gutter remains. Service rows use a sticky left rail with an outlined index numeral. The home hero opens inside the brain on desktop: the stage pins for a 300vh track and scroll pulls the camera out through the cortex (the folds flash as it passes), while the centred headline glides to the left column, the office photograph fades up and the subline and CTAs rise in. It rests as one screen: headline column left, the 3D brain figure on the right, running a seven-second thought cycle. Tablets, reduced motion and no-WebGL get the resting layout without the pin; phones get the photo and copy only.
+Two-column compositions pair copy with a substantial visual (around 0.82fr / 1.18fr on service rows). The visual is sized to fill its side so no wide blank gutter remains. Service rows use a sticky left rail with an outlined index numeral. The home hero opens inside the brain on desktop: the stage pins for a 200vh track and scroll pulls the camera out through the cortex (the folds flash as it passes), while the centred copy block (headline, subline and both CTAs, visible from the first frame) glides to the left column and the office photograph fades up. A "Skip intro" control in the scroll cue jumps to the resting composition. It rests as one screen: headline column left, the 3D brain figure on the right, running a seven-second thought cycle. Tablets, reduced motion and no-WebGL get the resting layout without the pin; phones get the photo and copy only.
 
 Breakpoints are content-driven, clustering around 1180px, 1000px, 960px (nav collapses into the mobile sheet), 760px, 560px and 480px. Below about 900px, columns stack, WebGL scenes switch to static fallbacks, and every control keeps a 44px minimum target.
 
@@ -258,7 +262,7 @@ The form language pairs soft pills with gently rounded panels. Interactive contr
 - **Error:** danger border and danger-tint fill, with a small icon and message below in danger red.
 
 ### Navigation
-- A fixed 76px bar on near-opaque Warm Bone (92%), which stays clean over navy bands. Links are Manrope 520 at 0.9rem in muted text, turning ink on hover or current with a 1px blue underline that scales in from the left. The pill CTA sits on the right. At 960px and below, links collapse into a circular 44px toggle that opens a full mobile sheet.
+- A fixed 76px bar on near-opaque Warm Bone (92%); over dark bands (navy, the blue CTA, the footer) it turns navy glass with light ink. Links are Manrope 520 at 0.9rem in muted text, turning ink on hover or current with a 1px blue underline that scales in from the left. The pill CTA sits on the right. At 960px and below, links collapse into a circular 44px toggle that opens a full mobile sheet.
 
 ### Flow Diagram (signature)
 - Three or more steps in a row, each opened by a top hairline and a 6px dot. Each step has a mono uppercase index ("REQUEST", "OMNITRON", "RESULT") above an Archivo 540 label. The final step, the person-decides or result step, carries the blue line, blue dot with glow, and blue label. This is the system's core visual sentence: work moves left to right and ends with a person.
@@ -277,7 +281,7 @@ The form language pairs soft pills with gently rounded panels. Interactive contr
 - **Do** give every 3D or scroll scene a static fallback for small screens and reduced motion.
 
 ### Don't:
-- **Don't** reintroduce orange or any second accent hue in UI. (The home hero's amber neural sparks are part of its image, not a UI accent.)
+- **Don't** reintroduce orange or any second accent hue in UI. (The home hero's amber neural sparks and the service scenes' meaning colours live inside their canvases, not in the UI.)
 - **Don't** render concepts as abstract, blurry 3D (bloom, fog, soft blobs). Keep 3D orthographic and crisp, outside the home hero.
 - **Don't** use a serif or playful geometric display face, or loosen Archivo's tight tracking.
 - **Don't** set body copy in JetBrains Mono, or use pure black text or neutral grey shadows.
