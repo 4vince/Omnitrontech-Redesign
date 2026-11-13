@@ -1,90 +1,160 @@
-import { afterIntro, gsap, isDesktop, prefersReducedMotion, ScrollTrigger } from "../core/motion.js";
+import {
+  afterIntro,
+  createScrubDriver,
+  gsap,
+  isDesktop,
+  prefersReducedMotion,
+  refreshMotion,
+  ScrollTrigger,
+} from "../core/motion.js";
+import { BEATS, photoAt, titleAt } from "./hero-timing.js";
 
 /*
- * Homepage hero — a holographic brain running on a processor.
+ * Homepage hero — "inside the AI's mind".
  *
- * One full screen over the Singapore office photograph: the headline
- * column on the left, the 3D figure (visuals/brain-scene.js) on a
- * transparent canvas with glyph rain behind it, brain on the right. The
- * figure powers on once the copy has landed, then runs its thought cycle.
+ * Desktop with full motion: the stage pins for a 300vh track, and one
+ * scroll clock (createScrubDriver over .hero-track) drives two things:
+ *   - the brain scene (visuals/brain-scene.js): the camera starts inside
+ *     the glass brain, among its amber network, and pulls back out through
+ *     the cortex to the resting framing, brain on the right
+ *   - a paused GSAP timeline for the HTML layers, scrubbed to the same
+ *     progress so copy and 3D can never drift apart
  *
- * Scroll: as the hero leaves, the camera lifts a little, the photo pushes
- * in slowly and the copy drifts up and dims, so the hand-off into the
- * bridge band is a parallax, not a cut.
+ * Beats (progress p, 0-1; BEATS in hero-timing.js):
+ *   0    - 0.08  inside: the network surrounds the centred headline,
+ *                 caption + scroll cue visible, the photograph hidden
+ *   0.08 - 0.55  pull-back: the headline glides to the left column (it
+ *                 leads), the camera crosses the cortex wall, the brain
+ *                 resolves and slides right (it follows), the office
+ *                 photograph fades up behind it
+ *   0.55 - 0.9   reveal: subline + CTAs rise in
+ *   0.9  - 1     short hold, then the pin releases into the bridge band
  *
- * Tablets (640-899px) stack: copy first, then the figure centred. Phones
- * never download Three.js: the photo and copy alone. Reduced motion gets
- * one composed still frame. No WebGL → the photo alone.
+ * Tablets (640-899px) stack: copy first, then the figure centred, no pin.
+ * Reduced motion: the resting composition as one still frame, no pin.
+ * Phones never download Three.js: the photo and copy alone. No WebGL →
+ * the resting layout over the photo (.is-static), no pin.
  */
 
 const PHONE = window.matchMedia("(max-width: 639px)");
+
+const { reveal: REVEAL } = BEATS;
+const START_SCALE = 0.92;
+const START_Y = 0.46; // headline centre at p=0, as a fraction of stage height
 
 export function initHero() {
   const track = document.querySelector("[data-hero-track]");
   const stage = track?.querySelector("[data-hero-stage]");
   const canvas = track?.querySelector("[data-scene-canvas]");
-  const copy = track?.querySelector("[data-hero-copy]");
+  const title = track?.querySelector("[data-hero-title]");
+  const more = track?.querySelector("[data-hero-more]");
+  const caption = track?.querySelector("[data-hero-caption]");
   const photo = track?.querySelector("[data-hero-photo]");
   const nav = document.querySelector("#site-nav");
-  if (!track || !stage || !canvas) return;
+  if (!track || !stage || !canvas || !title || !more) return;
 
   let scene = null;
-  let visible = true;
   let started = false;
+  let failed = false;
+  let driver = null;
+  let timeline = null;
+  let visible = true;
+  const center = { x: 0, y: 0 };
 
-  const layout = () => (isDesktop() ? "wide" : "stacked");
+  const openingMode = () => isDesktop() && !prefersReducedMotion() && !failed;
+  const layout = () => (isDesktop() ? "pinned" : "stacked");
 
-  // The hero is navy from the first pixel: the nav takes light ink at once.
-  nav?.classList.add("is-hero-static");
-  if (nav) {
-    ScrollTrigger.create({
-      trigger: track,
-      start: "top bottom",
-      end: () => `bottom top+=${nav.offsetHeight || 76}`,
-      toggleClass: { targets: nav, className: "is-on-hero" },
-    });
+  /* Where the headline sits at p=0: centred, a little above the middle.
+     Measured against its resting (left-column) position. */
+  function measureCenter() {
+    const previous = title.style.transform;
+    title.style.transform = "none";
+    const s = stage.getBoundingClientRect();
+    const r = title.getBoundingClientRect();
+    title.style.transform = previous;
+    center.x = s.left + s.width / 2 - (r.left + r.width / 2);
+    center.y = s.top + s.height * START_Y - (r.top + r.height / 2);
   }
 
-  // Scroll-out parallax (desktop, full motion only).
-  const mm = gsap.matchMedia();
-  mm.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
-    const trigger = ScrollTrigger.create({
-      trigger: track,
-      start: "top top",
-      end: "bottom top",
-      onUpdate: (self) => scene?.setScroll(self.progress),
-    });
-    const drift = copy
-      ? gsap.to(copy, {
-          yPercent: -18,
-          opacity: 0.25,
-          ease: "none",
-          scrollTrigger: { trigger: track, start: "top top", end: "bottom top", scrub: true },
-        })
-      : null;
-    const push = photo
-      ? gsap.fromTo(
-          photo,
-          { scale: 1 },
-          { scale: 1.06, ease: "none", scrollTrigger: { trigger: track, start: "top top", end: "bottom top", scrub: true } },
-        )
-      : null;
-    return () => {
-      trigger.kill();
-      push?.scrollTrigger?.kill();
-      push?.kill();
-      if (photo) gsap.set(photo, { clearProps: "transform" });
-      drift?.scrollTrigger?.kill();
-      drift?.kill();
-      if (copy) gsap.set(copy, { clearProps: "transform,opacity" });
-      scene?.setScroll(0);
-    };
+  function buildTimeline() {
+    measureCenter();
+    timeline = gsap.timeline({ paused: true, defaults: { ease: "none" } });
+    timeline
+      .addLabel("reveal", REVEAL)
+      .fromTo(caption, { xPercent: -50, y: 0, opacity: 1 }, { xPercent: -50, y: 16, opacity: 0, duration: 0.07 }, 0.02)
+      // The shade that keeps the headline legible over the network lifts
+      // once the brain has cleared the left column.
+      .fromTo(stage, { "--hero-scrim": 1 }, { "--hero-scrim": 0, duration: 0.2 }, 0.42)
+      .fromTo(more, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, "reveal")
+      // Pad to exactly 1 so timeline progress maps 1:1 onto scroll progress.
+      .set({}, {}, 1);
+  }
+
+  const setTitleX = gsap.quickSetter(title, "x", "px");
+  const setTitleY = gsap.quickSetter(title, "y", "px");
+  const setTitleScale = gsap.quickSetter(title, "scale");
+  const setPhotoOpacity = photo ? gsap.quickSetter(photo, "opacity") : () => {};
+  const setPhotoScale = photo ? gsap.quickSetter(photo, "scale") : () => {};
+
+  function placeLayers(p) {
+    const k = titleAt(p);
+    setTitleX(center.x * (1 - k));
+    setTitleY(center.y * (1 - k));
+    setTitleScale(START_SCALE + (1 - START_SCALE) * k);
+    // The office settles in from slightly close as the camera clears the brain.
+    const ph = photoAt(p);
+    setPhotoOpacity(ph);
+    setPhotoScale(1.12 - 0.12 * ph);
+  }
+
+  function applyProgress(p) {
+    if (timeline) {
+      timeline.progress(p);
+      placeLayers(p);
+      // Keep the CTAs out of the tab order until they are actually visible.
+      more.inert = p < REVEAL;
+    }
+    scene?.setProgress(p);
+  }
+
+  function setupScroll() {
+    if (driver) return;
+    track.classList.add("is-opening");
+    if (!timeline) buildTimeline();
+    driver = createScrubDriver({ trigger: track, onProgress: applyProgress });
+  }
+
+  function teardownScroll() {
+    track.classList.remove("is-opening");
+    driver?.kill();
+    driver = null;
+    timeline?.revert();
+    timeline = null;
+    gsap.set(title, { clearProps: "transform" });
+    if (photo) gsap.set(photo, { clearProps: "opacity,transform" });
+    more.inert = false;
+  }
+
+  // Layout changes (resize, fonts) move the headline's resting position.
+  ScrollTrigger.addEventListener("refresh", () => {
+    if (!timeline || !driver) return;
+    measureCenter();
+    timeline.invalidate();
+    applyProgress(driver.progress);
   });
 
   function applyMode() {
+    if (openingMode()) {
+      setupScroll();
+      refreshMotion();
+    } else {
+      teardownScroll();
+      refreshMotion();
+    }
     if (!scene) return;
     scene.setLayout(layout());
-    scene.setMotionEnabled(!prefersReducedMotion());
+    scene.setProgress(driver ? driver.progress : 1);
+    if (started) scene.setMotionEnabled(!prefersReducedMotion());
     if (!visible) scene.pause();
   }
 
@@ -97,20 +167,38 @@ export function initHero() {
       scene = null;
     }
     if (!scene) {
+      // No WebGL: the resting layout over the photograph, no pin.
+      failed = true;
       stage.classList.add("has-fallback");
+      track.classList.add("is-static");
+      applyMode();
       return;
     }
     scene.setLayout(layout());
+    scene.setProgress(driver ? driver.progress : 1);
     // Power on once the headline has landed, so the two don't compete.
-    // Until then the stage shows its own navy; the first frame is dark.
     await afterIntro("visual");
     stage.classList.add("has-webgl");
     started = true;
     applyMode();
   }
 
-  // Parallax toward the cursor. Mouse only: on touch, pointermove fires
-  // mid-scroll and the camera would twitch.
+  // The hero is navy from the first pixel: the nav takes light ink at once.
+  nav?.classList.add("is-hero-static");
+  if (nav) {
+    // Starts before the track reaches the top, so it is already active at
+    // scroll 0 (a start exactly at 0 is not "active" until you scroll).
+    ScrollTrigger.create({
+      trigger: track,
+      start: "top bottom",
+      end: () => `bottom top+=${nav.offsetHeight || 76}`,
+      toggleClass: { targets: nav, className: "is-on-hero" },
+    });
+  }
+
+  // Parallax toward the cursor (the scene fades it in at the reveal).
+  // Mouse only: on touch, pointermove fires mid-scroll and the camera
+  // would twitch.
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const onPointerMove = (event) => {
     scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
@@ -142,6 +230,10 @@ export function initHero() {
     ).observe(stage);
   }
 
+  // The pin and the headline's start position are set up straight away,
+  // so the first screen is already "inside" while the scene loads.
+  if (openingMode()) setupScroll();
+
   let sceneRequested = false;
   const requestScene = () => {
     if (sceneRequested || PHONE.matches) return;
@@ -153,8 +245,7 @@ export function initHero() {
 
   const onModeChange = () => {
     syncPointer();
-    if (started) applyMode();
-    else scene?.setLayout(layout());
+    applyMode();
   };
   window.matchMedia("(min-width: 900px)").addEventListener?.("change", onModeChange);
   window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", onModeChange);

@@ -17,6 +17,9 @@ import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometr
  *     their neighbours, with pulses running along the wires.
  *   - circuit traces: PCB-style runs leaving the brain left and right,
  *     each ending in a pad.
+ *   - interior: a deeper amber network suspended inside the cerebrum, for
+ *     the hero's opening, where the camera starts inside the brain and
+ *     pulls back out through the cortex (brain-scene.js). Faint afterwards.
  *
  * Local frame: front of the brain faces -x (toward the headline), up is +y,
  * the camera looks along -z. Everything shares one frame so the reveal and
@@ -71,6 +74,7 @@ const HOLO_FRAGMENT = /* glsl */ `
   uniform float uWave;
   uniform float uWaveAmp;
   uniform float uFace;
+  uniform float uExitFlash;
   uniform vec3 uDeep;
   uniform vec3 uCobalt;
   uniform vec3 uLine;
@@ -116,6 +120,8 @@ const HOLO_FRAGMENT = /* glsl */ `
     vec3 col = uDeep * 0.35 + uCobalt * (fres * 0.5 + diff * 0.05);
     col += uLine * lines * (0.3 + 0.55 * fres + 1.5 * wave);
     col += uCobalt * wave * 0.25;
+    // The camera passing out through the cortex wall lights the folds.
+    col += uLine * (sulci + feature * 0.6) * uExitFlash * 1.3;
     col += uIce * spec * 0.3;
     col += uIce * scan * 1.4;
 
@@ -139,7 +145,8 @@ const SPARK_VERTEX = /* glsl */ `
     tw = pow(max(tw, 0.0), 7.0);
     float front = mix(${BRAIN_BOUNDS.bottom.toFixed(2)}, ${BRAIN_BOUNDS.top.toFixed(2)}, uReveal);
     vA = (0.12 + 0.88 * tw) * step(position.y, front - 0.04);
-    gl_PointSize = uPx * (1.1 + 2.4 * tw) * (14.0 / -mv.z);
+    // Capped: from inside the brain the near wall is very close.
+    gl_PointSize = min(uPx * (1.1 + 2.4 * tw) * (14.0 / -mv.z), uPx * 14.0);
   }
 `;
 
@@ -177,6 +184,7 @@ const WIRE_FRAGMENT = /* glsl */ `
   uniform float uBurstPos;
   uniform float uBase;
   uniform float uTailFade;
+  uniform float uGain;
   uniform vec3 uColor;
   uniform vec3 uHot;
   varying float vT;
@@ -193,7 +201,7 @@ const WIRE_FRAGMENT = /* glsl */ `
     float tail = 1.0 - uTailFade * smoothstep(0.35, 1.0, vT);
 
     vec3 col = uColor * uBase * tail + uHot * (pulse * 0.85 + burst * 2.4) * tail;
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(col * uGain, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -217,7 +225,8 @@ const NODE_VERTEX = /* glsl */ `
     flare = max(flare, uThought * (0.55 + 0.45 * fract(aSeed * 7.13)));
     vFlare = flare;
     vA = smoothstep(aSeed * 0.5, aSeed * 0.5 + 0.5, uReveal);
-    gl_PointSize = uPx * aSize * (0.75 + 0.65 * flare) * (14.0 / -mv.z);
+    // Capped so a node the camera passes close to never fills the screen.
+    gl_PointSize = min(uPx * aSize * (0.75 + 0.65 * flare) * (14.0 / -mv.z), uPx * 72.0);
   }
 `;
 
@@ -507,6 +516,7 @@ function buildNetwork(cerebrum, rng, palette, uniforms) {
       uBurstPos: uniforms.uThoughtPos,
       uBase: { value: 0.12 },
       uTailFade: { value: 0 },
+      uGain: { value: 1 },
       uColor: { value: palette.amberDim.clone() },
       uHot: { value: palette.amber.clone() },
     },
@@ -591,6 +601,7 @@ function buildTraces(rng, palette, uniforms, { leftReach, rightReach }) {
       uBurstPos: uniforms.uTraceBurstPos,
       uBase: { value: 0.42 },
       uTailFade: { value: 0.45 },
+      uGain: { value: 1 },
       uColor: { value: palette.line.clone() },
       uHot: { value: palette.ice.clone() },
     },
@@ -620,6 +631,121 @@ function buildTraces(rng, palette, uniforms, { leftReach, rightReach }) {
   return { lines, pads: new THREE.Points(padGeometry, padMaterial) };
 }
 
+/*
+ * The interior: nodes suspended inside the cerebrum, each wired to its
+ * nearest neighbours. The hero opens with the camera at INTERIOR_EYE, so
+ * nodes keep clear of it, and their seeds are ordered by distance from it:
+ * on load the network ignites outward from behind the headline.
+ */
+export const INTERIOR_EYE = new THREE.Vector3(0, 0.12, 0.35);
+
+function buildInterior(rng, palette, uniforms) {
+  const nodes = [];
+  const p = new THREE.Vector3();
+  let guard = 0;
+  while (nodes.length < 72 && guard < 20000) {
+    guard += 1;
+    p.set((rng() * 2 - 1) * 1.08, 0.1 + (rng() * 2 - 1) * 0.62, (rng() * 2 - 1) * 0.84);
+    const e = (p.x / 1.08) ** 2 + ((p.y - 0.1) / 0.62) ** 2 + (p.z / 0.84) ** 2;
+    if (e > 1) continue;
+    if (p.distanceTo(INTERIOR_EYE) < 0.5) continue;
+    if (nodes.some((n) => n.distanceTo(p) < 0.2)) continue;
+    nodes.push(p.clone());
+  }
+
+  const far = Math.max(...nodes.map((n) => n.distanceTo(INTERIOR_EYE)));
+  const seeds = nodes.map((n) => Math.min(1, (n.distanceTo(INTERIOR_EYE) / far) * 0.85 + rng() * 0.15));
+
+  const edges = new Set();
+  nodes.forEach((a, i) => {
+    nodes
+      .map((b, j) => ({ j, d: a.distanceTo(b) }))
+      .filter(({ j }) => j !== i)
+      .sort((x, y) => x.d - y.d)
+      .slice(0, 3)
+      .forEach(({ j }) => edges.add(i < j ? `${i}-${j}` : `${j}-${i}`));
+  });
+
+  const linePos = [];
+  const lineT = [];
+  const lineSeed = [];
+  const steps = 10;
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const bow = new THREE.Vector3();
+  [...edges].forEach((key) => {
+    const [i, j] = key.split("-").map(Number);
+    // Fire away from the eye, so pulses read as thought spreading outward.
+    const [from, to, seed] = seeds[i] <= seeds[j] ? [nodes[i], nodes[j], seeds[i]] : [nodes[j], nodes[i], seeds[j]];
+    bow.set(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(0.12);
+    for (let s = 0; s < steps; s += 1) {
+      const t0 = s / steps;
+      const t1 = (s + 1) / steps;
+      a.lerpVectors(from, to, t0).addScaledVector(bow, Math.sin(t0 * Math.PI));
+      b.lerpVectors(from, to, t1).addScaledVector(bow, Math.sin(t1 * Math.PI));
+      linePos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      lineT.push(t0, t1);
+      lineSeed.push(seed, seed);
+    }
+  });
+
+  const wireGeometry = new THREE.BufferGeometry();
+  wireGeometry.setAttribute("position", new THREE.Float32BufferAttribute(linePos, 3));
+  wireGeometry.setAttribute("aT", new THREE.Float32BufferAttribute(lineT, 1));
+  wireGeometry.setAttribute("aSeed", new THREE.Float32BufferAttribute(lineSeed, 1));
+  const wires = new THREE.LineSegments(
+    wireGeometry,
+    new THREE.ShaderMaterial({
+      ...additive,
+      uniforms: {
+        uTime: uniforms.uTime,
+        uReveal: uniforms.uInteriorReveal,
+        uBurst: uniforms.uThought,
+        uBurstPos: uniforms.uThoughtPos,
+        uBase: { value: 0.16 },
+        uTailFade: { value: 0 },
+        uGain: uniforms.uInteriorGain,
+        uColor: { value: palette.amberDim.clone() },
+        uHot: { value: palette.amber.clone() },
+      },
+      vertexShader: WIRE_VERTEX,
+      fragmentShader: WIRE_FRAGMENT,
+    }),
+  );
+
+  // Mostly amber (thought); one in five cobalt (the machine).
+  const makePoints = (list, core, halo) => {
+    const geometry = new THREE.BufferGeometry().setFromPoints(list.map((k) => nodes[k]));
+    geometry.setAttribute("aSeed", new THREE.Float32BufferAttribute(list.map((k) => seeds[k]), 1));
+    geometry.setAttribute("aSize", new THREE.Float32BufferAttribute(list.map(() => 2.6 + rng() * 2.2), 1));
+    return new THREE.Points(
+      geometry,
+      new THREE.ShaderMaterial({
+        ...additive,
+        uniforms: {
+          uTime: uniforms.uTime,
+          uReveal: uniforms.uInteriorReveal,
+          uThought: uniforms.uThought,
+          uPx: uniforms.uPx,
+          uCore: { value: core.clone() },
+          uHalo: { value: halo.clone() },
+          uGain: uniforms.uInteriorGain,
+        },
+        vertexShader: NODE_VERTEX,
+        fragmentShader: NODE_FRAGMENT,
+      }),
+    );
+  };
+  const amber = [];
+  const cobalt = [];
+  nodes.forEach((_, k) => (rng() < 0.2 ? cobalt : amber).push(k));
+  return {
+    wires,
+    amber: makePoints(amber, palette.amberCore, palette.amber),
+    cobalt: makePoints(cobalt, palette.ice, palette.line),
+  };
+}
+
 /**
  * Build the brain. `uniforms` are shared uniform objects owned by the
  * scene (time, reveal stages, thought wave), so one update drives every part.
@@ -643,7 +769,8 @@ export function buildBrain({ palette, uniforms, traceReach }) {
         uReveal: uniforms.uReveal,
         uWave: uniforms.uWave,
         uWaveAmp: uniforms.uWaveAmp,
-        uFace: { value: face },
+        uFace: face,
+        uExitFlash: uniforms.uExitFlash,
         uDeep: { value: palette.deep.clone() },
         uCobalt: { value: palette.cobalt.clone() },
         uLine: { value: palette.line.clone() },
@@ -657,9 +784,11 @@ export function buildBrain({ palette, uniforms, traceReach }) {
   root.name = "brain";
 
   // Far wall first, dimmer: the folds behind read through the glass.
-  const back = new THREE.Mesh(shell, makeShell(THREE.BackSide, 0.24));
+  // From inside the brain this is the wall you see; the scene raises it
+  // (uniforms.uBackFace) while the camera is in there.
+  const back = new THREE.Mesh(shell, makeShell(THREE.BackSide, uniforms.uBackFace));
   back.renderOrder = 1;
-  const front = new THREE.Mesh(shell, makeShell(THREE.FrontSide, 1));
+  const front = new THREE.Mesh(shell, makeShell(THREE.FrontSide, { value: 1 }));
   front.renderOrder = 2;
   root.add(back, front);
 
@@ -672,6 +801,12 @@ export function buildBrain({ palette, uniforms, traceReach }) {
   traces.lines.renderOrder = 0;
   traces.pads.renderOrder = 0;
   root.add(sparkles, network.wires, network.points, traces.lines, traces.pads);
+
+  const interior = buildInterior(rng, palette, uniforms);
+  interior.wires.renderOrder = 3;
+  interior.amber.renderOrder = 4;
+  interior.cobalt.renderOrder = 4;
+  root.add(interior.wires, interior.amber, interior.cobalt);
 
   cerebrum.dispose();
   return { root };

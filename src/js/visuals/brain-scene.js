@@ -6,7 +6,8 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { getRendererInfo } from "../core/scene-quality.js";
-import { buildBrain } from "./brain-model.js";
+import { BEATS, pullAt, slideAt, smooth } from "../home/hero-timing.js";
+import { buildBrain, INTERIOR_EYE } from "./brain-model.js";
 import { createMatrixRain } from "./matrix-rain.js";
 
 /**
@@ -29,12 +30,22 @@ import { createMatrixRain } from "./matrix-rain.js";
  *      the nodes flare, and the signal leaves along the circuit traces.
  *   3. Ambient: the brain floats and turns a few degrees, sparkles
  *      twinkle, LEDs chase, the rain falls.
- *   4. Pointer parallax (desktop) and a gentle scroll lift.
+ *   4. Pointer parallax (desktop), once the figure is revealed.
+ *
+ * The opening (layout "pinned", desktop): scroll progress (setProgress)
+ * drives the camera from INTERIOR_EYE, inside the cerebrum among a deeper
+ * amber network, back out through the cortex wall (the folds flash as it
+ * passes) to the resting framing, brain right of the headline. The pull is
+ * exponential in distance so it reads as one steady speed; the lens narrows
+ * from wide (immersive) to the resting 28°. Curves: home/hero-timing.js.
  *
  * Reduced motion renders one composed still frame mid-thought.
  */
 
 const FOV = 28;
+const RAIN_OPACITY = 0.5;
+const START_FOV = 50; // inside the brain: wide, so the network surrounds you
+const WALL_Z = 1.06; // the cortex wall in front of INTERIOR_EYE, brain-local z
 const BRAIN_SCALE = 1.3;
 const BRAIN_Y = 1.3;
 const CHIP = new THREE.Vector3(0.35, -1.1, 0.3); // die top centre
@@ -360,15 +371,15 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     running: false,
     disposed: false,
     contextLost: false,
-    layout: "wide", // "wide" (brain right of the headline) | "stacked" (brain centred)
+    layout: "pinned", // "pinned" (opening + brain right of the headline) | "stacked" (brain centred)
     aspect: 16 / 9,
     clock: 0,
     pointerX: 0,
     pointerY: 0,
     lookX: 0,
     lookY: 0,
-    scroll: 0,
-    scrollEased: 0,
+    progress: 1, // opening scroll progress, 0 (inside) → 1 (resting)
+    fov: FOV,
   };
 
   const uniforms = {
@@ -388,6 +399,10 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     uTraces: { value: 0 },
     uTraceBurst: { value: 0 },
     uTraceBurstPos: { value: 0 },
+    uInteriorReveal: { value: 0 },
+    uInteriorGain: { value: 0.22 },
+    uBackFace: { value: 0.24 },
+    uExitFlash: { value: 0 },
   };
 
   const scene = new THREE.Scene();
@@ -411,7 +426,7 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
   scene.add(chipLight, keyLight, rimLight, hemi);
 
   // The rain stays put behind the figure while the brain floats.
-  const rain = createMatrixRain({ opacity: 0.5 });
+  const rain = createMatrixRain({ opacity: RAIN_OPACITY });
   rain.mesh.scale.set(1.25, 1.1, 1.25);
   rain.mesh.position.set(0.25, 0.3, 1.6);
   scene.add(rain.mesh);
@@ -462,22 +477,49 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     return { distance: h / (2 * halfTan), shiftX: 0.46, shiftY: 0.24, pitch: 0.1 };
   }
 
+  const EYE_D = INTERIOR_EYE.z * BRAIN_SCALE; // camera distance from the brain's mid-plane at p=0
+  const EYE_Y = BRAIN_Y + INTERIOR_EYE.y * BRAIN_SCALE;
+  const opening = () => state.layout === "pinned";
+  // Where along the pull (0-1) the camera crosses the cortex wall.
+  let wallU = 0.2;
+
   function placeCamera(intro) {
     const f = framing();
-    // Power-on: start a touch closer and lower, settle back.
-    const settle = 1 - easeOut(intro);
-    const distance = f.distance * (1 - 0.07 * settle) * (1 - 0.04 * state.scrollEased);
-    const halfH = distance * halfTan;
+    const open = opening();
+    const p = open ? state.progress : 1;
+    const u = pullAt(p);
+    const slide = open ? slideAt(p) : 1;
+    // Power-on (static layouts only): start a touch closer, settle back.
+    const settle = open ? 0 : 1 - easeOut(intro);
+    const endD = f.distance * (1 - 0.07 * settle);
+    wallU = Math.log((WALL_Z * BRAIN_SCALE) / EYE_D) / Math.log(endD / EYE_D);
+    // Exponential in distance, so the pull reads as one steady speed, and
+    // front-loaded (uD runs ahead of u) so the brain has shrunk clear of
+    // the copy by the time the subline and CTAs arrive.
+    const uD = open ? 1 - (1 - u) ** 1.9 : 1;
+    const d = EYE_D * (endD / EYE_D) ** uD;
+
+    const fov = lerp(START_FOV, FOV, open ? smooth(0, 0.6, u) : 1);
+    if (fov !== state.fov) {
+      state.fov = fov;
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+    const halfH = d * Math.tan(THREE.MathUtils.degToRad(fov / 2));
     const halfW = halfH * state.aspect;
-    const centerY = BRAIN_Y + 0.05 * BRAIN_SCALE;
-    lookAt.set(-halfW * f.shiftX, centerY - halfH * f.shiftY + state.scrollEased * 0.9, 0);
-    const pitch = f.pitch - 0.03 * settle;
+    const centerY = lerp(EYE_Y, BRAIN_Y + 0.05 * BRAIN_SCALE, open ? smooth(0, 0.5, u) : 1);
+    const lift = open ? smooth(0.15, 0.75, u) : 1;
+    lookAt.set(-halfW * f.shiftX * slide, centerY - halfH * f.shiftY * lift, 0);
+    const pitch = (f.pitch - 0.03 * settle) * (open ? u : 1);
+    // The cursor only steers once the figure is revealed.
+    const follow = open ? smooth(BEATS.reveal, BEATS.hold, p) : 1;
     camera.position.set(
-      lookAt.x + state.lookX * 0.45,
-      lookAt.y + Math.sin(pitch) * distance - state.lookY * 0.25 - 0.2 * settle,
-      Math.cos(pitch) * distance,
+      lookAt.x + state.lookX * 0.45 * follow,
+      lookAt.y + Math.sin(pitch) * d - state.lookY * 0.25 * follow - 0.2 * settle,
+      Math.cos(pitch) * d,
     );
     camera.lookAt(lookAt);
+    return { u: uD, follow };
   }
 
   /* ── Timeline ────────────────────────────────────────────────────── */
@@ -491,7 +533,12 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     // 1. Power-on.
     const power = easeOut(span(t, 0.0, 0.8));
     const streams = easeOut(span(t, 0.35, 1.3));
-    const reveal = easeInOut(span(t, 0.9, 2.6));
+    const open = opening();
+    // Inside the brain the walls build around you fast; from outside the
+    // shell scans up from the stem.
+    const reveal = open ? easeInOut(span(t, 0.1, 1.4)) : easeInOut(span(t, 0.9, 2.6));
+    // The interior ignites outward from behind the headline.
+    const interior = open ? easeOut(span(t, 0.35, 2.4)) : easeOut(span(t, 2.3, 3.4));
     const traces = easeOut(span(t, 2.0, 3.1));
     const network = easeOut(span(t, 2.3, 3.2));
     const intro = span(t, 0, 3.4);
@@ -519,6 +566,7 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     uniforms.uTraces.value = traces;
     uniforms.uTraceBurst.value = Math.min(1, bump(traceU) * 1.6);
     uniforms.uTraceBurstPos.value = traceU * 1.1;
+    uniforms.uInteriorReveal.value = interior;
 
     chipLight.intensity = (8 + 5 * chipFlash) * power;
     rain.update(t);
@@ -527,10 +575,19 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     const step = state.animate ? dt : 1;
     state.lookX = damp(state.lookX, state.pointerX, 2.2, step);
     state.lookY = damp(state.lookY, state.pointerY, 2.2, step);
-    state.scrollEased = damp(state.scrollEased, state.scroll, 6, step);
-    brain.root.position.y = BRAIN_Y + Math.sin(t * 0.55) * 0.07 + state.scrollEased * 0.25;
-    brain.root.rotation.y = -0.16 + Math.sin(t * 0.13) * 0.12 + state.lookX * 0.1;
-    brain.root.rotation.x = Math.sin(t * 0.21 + 1.2) * 0.025 + state.lookY * 0.05;
+    const { u, follow } = placeCamera(state.animate ? intro : 1);
+    brain.root.position.y = BRAIN_Y + Math.sin(t * 0.55) * 0.07;
+    brain.root.rotation.y = -0.16 + Math.sin(t * 0.13) * 0.12 + state.lookX * 0.1 * follow;
+    brain.root.rotation.x = Math.sin(t * 0.21 + 1.2) * 0.025 + state.lookY * 0.05 * follow;
+
+    // Inside → out: the far wall and the interior network are strongest
+    // while the camera is in there; the folds flash as it crosses the wall.
+    const inside = open ? 1 - smooth(wallU - 0.04, wallU + 0.1, u) : 0;
+    uniforms.uBackFace.value = 0.24 + 0.36 * inside;
+    uniforms.uInteriorGain.value = 0.22 + 0.78 * inside;
+    uniforms.uExitFlash.value = open ? Math.exp(-(((u - wallU) / 0.05) ** 2)) : 0;
+    // The rain belongs to the room: it falls in once the camera is out.
+    rain.mesh.material.uniforms.uOpacity.value = RAIN_OPACITY * (open ? smooth(wallU + 0.05, wallU + 0.35, u) : 1);
 
     // Front LEDs: a slow amber chase, brighter on the flash.
     for (let i = 0; i < chip.ledCount; i += 1) {
@@ -541,7 +598,6 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     }
     chip.leds.instanceColor.needsUpdate = true;
 
-    placeCamera(state.animate ? intro : 1);
   }
 
   /* ── Sizing ──────────────────────────────────────────────────────── */
@@ -630,18 +686,15 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     /** Start (or continue) the animation loop. */
     resume,
     pause,
-    /** "wide" (brain right of the headline) or "stacked" (brain centred). */
+    /** "pinned" (opening, then brain right of the headline) or "stacked" (brain centred). */
     setLayout(layout) {
       state.layout = layout;
       if (!state.running) draw(0);
     },
-    /** How far the hero has scrolled out of view, 0-1. */
-    setScroll(value) {
-      state.scroll = clamp01(value);
-      if (!state.running) {
-        state.scrollEased = state.scroll;
-        draw(0);
-      }
+    /** Opening progress through the pinned track, 0 (inside) → 1 (resting). */
+    setProgress(value) {
+      state.progress = clamp01(value);
+      if (!state.running) draw(0);
     },
     /** Pointer position over the hero, each axis -1..1. */
     setPointer(nx, ny) {

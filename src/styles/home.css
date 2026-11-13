@@ -125,6 +125,102 @@
   line-height: 1.62;
 }
 
+/* Caption + scroll cue, shown only while the opening sits inside the brain. */
+.hero-lens-caption {
+  display: none;
+}
+
+/* ─── The opening: "inside the AI's mind" (desktop, full motion) ─────
+   hero.js adds .is-opening and scrubs everything over the pinned track:
+   the camera pulls back out of the brain, the headline glides from the
+   centre to the left column, the photograph fades up behind the figure.
+   .is-static (no WebGL) drops back to the resting layout. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  /* Hidden from the first paint, so the photograph never flashes before
+     the opening takes over; hero.js fades it up from here. */
+  html.js .hero-track:not(.is-static) .hero-photo {
+    opacity: 0;
+  }
+
+  .hero-track.is-opening {
+    /* p 0.9-1 is a short hold before the pin releases; keep it short. */
+    height: 300vh;
+  }
+
+  .hero-track.is-opening .hero-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .hero-track.is-opening .hero-photo {
+    transform-origin: 62% 55%;
+  }
+
+  .hero-track.is-opening .hero-copy__title,
+  .hero-track.is-opening .hero-copy__more {
+    will-change: transform, opacity;
+  }
+
+  /* A soft shade that travels with the headline while the network and
+     the cortex wall pass behind it; hero.js lifts it (--hero-scrim, set
+     on the stage) once the brain has cleared the left column. */
+  .hero-track.is-opening .hero-copy__title {
+    position: relative;
+  }
+
+  .hero-track.is-opening .hero-copy__title::before {
+    content: "";
+    position: absolute;
+    inset: -45% -16%;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(4, 9, 30, 0.74) 0%, rgba(4, 9, 30, 0.42) 55%, transparent 100%);
+    opacity: var(--hero-scrim, 0);
+    pointer-events: none;
+  }
+
+  .hero-track.is-opening .hero-lens-caption {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(18px, 3.4vh, 34px);
+    z-index: 9;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border: 1px solid rgba(138, 163, 255, 0.28);
+    border-radius: var(--radius-pill);
+    background: rgba(6, 13, 42, 0.62);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #b9c8ff;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-lens-caption .ph {
+    font-size: 0.95rem;
+    animation: hero-cue 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+}
+
+@keyframes hero-cue {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+
+  50% {
+    transform: translateY(3px);
+  }
+}
+
 /* Shared canvas base for Three.js scenes on the page (hero + handoff band). */
 .scene-canvas {
   position: absolute;
