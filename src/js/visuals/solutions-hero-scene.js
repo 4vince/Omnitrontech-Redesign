@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { applyPixelRatio, getRendererInfo } from "../core/scene-quality.js";
+import { getRendererInfo } from "../core/scene-quality.js";
 
 /**
  * AI Solutions hero — a crisp, literal overview of the five services.
@@ -21,12 +21,21 @@ const HUB_H = 1.3;
 const SLAB_DEPTH = 0.16;
 const SLAB_BEVEL = 0.025;
 // Card artwork is laid out on a 200-px-per-unit design grid; textures are
-// rendered at the real on-screen density (see resize) and scaled to it.
+// rendered at SUPERSAMPLE x the on-screen density (see resize) and mipmapped.
 const DESIGN_SCALE = 200;
+// Texture pixels per screen pixel. Drawn 2x and sampled through mipmaps, the
+// text stays crisp and smooth while the board tilts or a card lifts.
+const SUPERSAMPLE = 2;
+
+/* This scene is cheap (no bloom or post), so it renders at the screen's own
+   density: a capped ratio gets stretched by the browser and reads as blur. */
+function applyPixelRatio(renderer) {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+}
 
 const COLORS = {
   ink: "#17191f",
-  muted: "#4e535d",
+  muted: "#40454e",
   muted2: "#555c67",
   blue: "#2b46d6",
   blueTint: "#eef1fc",
@@ -176,13 +185,14 @@ function wrapLines(ctx, text, maxWidth) {
   return lines;
 }
 
-/* Textures are drawn at the density they are shown at and sampled one to
-   one: no mipmaps (which soften text), plain linear filtering. */
+/* Textures are drawn at SUPERSAMPLE x the density they are shown at and
+   filtered trilinearly: the GPU reads a clean box-filtered mip level, so text
+   and edges neither alias (oversized, unfiltered) nor smear (stretched). */
 function canvasTexture(canvas, renderer) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace; // canvas colours are sRGB
-  texture.generateMipmaps = false;
-  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return texture;
@@ -271,7 +281,7 @@ function makeCardTexture(renderer, { index, name, outcome, iconKey }, scale = DE
   ctx.fillText(name, pad, 164);
 
   ctx.fillStyle = COLORS.muted;
-  ctx.font = '500 37px "Manrope Variable", Arial, sans-serif';
+  ctx.font = '560 37px "Manrope Variable", Arial, sans-serif';
   wrapLines(ctx, outcome, W - pad * 2)
     .slice(0, 2)
     .forEach((line, i) => ctx.fillText(line, pad, 218 + i * 45));
@@ -311,8 +321,8 @@ function makeHubTexture(renderer, scale = DESIGN_SCALE) {
   ctx.font = '650 48px "Archivo Variable", Arial, sans-serif';
   ctx.fillText("Day-to-day work", W / 2, 180);
 
-  ctx.fillStyle = "#d3dbf5";
-  ctx.font = '500 31px "Manrope Variable", Arial, sans-serif';
+  ctx.fillStyle = "#dfe5f8";
+  ctx.font = '560 31px "Manrope Variable", Arial, sans-serif';
   ctx.fillText("Requests · records · customers", W / 2, 228);
 
   return canvasTexture(canvas, renderer);
@@ -528,12 +538,12 @@ export async function createSolutionsHeroScene(
     return { halfW: col + CARD_W / 2 + 0.15, halfH: 2.75 + CARD_H / 2 + 0.38 };
   }
 
-  /* Device pixels per world unit as rendered: the card artwork is redrawn
-     at this density so text is sampled one to one (sharp), not shrunk. */
+  /* Device pixels per world unit as rendered, times SUPERSAMPLE: the card
+     artwork is redrawn at this density whenever it drifts by more than 4%. */
   function syncTextureScale(cssHeight) {
     const visibleH = FRUSTUM_H / camera.zoom;
-    const wanted = clamp(Math.round(((cssHeight * renderer.getPixelRatio()) / visibleH) * 1.05), 90, 480);
-    if (Math.abs(wanted - state.texScale) / state.texScale < 0.12) return;
+    const wanted = clamp(Math.round(((cssHeight * renderer.getPixelRatio()) / visibleH) * SUPERSAMPLE), 120, 640);
+    if (Math.abs(wanted - state.texScale) / state.texScale < 0.04) return;
     state.texScale = wanted;
     const swap = (face, texture) => {
       face.material.map?.dispose();

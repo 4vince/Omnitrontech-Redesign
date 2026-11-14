@@ -92,7 +92,6 @@
    extra layer whose offset follows the tilt (--tilt-x / --tilt-y, set by
    src/js/ui/tilt.js), so the light reads as fixed while the card turns. */
 .svc__visual,
-.problem-flow,
 .applied-flow,
 .contact-form-card {
   box-shadow: var(--elev-2), var(--edge-hi);

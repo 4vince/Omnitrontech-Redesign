@@ -17,6 +17,7 @@ import {
 } from "../core/motion.js";
 import { serviceDiagramMarkup } from "../visuals/service-diagrams.js";
 import { initServiceStack } from "./solutions-stack.js";
+import { createStageLayout, setActiveCaption, wirePauseToggle } from "../core/visual-stage.js";
 
 /*
  * Timing map for the AI Solutions page
@@ -134,45 +135,21 @@ function initHeroExit() {
 }
 
 /* Scene modules, loaded only when their section comes near the viewport. */
-// Every service plays in the same Three.js hologram stage (visuals/holo3d).
-// Support and reporting are 2D boards (visuals/holo) shown as projections.
+// Strategy, Automation and AI Agents are Three.js holograms (visuals/holo3d).
 const HOLO3D = () => import("../visuals/holo3d/kit.js");
-const projected = (board) => () => import("../visuals/holo3d/projection.js").then((m) => m.prepare(board));
+// Customer Support and Data & Reporting stay flat 2D holographic boards.
+const HOLO2D = () => import("../visuals/holo/holo-kit.js");
 const SCENES = {
   strategy: { kit: HOLO3D, scene: () => import("../visuals/holo3d/strategy.js") },
   automation: { kit: HOLO3D, scene: () => import("../visuals/holo3d/automation.js") },
   agentic: { kit: HOLO3D, scene: () => import("../visuals/holo3d/agentic.js") },
-  experience: { kit: HOLO3D, scene: projected(() => import("../visuals/holo/experience.js")) },
-  data: { kit: HOLO3D, scene: projected(() => import("../visuals/holo/data.js")) },
+  experience: { kit: HOLO2D, scene: () => import("../visuals/holo/experience.js") },
+  data: { kit: HOLO2D, scene: () => import("../visuals/holo/data.js") },
 };
 
 // Phones and tablets keep the flat diagram: below this width the
 // hologram's labels would be too small to read.
 const WIDE = "(min-width: 1200px)";
-
-function setActiveCaption(stage, index, story) {
-  const items = stage.querySelectorAll("[data-caption]");
-  if (index === null) {
-    items.forEach((item) => item.classList.remove("is-active", "is-done"));
-    stage.classList.add("is-static");
-    return;
-  }
-  stage.classList.remove("is-static");
-  const { marks, cycle } = story;
-  const duration = (marks[index + 1] ?? cycle) - marks[index];
-  items.forEach((item, i) => {
-    item.classList.toggle("is-done", i < index);
-    if (i === index) {
-      item.style.setProperty("--step-dur", `${duration.toFixed(2)}s`);
-      // Restart the progress line for this step.
-      item.classList.remove("is-active");
-      void item.offsetWidth;
-      item.classList.add("is-active");
-    } else {
-      item.classList.remove("is-active");
-    }
-  });
-}
 
 let stack = null;
 
@@ -193,47 +170,22 @@ function initServiceStage(section) {
   // Buried under the next card in the stack (solutions-stack.js).
   let covered = false;
 
-  // The title (top) and captions (bottom) sit over the stage. Measure the
-  // bands they take so the scene never runs under them: light cards size
-  // their navy panel from --svx-top / --svx-bottom, navy cards frame the 3D
-  // camera inside them (bands option of createHoloStage).
-  const head = stage.querySelector(".svx__head");
-  const captions = stage.querySelector(".svx__captions");
-  const BAND_GAP = 24;
-  const bands = () => ({
-    top: head ? head.offsetTop + head.offsetHeight + BAND_GAP : 0,
-    bottom: captions ? stage.clientHeight - captions.offsetTop + BAND_GAP : 0,
+  // The scene takes the box beside or below the title, clear of the title
+  // and captions (core/visual-stage.js). Light cards place their navy panel
+  // there (--svx-x/y/w/h); navy cards frame the camera in it (area option).
+  const { layout, area } = createStageLayout(stage, {
+    aspect: () => scene?.aspect ?? 2.2,
+    onChange: () => scene?.refit(),
   });
-  const syncBands = () => {
-    const { top, bottom } = bands();
-    stage.style.setProperty("--svx-top", `${top}px`);
-    stage.style.setProperty("--svx-bottom", `${bottom}px`);
-    scene?.refit();
-  };
-  syncBands();
-  if (typeof ResizeObserver !== "undefined") {
-    const bandObserver = new ResizeObserver(syncBands);
-    [stage, head, captions].forEach((el) => el && bandObserver.observe(el));
-  }
   let seen = false;
   let scroll = 0;
   // Pause control for the looping scene (WCAG 2.2.2).
-  let userPaused = false;
-  const toggle = stage.querySelector("[data-svx-toggle]");
-  const paintToggle = () => {
-    if (!toggle) return;
-    toggle.setAttribute("aria-pressed", String(userPaused));
-    toggle.setAttribute("aria-label", userPaused ? "Play animation" : "Pause animation");
-    toggle.innerHTML = `<i class="ph ${userPaused ? "ph-play" : "ph-pause"}" aria-hidden="true"></i>`;
-  };
-  paintToggle();
-  toggle?.addEventListener("click", () => {
-    userPaused = !userPaused;
-    paintToggle();
+  const pauseControl = wirePauseToggle(stage, (paused) => {
     if (!scene) return;
-    if (userPaused) scene.pause();
+    if (paused) scene.pause();
     else if (visible) scene.resume();
   });
+  const userPaused = () => pauseControl.paused();
 
   const start = async () => {
     if (scene || loading || !wide.matches) return;
@@ -245,7 +197,7 @@ function initServiceStage(section) {
         animate: !prefersReducedMotion(),
         // Light cards show the hologram inside a navy display panel.
         panel: !section.classList.contains("tone-navy"),
-        bands,
+        area,
         host: section,
         onStep: (index, story) => setActiveCaption(stage, index, story),
       });
@@ -255,11 +207,13 @@ function initServiceStage(section) {
         return;
       }
       stage.classList.add("has-visual");
+      // Now the scene's proportions are known: choose its box again.
+      layout();
       if (import.meta.env.DEV) stage.svxScene = scene;
       scene.setScroll(scroll);
       if (visible) {
         seen = true;
-        if (!userPaused) scene.resume();
+        if (!userPaused()) scene.resume();
       }
     } catch (error) {
       console.error(`Could not load the ${stage.dataset.serviceId} visual.`, error);
@@ -293,7 +247,7 @@ function initServiceStage(section) {
         // First time on screen: play the story from its first step.
         if (!seen) scene.restart();
         seen = true;
-        if (!userPaused) scene.resume();
+        if (!userPaused()) scene.resume();
       } else {
         scene.pause();
       }
@@ -325,7 +279,7 @@ function initServiceStage(section) {
   wide.addEventListener?.("change", () => {
     syncWidth();
     if (!wide.matches) scene?.pause();
-    else if (scene && visible && !userPaused) scene.resume();
+    else if (scene && visible && !userPaused()) scene.resume();
     else void start();
   });
 

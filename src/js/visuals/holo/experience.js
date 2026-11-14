@@ -20,22 +20,22 @@ const CHANNELS = [
   { name: "Phone", icon: "ph-phone", hue: HUE.lime, q: "Are you open Sunday?", y: 390 },
   { name: "Website", icon: "ph-globe", hue: HUE.rose, q: "I was charged twice", y: 540 },
 ];
-const CH_W = 240;
-const AI = [600, 330];
+const CH_W = 340;
+const AI = [610, 330];
 const AI_R = 48;
 const PAGES = [
-  { name: "Delivery", icon: "ph-truck", x: 490 },
-  { name: "Returns", icon: "ph-arrow-u-up-left", x: 600 },
-  { name: "Accounts", icon: "ph-user-circle", x: 710 },
+  { name: "Delivery", icon: "ph-truck", x: 492 },
+  { name: "Returns", icon: "ph-arrow-u-up-left", x: 610 },
+  { name: "Accounts", icon: "ph-user-circle", x: 728 },
 ];
-const PAGE_Y = 120;
-const THREAD = { x: 920, y: 30, w: 560, h: 400 };
+const PAGE_Y = 126;
+const THREAD = { x: 890, y: 24, w: 600, h: 420 };
 const PERSON = [1150, 580];
 
 const IN = CHANNELS.map((c) => trace([CH_W, c.y], [AI[0] - AI_R, AI[1]], 0.5, 22));
 // Each help page drops a line down into the assistant.
 const PAGE_LINES = PAGES.map(({ x }) => {
-  const top = PAGE_Y + 34;
+  const top = PAGE_Y + 40;
   const bottom = AI[1] - AI_R;
   if (x === AI[0]) return path([[x, top], [x, bottom]]);
   const mid = (top + bottom) / 2;
@@ -77,7 +77,7 @@ export function build(kit) {
 
   function bubble(x, y, w, text, hue, a, { align = "left", sub = null, subHue = INK.sub } = {}) {
     if (a <= 0.001) return;
-    const h = sub ? 58 : 40;
+    const h = sub ? 68 : 46;
     const left = align === "left" ? x : x - w;
     const rise = (1 - a) * 10;
     ctx.save();
@@ -91,8 +91,8 @@ export function build(kit) {
     ctx.strokeStyle = kit.rgba(hue, 0.6);
     ctx.stroke();
     ctx.restore();
-    kit.text(text, left + 14, y + rise + 20, { size: 14.5, weight: 560, a, maxW: w - 28 });
-    if (sub) kit.text(sub, left + 14, y + rise + 41, { size: 12.5, weight: 600, color: subHue, a, maxW: w - 28 });
+    kit.text(text, left + 16, y + rise + 23, { size: 17, weight: 580, a, maxW: w - 32 });
+    if (sub) kit.text(sub, left + 16, y + rise + 48, { size: 14.5, weight: 620, color: subHue, a, maxW: w - 32 });
   }
 
   function channels(t, out) {
@@ -107,12 +107,13 @@ export function build(kit) {
         sub: isClosed ? "Answered" : c.q,
         hue: c.hue,
         w: CH_W,
-        h: 66,
+        h: 88,
+        trail: 30,
         a: inn * out,
         strong: sensitive && t < OUT,
       });
-      if (isClosed) kit.check(CH_W - 26, c.y, 13, HUE.teal, seg(t, closed.at, closed.at + 0.35), out);
-      if (sensitive) kit.icon("ph-warning-circle", CH_W - 26, c.y, 18, HUE.amber, seg(t, 7.5, 7.8) * out);
+      if (isClosed) kit.check(CH_W - 26, c.y, 15, HUE.teal, seg(t, closed.at, closed.at + 0.35), out);
+      if (sensitive) kit.icon("ph-warning-circle", CH_W - 26, c.y, 21, HUE.amber, seg(t, 7.5, 7.8) * out);
 
       // The question running in to the assistant.
       kit.beam(IN[i], HUE.cobalt, { a: 0.32, halo: 0.5, width: 1.3 });
@@ -124,12 +125,12 @@ export function build(kit) {
   }
 
   function library(t, out) {
-    kit.card(PAGES[0].x - 100, 16, PAGES[2].x - PAGES[0].x + 200, 156, { title: "Your help content", icon: "ph-books", a: 1 });
+    kit.card(PAGES[0].x - 92, 14, PAGES[2].x - PAGES[0].x + 184, 170, { title: "Your help content", icon: "ph-books", a: 1 });
     PAGES.forEach((page, i) => {
       const used = Math.max(0, ...LOOKUPS.filter((l) => l.page === i).map((l) => window01(t, l.at, l.at + 1.3, 0.25)));
-      kit.box(page.x - 46, PAGE_Y - 34, 92, 66, used > 0.1 ? HUE.ice : HUE.cobalt, { a: 0.55 + used * 0.45, r: 10, fill: 0.05 + used * 0.12, face: true, halo: used });
-      kit.icon(page.icon, page.x, PAGE_Y - 10, 20, used > 0.1 ? HUE.ice : HUE.cobalt, 0.8 + used * 0.2);
-      kit.text(page.name, page.x, PAGE_Y + 16, { size: 13, weight: 600, align: "center", color: used > 0.1 ? INK.text : INK.sub });
+      kit.box(page.x - 52, PAGE_Y - 34, 104, 74, used > 0.1 ? HUE.ice : HUE.cobalt, { a: 0.6 + used * 0.4, r: 10, fill: 0.05 + used * 0.12, face: true, halo: used });
+      kit.icon(page.icon, page.x, PAGE_Y - 9, 23, used > 0.1 ? HUE.ice : HUE.cobalt, 0.85 + used * 0.15);
+      kit.text(page.name, page.x, PAGE_Y + 21, { size: 15.5, weight: 620, align: "center", color: used > 0.1 ? INK.text : INK.sub, maxW: 96 });
       const line = PAGE_LINES[i];
       kit.beam(line, HUE.cobalt, { a: 0.26, halo: 0.4, width: 1.2 });
       LOOKUPS.filter((l) => l.page === i).forEach((l) => {
@@ -145,7 +146,7 @@ export function build(kit) {
     const busy = Math.max(window01(t, 1.9, 3.5, 0.3), window01(t, 3.8, 5.2, 0.3), window01(t, 7.1, 8.0, 0.2), window01(t, 10.5, 11.9, 0.3));
     kit.node(AI[0], AI[1], AI_R, HUE.cobalt, { icon: "ph-chats-circle", iconSize: 34, lit: 0.55 + busy * 0.4, fill: 0.12 + busy * 0.1 });
     kit.spinner(AI[0], AI[1], AI_R + 9, HUE.ice, t, { a: busy * 0.8 });
-    kit.text("Assistant", AI[0], AI[1] + AI_R + 26, { size: 15, weight: 600, color: INK.sub, align: "center" });
+    kit.text("Assistant", AI[0], AI[1] + AI_R + 28, { size: 17.5, weight: 620, color: INK.sub, align: "center" });
   }
 
   function thread(t, out) {
@@ -157,25 +158,25 @@ export function build(kit) {
     const fade = out;
     const left = x + 18;
     const right = x + w - 18;
-    bubble(left, body + 16, 300, "Where's my order #2291?", HUE.sky, easeOut(seg(t, 3.5, 3.9)) * fade);
-    bubble(right, body + 72, 380, "It left our depot today and arrives Thursday.", HUE.cobalt, easeOut(seg(t, 5.0, 5.4)) * fade, {
+    bubble(left, body + 16, 290, "Where's my order #2291?", HUE.sky, easeOut(seg(t, 3.5, 3.9)) * fade);
+    bubble(right, body + 76, 470, "It left our depot today and arrives Thursday.", HUE.cobalt, easeOut(seg(t, 5.0, 5.4)) * fade, {
       align: "right",
       sub: "From: Delivery times",
       subHue: HUE.cobalt,
     });
     const resolved = easeOut(seg(t, 10.6, 11.0)) * fade;
     if (resolved > 0) {
-      kit.check(right - 98, body + 158, 11, HUE.teal, seg(t, 10.6, 10.95), resolved);
-      kit.text("Resolved", right, body + 158, { size: 13, weight: 650, color: HUE.teal, align: "right", a: resolved });
+      const labelW = kit.text("Resolved", right, body + 170, { size: 15.5, weight: 650, color: HUE.teal, align: "right", a: resolved });
+      kit.check(right - labelW - 16, body + 170, 13, HUE.teal, seg(t, 10.6, 10.95), resolved);
     }
-    bubble(left, body + 182, 360, "I was charged twice. Please cancel.", HUE.rose, easeOut(seg(t, 7.0, 7.4)) * fade, {
+    bubble(left, body + 196, 400, "I was charged twice. Please cancel.", HUE.rose, easeOut(seg(t, 7.0, 7.4)) * fade, {
       sub: "Sensitive: billing",
       subHue: HUE.amber,
     });
     const note = easeOut(seg(t, HANDOFF + 1.0, HANDOFF + 1.4)) * fade;
     if (note > 0) {
-      kit.icon("ph-user-switch", left + 12, body + 280, 18, HUE.amber, note);
-      kit.text("Handed to Sam, with the whole chat", left + 34, body + 280, { size: 14.5, weight: 600, color: HUE.amber, a: note });
+      kit.icon("ph-user-switch", left + 13, body + 308, 21, HUE.amber, note);
+      kit.text("Handed to Sam, with the whole chat", left + 36, body + 308, { size: 17, weight: 620, color: HUE.amber, a: note });
     }
   }
 
@@ -188,12 +189,12 @@ export function build(kit) {
     const called = window01(t, HANDOFF + 0.9, OUT - 0.2, 0.35);
     if (u > 0) kit.beam(TO_PERSON, HUE.amber, { a: 0.85 * (u < 1 ? 1 : called) * out, width: 1.8, to: easeInOut(u) });
     kit.node(PERSON[0], PERSON[1], 36, HUE.amber, { icon: "ph-user", lit: 0.2 + called * 0.6, fill: 0.08 + called * 0.14, a: 0.55 + called * 0.45 });
-    kit.chip(PERSON[0] + 170, PERSON[1], {
+    kit.chip(PERSON[0] + 192, PERSON[1], {
       title: "Sam, support",
       sub: called > 0 ? "Has the full chat" : "Takes sensitive cases",
       hue: HUE.amber,
-      w: 250,
-      h: 62,
+      w: 304,
+      h: 86,
       a: 0.6 + called * 0.4,
       strong: called > 0.5,
     });

@@ -45,6 +45,11 @@ const STACK = "(min-width: 761px) and (prefers-reduced-motion: no-preference)";
 const SCALE = 0.07;
 const TILT = 6; // degrees, top edge away from the viewer
 const LIFT = 0.025; // fraction of viewport height
+// A landed card shows the next card's tab at the bottom of the screen. The
+// recede only starts once that card rises past this fraction of the viewport,
+// so a landed card has no transform at all (a 3D transform resamples the
+// whole card, scene and text included, and softens it).
+const REST = 0.12;
 const SHADE = 0.55;
 const PERSPECTIVE = 1600;
 // Cast shadow on the card below: its opacity while the card is still far
@@ -297,7 +302,7 @@ export function initServiceStack({ mount, sections, closer }) {
     const tops = cards.map((card) => card.getBoundingClientRect().top);
     // Then writes: card i recedes as card i+1 rises from the bottom edge.
     for (let i = 0; i < cards.length - 1; i += 1) {
-      const p = clamp01((vh - tops[i + 1]) / vh);
+      const p = clamp01(((vh - tops[i + 1]) / vh - REST) / (1 - REST));
       paint(cards[i], p);
       paintCast(cards[i + 1], p);
       setCovered(cards[i], tops[i + 1] <= 1);

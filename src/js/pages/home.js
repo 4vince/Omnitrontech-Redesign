@@ -4,7 +4,8 @@ import {
   problems,
   proofRows,
 } from "../content/home.js";
-import { gsap, prefersReducedMotion, refreshMotion } from "../core/motion.js";
+import { gsap, prefersReducedMotion } from "../core/motion.js";
+import { createStageLayout, setActiveCaption, wirePauseToggle } from "../core/visual-stage.js";
 
 function exampleFlow(flow = []) {
   if (!flow.length) return "";
@@ -43,14 +44,12 @@ function exampleTab(example, index) {
 }
 
 export function initHomeSections() {
+  // The four gaps: titles as the visual's captions, full text in the details.
   const problemMount = document.querySelector("[data-problems]");
   if (problemMount) {
-    // In the mirrored band the heading sits right, so the rows start left.
-    const flipped = Boolean(problemMount.closest(".is-flip"));
     problemMount.innerHTML = problems
       .map(
-        (problem, i) => `<article class="problem-row problem-row--${(i % 2 === 0) === flipped ? "left" : "right"}">
-          <span class="problem-row__stop" aria-hidden="true"></span>
+        (problem) => `<article class="problem-row">
           <span class="problem-row__icon"><i class="ph ${problem.icon}" aria-hidden="true"></i></span>
           <div class="problem-row__body">
             <h3>${problem.title}</h3>
@@ -59,6 +58,10 @@ export function initHomeSections() {
         </article>`,
       )
       .join("");
+  }
+  const captionMount = document.querySelector("[data-problem-captions]");
+  if (captionMount) {
+    captionMount.innerHTML = problems.map((problem) => `<li data-caption><span>${problem.title}</span></li>`).join("");
   }
 
   const proofMount = document.querySelector("[data-proof]");
@@ -88,98 +91,120 @@ export function initHomeSections() {
       .join("");
   }
 
-  initProblemReveal();
+  initProblemStage();
   initAppliedShowcase();
 }
 
 /*
- * Row 1 tucks in just under the flow card instead of waiting below the
- * (taller) heading. Measured, because the heading's height changes with
- * width and wrapping:
- *   --rise        how far the list moves up from its natural grid slot so
- *                 its top sits TUCK px under the flow card
- *   --first-left  how far the first left-hand row drops inside the list so
- *                 it still clears the heading by CLEAR px
- * Layout offsets (relative to the positioned .wrap), not bounding rects:
- * the entrance reveal translates these elements, which would skew the
- * numbers.
+ * Problem band, visual first: one flat diagram (visuals/holo/problem.js, on
+ * the 2D kit's paper theme) plays the four gaps in turn and the captions
+ * follow it (core/visual-stage.js, shared with the AI Solutions services).
+ *
+ * Wide screens only: below WIDE the labels would be too small, so the
+ * details open and the four gaps read as a plain list. Reduced motion draws
+ * one still with all four panels at their end state.
  */
-const TUCK = 32;
-const CLEAR = 56;
+const WIDE = "(min-width: 1200px)";
 
-function fitProblemList() {
-  const grid = document.querySelector(".problem-grid");
-  const head = grid?.querySelector(".problem-head");
-  const card = grid?.querySelector(".problem-flow");
-  const list = grid?.querySelector(".problem-list");
-  if (!grid || !head || !card || !list) return;
+function initProblemStage() {
+  const stage = document.querySelector("[data-problem-stage]");
+  const canvas = stage?.querySelector("canvas");
+  const details = document.querySelector("[data-problem-details]");
+  if (!stage || !canvas) return;
 
-  const desktop = window.matchMedia("(min-width: 900px)");
-  let last = "";
-  const measure = () => {
-    let rise = 0;
-    let firstLeft = 0;
-    if (desktop.matches) {
-      // The list's natural slot = where it is now plus the rise applied.
-      const applied = parseFloat(list.style.getPropertyValue("--rise")) || 0;
-      const natural = list.offsetTop + applied;
-      const headBottom = head.offsetTop + head.offsetHeight;
-      const cardBottom = card.offsetTop + card.offsetHeight;
-      const target = cardBottom + TUCK;
-      rise = Math.max(0, Math.round(natural - target));
-      firstLeft = Math.max(0, Math.round(headBottom + CLEAR - target));
-    }
-    const key = `${rise}/${firstLeft}`;
-    if (key === last) return;
-    last = key;
-    list.style.setProperty("--rise", `${rise}px`);
-    list.style.setProperty("--first-left", `${firstLeft}px`);
-    refreshMotion();
+  const wide = window.matchMedia(WIDE);
+  let scene = null;
+  let loading = false;
+  let failed = false;
+  let visible = false;
+
+  // Without the visual the text is the content: show it.
+  const sync = () => {
+    const fallback = failed || !wide.matches;
+    stage.classList.toggle("is-fallback", fallback);
+    if (details) details.open = fallback;
   };
-  measure();
-  if (typeof ResizeObserver !== "undefined") new ResizeObserver(measure).observe(head);
-  desktop.addEventListener?.("change", measure);
-}
+  sync();
 
-/*
- * Problem rows: each one enters from its own side toward the thread, its
- * connector draws out from the stop, and the stop fills. Plays as a row
- * scrolls in and reverses when you scroll back above it, so the route
- * reads as travelled in both directions. Phones get a plain fade-up;
- * reduced motion shows everything at rest.
- */
-function initProblemReveal() {
-  const rows = gsap.utils.toArray(".problem-row");
-  if (!rows.length) return;
-  fitProblemList();
+  const { area } = createStageLayout(stage, {
+    aspect: () => scene?.aspect ?? 2.6,
+    onChange: () => scene?.refit(),
+  });
+  const pause = wirePauseToggle(stage, (paused) => {
+    if (!scene) return;
+    if (paused) scene.pause();
+    else if (visible) scene.resume();
+  });
 
-  const mm = gsap.matchMedia();
-  mm.add(
-    {
-      desktop: "(min-width: 900px) and (prefers-reduced-motion: no-preference)",
-      narrow: "(max-width: 899px) and (prefers-reduced-motion: no-preference)",
-    },
-    ({ conditions }) => {
-      rows.forEach((row) => {
-        const fromRight = row.classList.contains("problem-row--right");
-        const tl = gsap.timeline({
-          defaults: { ease: "power3.out" },
-          scrollTrigger: {
-            trigger: row,
-            start: "top 82%",
-            toggleActions: "play none none reverse",
-          },
-        });
-        if (conditions.desktop) {
-          tl.from(row.querySelectorAll(".problem-row__icon, .problem-row__body"), { x: fromRight ? 48 : -48, opacity: 0, duration: 0.7 })
-            .from(row, { "--link": 0, duration: 0.45 }, 0.1)
-            .from(row, { "--stop": 0, duration: 0.3 }, 0.35);
-        } else {
-          tl.from(row, { y: 24, opacity: 0, duration: 0.6 });
-        }
+  const start = async () => {
+    if (scene || loading || failed || !wide.matches) return;
+    loading = true;
+    try {
+      const [{ createHoloStage }, { build }] = await Promise.all([
+        import("../visuals/holo/holo-kit.js"),
+        import("../visuals/holo/problem.js"),
+      ]);
+      scene = await createHoloStage(canvas, {
+        build,
+        theme: "paper",
+        animate: !prefersReducedMotion(),
+        area,
+        host: stage,
+        onStep: (index, story) => setActiveCaption(stage, index, story),
       });
-    },
-  );
+      if (!scene) throw new Error("No 2D canvas.");
+      stage.classList.add("has-visual");
+      if (import.meta.env.DEV) stage.svxScene = scene;
+      scene.refit();
+      if (visible) {
+        scene.restart();
+        if (!pause.paused()) scene.resume();
+      }
+    } catch (error) {
+      console.error("Could not load the problem visual.", error);
+      failed = true;
+      sync();
+    } finally {
+      loading = false;
+    }
+  };
+
+  if (typeof IntersectionObserver === "undefined") {
+    visible = true;
+    void start();
+  } else {
+    // Load a little before it arrives; play only while it is on screen.
+    new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void start();
+      },
+      { rootMargin: "600px 0px" },
+    ).observe(stage);
+    let seen = false;
+    new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        if (!scene) return;
+        if (visible) {
+          // First time in view: start the story from its first gap.
+          if (!seen) scene.restart();
+          seen = true;
+          if (!pause.paused()) scene.resume();
+        } else scene.pause();
+      },
+      { threshold: 0.25 },
+    ).observe(stage);
+  }
+
+  wide.addEventListener?.("change", () => {
+    sync();
+    if (!wide.matches) scene?.pause();
+    else if (scene && visible && !pause.paused()) scene.resume();
+    else void start();
+  });
+  window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", () => {
+    scene?.setMotionEnabled(!prefersReducedMotion());
+  });
 }
 
 /*

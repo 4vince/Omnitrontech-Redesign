@@ -39,9 +39,34 @@ export const HUE = {
 
 export const INK = {
   text: "#eaf0ff",
-  sub: "#a9b8e6",
-  faint: "rgba(169, 184, 230, 0.55)",
+  // Secondary text stays clearly legible on the navy (about 8:1 and 5:1).
+  sub: "#cad5f6",
+  faint: "rgba(202, 213, 246, 0.86)",
   panel: "rgba(7, 16, 52, 0.82)",
+};
+
+/* Paper theme: the same kit drawn as a flat diagram on the light page
+   (homepage). Ink lines, white card faces, no additive light. Colour keeps
+   its meaning; each hue is a darker step that reads on paper. */
+export const PAPER_HUE = {
+  cobalt: "#2b46d6",
+  ice: "#8a93a6",
+  amber: "#c46a10",
+  teal: "#0d8a70",
+  red: "#cf3a2a",
+  sky: "#1f86c4",
+  coral: "#c9583c",
+  lime: "#5b8a1c",
+  rose: "#c23f76",
+  violet: "#6a55d6",
+};
+
+export const PAPER_INK = {
+  text: "#17191f",
+  sub: "#40454e",
+  faint: "rgba(23, 25, 31, 0.55)",
+  panel: "#ffffff",
+  line: "rgba(23, 25, 31, 0.16)",
 };
 
 export const FONT = {
@@ -154,12 +179,20 @@ function sprite(hex) {
  *   animate?: boolean,
  *   panel?: boolean,     the scene plays inside a display panel (light cards)
  *   host?: Element,      pointer parallax listens here
+ *   area?: () => ({ x, y, w, h } | null),  box (CSS px) to fit the board in,
+ *                        clear of the title and captions (navy cards); call
+ *                        stage.refit() when it changes
  *   onStep?: (index: number | null, story: object) => void,
+ *   theme?: "holo" | "paper",  paper: flat ink diagram on the light page
  * }} options
  */
-export async function createHoloStage(canvas, { build, animate = true, panel = false, host, onStep, surface = null } = {}) {
+export async function createHoloStage(canvas, { build, animate = true, panel = false, host, area, onStep, theme = "holo" } = {}) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
+  const paper = theme === "paper";
+  // Inside the stage every helper draws with the theme's own ink and hues.
+  const ink = paper ? PAPER_INK : INK;
+  const hues = paper ? PAPER_HUE : HUE;
 
   // Wait for the fonts the labels use, so the first frame is not a fallback face.
   try {
@@ -173,9 +206,18 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     /* draw with whatever is there */
   }
 
-  // Keep the title band (top) and caption band (bottom) clear on navy cards;
-  // inside a panel the whole box is the scene's.
-  const pad = panel ? { top: 0.06, bottom: 0.06, side: 0.03 } : { top: 0.24, bottom: 0.13, side: 0.02 };
+  // Where the board fits: the page's measured area on navy cards (clear of
+  // the title and captions); inside a light card's panel, the whole box less
+  // a margin.
+  function fitBox(w, h) {
+    const r = panel ? null : area?.();
+    if (r && r.w > 40 && r.h > 40) return { x: r.x + r.w * 0.02, y: r.y, w: r.w * 0.96, h: r.h };
+    return { x: w * 0.03, y: h * 0.06, w: w * 0.94, h: h * 0.88 };
+  }
+  // No label is drawn smaller than this on screen (CSS px).
+  const MIN_TEXT = 13.5;
+  // Labels that must shrink to fit their box stop here.
+  const MIN_FIT = 12;
 
   const state = {
     animate,
@@ -196,23 +238,23 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     ox: 0,
     oy: 0,
     flicker: 1,
-    // Projected as a hologram texture (holo3d/projection.js): labels set larger.
-    textScale: surface?.textScale ?? 1,
+    fitKey: "",
   };
 
   /* ── Drawing helpers handed to the scene (all in design units) ── */
   const kit = {
     ctx,
-    HUE,
-    INK,
+    HUE: hues,
+    INK: ink,
     FONT,
+    paper,
     get still() {
       return !state.animate;
     },
 
     /** Soft light at a point (additive). */
     glow(x, y, r, hue, a = 1) {
-      if (a <= 0.001) return;
+      if (a <= 0.001 || paper) return;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       ctx.globalAlpha = clamp(a * state.flicker);
@@ -234,7 +276,7 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       if (dash) ctx.setLineDash(dash);
       ctx.globalCompositeOperation = "lighter";
       const f = state.flicker;
-      if (halo > 0) {
+      if (halo > 0 && !paper) {
         stroke(pts, rgba(hue, 0.09 * a * halo * f), width + 14);
         stroke(pts, rgba(hue, 0.2 * a * halo * f), width + 5);
       }
@@ -256,9 +298,10 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       kit.glow(x, y, size * 3.4, hue, a * 0.9);
       ctx.save();
       ctx.globalAlpha = clamp(a);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = paper ? hue : "#ffffff";
       ctx.beginPath();
-      ctx.arc(x, y, size * 0.42, 0, Math.PI * 2);
+      // On paper there is no glow around it, so the dot itself is larger.
+      ctx.arc(x, y, size * (paper ? 0.7 : 0.42), 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     },
@@ -271,7 +314,7 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       ctx.globalAlpha = clamp(a);
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = INK.panel;
+      ctx.fillStyle = ink.panel;
       ctx.fill();
       ctx.fillStyle = rgba(hue, fill);
       ctx.fill();
@@ -311,29 +354,36 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       ctx.restore();
     },
 
-    text(str, x, y, { size = 18, weight = 600, family = FONT.body, color = INK.text, align = "left", base = "middle", a = 1, maxW = 0, track = 0 } = {}) {
-      if (a <= 0.001) return;
+    text(str, x, y, { size = 18, weight = 600, family = FONT.body, color = ink.text, align = "left", base = "middle", a = 1, maxW = 0, track = 0 } = {}) {
+      if (a <= 0.001) return 0;
       ctx.save();
       ctx.globalAlpha = clamp(a);
       ctx.fillStyle = color;
       ctx.textAlign = align;
       ctx.textBaseline = base;
-      let s = size * state.textScale;
-      ctx.font = `${weight} ${s}px ${family}`;
+      // Never under MIN_TEXT on screen, however small the board is drawn;
+      // a label that must fit its box may give up a little more.
+      const unit = 1 / (state.scale || 1);
+      let s = Math.max(size, MIN_TEXT * unit);
+      // Small on screen, thin strokes break up: give small text more weight.
+      const w = s / unit < 16 ? Math.max(weight, 600) : weight;
+      ctx.font = `${w} ${s}px ${family}`;
       if (track) ctx.letterSpacing = `${track}px`;
-      while (maxW && s > 9 && ctx.measureText(str).width > maxW) {
-        s -= 0.5;
-        ctx.font = `${weight} ${s}px ${family}`;
+      while (maxW && s > MIN_FIT * unit && ctx.measureText(str).width > maxW) {
+        s -= 0.25;
+        ctx.font = `${w} ${s}px ${family}`;
       }
       ctx.fillText(str, x, y);
+      const width = ctx.measureText(str).width;
       ctx.restore();
+      return width;
     },
 
     /**
      * Glass label: navy face, hairline in the hue, icon tile, title and sub.
      * (x, y) is the card's centre. Returns its box.
      */
-    chip(x, y, { icon, title, sub, hue = HUE.cobalt, w = 230, h = 64, a = 1, lit = 0.35, scale = 1, strong = false } = {}) {
+    chip(x, y, { icon, title, sub, hue = hues.cobalt, w = 230, h = 64, a = 1, lit = 0.35, scale = 1, strong = false, trail = 0 } = {}) {
       if (a <= 0.001) return null;
       const W = w * scale;
       const H = h * scale;
@@ -341,17 +391,21 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       const top = y - H / 2;
       ctx.save();
       ctx.globalAlpha = clamp(a);
-      // Halo: a lit edge, additive, under the crisp face.
-      ctx.globalCompositeOperation = "lighter";
-      roundRect(left - 3, top - 3, W + 6, H + 6, 14 * scale + 3);
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = rgba(hue, 0.22 * lit * state.flicker);
-      ctx.stroke();
-      ctx.globalCompositeOperation = "source-over";
+      if (!paper) {
+        // Halo: a lit edge, additive, under the crisp face.
+        ctx.globalCompositeOperation = "lighter";
+        roundRect(left - 3, top - 3, W + 6, H + 6, 14 * scale + 3);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = rgba(hue, 0.22 * lit * state.flicker);
+        ctx.stroke();
+        ctx.globalCompositeOperation = "source-over";
+      }
       roundRect(left, top, W, H, 14 * scale);
-      ctx.fillStyle = INK.panel;
+      if (paper) paperShadow();
+      ctx.fillStyle = ink.panel;
       ctx.fill();
-      ctx.fillStyle = rgba(hue, strong ? 0.16 : 0.06);
+      ctx.shadowColor = "transparent";
+      ctx.fillStyle = rgba(hue, strong ? (paper ? 0.1 : 0.16) : paper ? 0.03 : 0.06);
       ctx.fill();
       ctx.lineWidth = 1.3;
       ctx.strokeStyle = rgba(hue, strong ? 0.95 : 0.6);
@@ -359,25 +413,25 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       ctx.restore();
 
       const pad = 12 * scale;
-      const tile = H - pad * 2;
+      // Square icon tile, centred; capped so a tall chip keeps its text room.
+      const tile = Math.min(H - pad * 2, 54 * scale);
       if (icon) {
         ctx.save();
         ctx.globalAlpha = clamp(a);
-        roundRect(left + pad, top + pad, tile, tile, 9 * scale);
+        roundRect(left + pad, top + (H - tile) / 2, tile, tile, 9 * scale);
         ctx.fillStyle = rgba(hue, 0.18);
         ctx.fill();
         ctx.restore();
         kit.icon(icon, left + pad + tile / 2, top + H / 2, tile * 0.56, hue, a);
       }
       const tx = left + pad + (icon ? tile + 12 * scale : 4 * scale);
-      const maxW = left + W - pad - tx;
+      // trail: room kept at the right for a status mark drawn by the scene.
+      const maxW = left + W - pad - tx - trail * scale;
       if (sub) {
-        // Larger labels (projected boards) need the two lines further apart.
-        const spread = (state.textScale - 1) * 0.12;
-        kit.text(title, tx, top + H * (0.39 - spread), { size: 17 * scale, weight: 650, family: FONT.display, a, maxW });
-        kit.text(sub, tx, top + H * (0.7 + spread), { size: 13.5 * scale, weight: 560, color: INK.sub, a, maxW });
+        kit.text(title, tx, top + H * 0.34, { size: 19 * scale, weight: 650, family: FONT.display, a, maxW });
+        kit.text(sub, tx, top + H * 0.7, { size: 15.5 * scale, weight: 560, color: ink.sub, a, maxW });
       } else {
-        kit.text(title, tx, top + H / 2 + 1, { size: 17 * scale, weight: 650, family: FONT.display, a, maxW });
+        kit.text(title, tx, top + H / 2 + 1, { size: 19 * scale, weight: 650, family: FONT.display, a, maxW });
       }
       return { left, top, w: W, h: H };
     },
@@ -415,7 +469,7 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     box(x, y, w, h, hue, { a = 1, r = 14, fill = 0, face = false, dash = null, width = 1.4, halo = 1 } = {}) {
       if (a <= 0.001) return;
       ctx.save();
-      if (halo > 0) {
+      if (halo > 0 && !paper) {
         ctx.globalCompositeOperation = "lighter";
         roundRect(x, y, w, h, r);
         ctx.lineWidth = width + 6;
@@ -426,8 +480,10 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       roundRect(x, y, w, h, r);
       if (face) {
         ctx.globalAlpha = clamp(a);
-        ctx.fillStyle = INK.panel;
+        if (paper) paperShadow();
+        ctx.fillStyle = ink.panel;
         ctx.fill();
+        ctx.shadowColor = "transparent";
         ctx.globalAlpha = 1;
       }
       if (fill > 0) {
@@ -445,17 +501,17 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
      * A titled readout card: glass face, icon and title in a header, a rule
      * under it. Returns the y where its body starts.
      */
-    card(x, y, w, h, { title, icon, hue = HUE.cobalt, a = 1, strong = false } = {}) {
-      if (a <= 0.001) return y + 52;
+    card(x, y, w, h, { title, icon, hue = hues.cobalt, a = 1, strong = false } = {}) {
+      if (a <= 0.001) return y + 56;
       kit.box(x, y, w, h, hue, { a: a * (strong ? 1 : 0.8), r: 14, fill: strong ? 0.08 : 0.04, face: true, halo: strong ? 1 : 0.6 });
-      if (icon) kit.icon(icon, x + 26, y + 26, 19, hue, a);
-      kit.text(title, x + (icon ? 46 : 18), y + 27, { size: 15.5, weight: 650, family: FONT.display, a, maxW: w - 64 });
+      if (icon) kit.icon(icon, x + 28, y + 29, 22, hue, a);
+      kit.text(title, x + (icon ? 50 : 18), y + 30, { size: 18.5, weight: 650, family: FONT.display, a, maxW: w - 68 });
       ctx.save();
       ctx.globalAlpha = clamp(a) * 0.45;
       ctx.fillStyle = hue;
-      ctx.fillRect(x + 16, y + 50, w - 32, 1);
+      ctx.fillRect(x + 16, y + 56, w - 32, 1);
       ctx.restore();
-      return y + 50;
+      return y + 56;
     },
 
     /** A check mark drawn on over `p` (0…1). */
@@ -484,6 +540,13 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
   }
   kit.roundRect = roundRect;
 
+  // A card lifted a little off the paper: soft, navy-tinted, never black.
+  function paperShadow() {
+    ctx.shadowColor = "rgba(10, 27, 82, 0.1)";
+    ctx.shadowBlur = 18 * state.scale * state.dpr;
+    ctx.shadowOffsetY = 6 * state.scale * state.dpr;
+  }
+
   function stroke(pts, color, width) {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
@@ -508,54 +571,30 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
   const api = build(kit);
   const frame = api.frame ?? { w: 1500, h: 640 };
 
-  // Surface mode: no layout, loop or listeners of its own. The board is drawn
-  // into `canvas` at `res` pixels per design unit, for a 3D stage to place
-  // (holo3d/projection.js).
-  if (surface) {
-    let res = 0;
-    const resize = (next) => {
-      if (Math.abs(next - res) < 0.02) return;
-      res = next;
-      canvas.width = Math.round(frame.w * res);
-      canvas.height = Math.round(frame.h * res);
-    };
-    resize(surface.scale ?? 1);
-    return {
-      canvas,
-      frame,
-      story: api.story,
-      staticTime: api.staticTime,
-      resize,
-      render(local, dt, t, animate) {
-        state.animate = animate;
-        state.t = t;
-        state.flicker = animate ? 1 + 0.03 * Math.sin(t * 13.1) * Math.sin(t * 3.7) : 1;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.setTransform(res, 0, 0, res, 0, 0);
-        api.draw(local, animate ? dt : 0, t);
-      },
-    };
-  }
-
   /* ── Layout ── */
   function fit() {
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.round(rect.width);
-    const h = Math.round(rect.height);
+    // Layout size, not getBoundingClientRect: the folder stack scales cards
+    // with CSS transforms, and a buffer measured mid-recede stays too small
+    // (the browser then stretches it, which blurs every label).
+    const w = Math.round(canvas.clientWidth);
+    const h = Math.round(canvas.clientHeight);
     if (!w || !h) return false;
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-    if (w === state.w && h === state.h && dpr === state.dpr) return false;
+    // The screen's own density (to 2x): a capped ratio is stretched and blurs.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const box = fitBox(w, h);
+    const key = [w, h, dpr, box.x, box.y, box.w, box.h].map(Math.round).join();
+    if (key === state.fitKey) return false;
+    state.fitKey = key;
+    if (w !== state.w || h !== state.h || dpr !== state.dpr) {
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
     state.w = w;
     state.h = h;
     state.dpr = dpr;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    const availW = w * (1 - pad.side * 2);
-    const availH = h * (1 - pad.top - pad.bottom);
-    state.scale = Math.min(availW / frame.w, availH / frame.h);
-    state.ox = (w - frame.w * state.scale) / 2;
-    state.oy = h * pad.top + (availH - frame.h * state.scale) / 2;
+    state.scale = Math.min(box.w / frame.w, box.h / frame.h);
+    state.ox = box.x + (box.w - frame.w * state.scale) / 2;
+    state.oy = box.y + (box.h - frame.h * state.scale) / 2;
     return true;
   }
 
@@ -574,7 +613,7 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     state.px = lerp(state.px, state.pxTarget, k);
     state.py = lerp(state.py, state.pyTarget, k);
     // A faint shimmer on the light (never the text), as on the hero.
-    state.flicker = state.animate ? 1 + 0.03 * Math.sin(state.t * 13.1) * Math.sin(state.t * 3.7) : 1;
+    state.flicker = state.animate && !paper ? 1 + 0.03 * Math.sin(state.t * 13.1) * Math.sin(state.t * 3.7) : 1;
 
     const local = state.animate ? state.t % api.story.cycle : api.staticTime;
 
@@ -582,11 +621,13 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const s = state.scale * state.dpr;
     // Parallax: a few pixels of pointer and scroll drift, whole board.
-    const dx = state.px * 10;
-    const dy = state.py * 6 + state.scroll * -14;
-    ctx.setTransform(s, 0, 0, s, (state.ox + dx) * state.dpr, (state.oy + dy) * state.dpr);
+    // Kept within the clearance the page leaves above the captions.
+    const dx = state.px * 8;
+    const dy = state.py * 4 + state.scroll * -7;
+    // Whole device pixels: text never lands between pixels as the board drifts.
+    ctx.setTransform(s, 0, 0, s, Math.round((state.ox + dx) * state.dpr), Math.round((state.oy + dy) * state.dpr));
 
-    if (state.animate) sweep(local);
+    if (state.animate && !paper) sweep(local);
     api.draw(local, state.animate ? dt : 0, state.t);
 
     const nextStep = state.animate ? stepAt(local) : null;
@@ -690,6 +731,12 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
         state.pyTarget = 0;
         draw(0);
       }
+    },
+    /** Width over height of the board, for choosing its area. */
+    aspect: frame.w / frame.h,
+    /** Re-measure the area and redraw (it changed). */
+    refit() {
+      if (!state.disposed && fit() && !state.running) draw(0);
     },
     /** Test hook: draw the story at a given loop time. */
     seek(local) {

@@ -149,13 +149,14 @@ const POINT_FRAG = /* glsl */ `
 /**
  * @param {HTMLCanvasElement} canvas
  * @param {{ build: Function, animate?: boolean, panel?: boolean, host?: Element,
- *           bands?: () => { top: number, bottom: number },
+ *           area?: () => ({ x: number, y: number, w: number, h: number } | null),
  *           onStep?: (index: number | null, story: object) => void }} options
- *   bands  pixels at the canvas top and bottom the scene must keep clear
- *          (the title and the captions over a navy card); call
- *          stage.refit() when they change.
+ *   area   the box inside the canvas (CSS px) the scene is framed in,
+ *          clear of the title and captions over a navy card (measured by
+ *          the page); call stage.refit() when it changes. Without it the
+ *          scene fills the canvas with a small margin.
  */
-export async function createHoloStage(canvas, { build, animate = true, panel = false, host, bands, onStep } = {}) {
+export async function createHoloStage(canvas, { build, animate = true, panel = false, host, area, onStep } = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: "high-performance" });
@@ -167,19 +168,12 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 
-  // Keep the title and caption bands clear on navy cards (measured by the
-  // page, see bands); inside a panel the whole box belongs to the scene.
-  const pad = { top: 0.05, bottom: 0.05 };
-  function measurePad(height) {
-    if (panel) return;
-    const b = bands?.();
-    const top = b ? b.top / height : 0.24;
-    const bottom = b ? b.bottom / height : 0.12;
-    // The stage is sized to leave room (service-stage.css); this only guards
-    // against a degenerate frame.
-    const k = Math.min(1, 0.8 / Math.max(0.01, top + bottom));
-    pad.top = clamp(top * k, 0, 0.6);
-    pad.bottom = clamp(bottom * k, 0, 0.4);
+  // Where the scene is framed: the page's measured area on navy cards; the
+  // whole box (less a margin) inside a light card's display panel.
+  function frameBox(width, height) {
+    const r = panel ? null : area?.();
+    if (r && r.w > 40 && r.h > 40) return r;
+    return { x: 0, y: height * 0.05, w: width, h: height * 0.9 };
   }
 
   const scene = new THREE.Scene();
@@ -412,12 +406,12 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (!width || !height) return false;
-    measurePad(height);
-    const contentH = height * (1 - pad.top - pad.bottom);
-    camera.aspect = width / contentH;
+    const box = frameBox(width, height);
+    camera.aspect = box.w / box.h;
     const half = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     distance = Math.max(frame.h / 2 / half, frame.w / 2 / (half * camera.aspect));
-    camera.setViewOffset(width, contentH, 0, -pad.top * height, width, height);
+    // Render the full canvas, with the framed view sitting at the box.
+    camera.setViewOffset(box.w, box.h, -box.x, -box.y, width, height);
     camera.updateProjectionMatrix();
     // Bloom and MSAA are fill-rate heavy: cap the ratio and the total pixels.
     const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -555,7 +549,9 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
       state.t = local;
       draw(0);
     },
-    /** Re-measure the clear bands and reframe (they changed size). */
+    /** Width over height of the scene's framed box, for choosing its area. */
+    aspect: frame.w / frame.h,
+    /** Re-measure the framing area and reframe (it changed). */
     refit() {
       if (state.disposed || state.contextLost) return;
       if (fit() && !state.running) draw(0);

@@ -1,8 +1,8 @@
 /* ─────────────────────────────────────────────────────────────
    AI SOLUTIONS: visual-first service sections
    Markup: rowMarkup() in src/js/pages/solutions.js
-   Scenes: src/js/visuals/holo3d/*.js (3D holograms; Support and Data are
-   2D boards from visuals/holo projected in 3D)
+   Scenes: src/js/visuals/holo3d/*.js (3D holograms); Customer Support and
+   Data & Reporting are flat 2D boards (src/js/visuals/holo/*.js)
 
    The scene is the section. On navy cards the title sits over its top
    band, captions that follow the scene's story run along its bottom, and
@@ -43,45 +43,17 @@
   opacity: 1;
 }
 
-/* A projected board (holo3d/projection.js): drawn natively, pinned onto the
-   3D sheet by a per-frame matrix3d. Light adds onto the stage; the rim fades
-   and fine scan lines run across it, as in a projected beam. */
-.svx__board-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 900ms var(--ease-out);
-}
-
-.svx__stage.has-visual .svx__board-layer {
-  opacity: 1;
-}
-
-.svx__board {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: 0 0;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  --rim: linear-gradient(90deg, transparent, #000 1.4%, #000 98.6%, transparent);
-  --rim-y: linear-gradient(transparent, #000 2.4%, #000 97.6%, transparent);
-  --lines: repeating-linear-gradient(#000 0 2px, rgb(0 0 0 / 0.8) 2px 3px);
-  -webkit-mask-image: var(--rim), var(--rim-y), var(--lines);
-  -webkit-mask-composite: source-in, source-in;
-  mask-image: var(--rim), var(--rim-y), var(--lines);
-  mask-composite: intersect;
-}
-
 /* Light cards: the hologram plays inside a navy display panel set into the
    card, between the title and the captions. Navy cards show it directly. */
 .svx:not(.tone-navy) .svx__canvas {
-  /* Between the title and the captions, measured by solutions.js. A canvas
-     is a replaced element: insets alone do not size it. */
-  top: var(--svx-top, 24%);
+  /* Below or beside the title, clear of the captions: the box chosen in
+     solutions.js. A canvas is a replaced element: insets alone do not size it. */
+  top: var(--svx-y, 24%);
+  right: auto;
   bottom: auto;
-  height: calc(100% - var(--svx-top, 24%) - var(--svx-bottom, 72px));
+  left: var(--svx-x, 0px);
+  width: var(--svx-w, 100%);
+  height: var(--svx-h, calc(76% - 72px));
   border-radius: var(--radius-lg);
   background:
     radial-gradient(circle, rgba(111, 155, 255, 0.14) 1px, transparent 1.5px) 0 0 / 24px 24px,
@@ -256,7 +228,6 @@
 
 /* Narrower than the hologram allows (or it failed): the flat diagram only. */
 .svx__stage.is-fallback .svx__canvas,
-.svx__stage.is-fallback .svx__board-layer,
 .svx__stage.is-fallback .svx__captions,
 .svx__stage.is-fallback .svx__toggle {
   display: none;
@@ -318,7 +289,6 @@ html:not(.js) .svx__fallback {
   }
 
   .svx__canvas,
-  .svx__board-layer,
   .svx__captions {
     display: none;
   }
@@ -362,7 +332,6 @@ html:not(.js) .svx__fallback {
 
 @media (prefers-reduced-motion: reduce) {
   .svx__canvas,
-  .svx__board-layer,
   .svx__captions li {
     transition: none;
   }

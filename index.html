@@ -103,43 +103,28 @@
 
       <section class="band band-problem is-flip" aria-labelledby="problem-title">
         <span class="thread" aria-hidden="true"></span>
-        <div class="wrap problem-grid">
-          <div class="problem-head" data-reveal>
-            <h2 id="problem-title">The business runs. <span>You carry the gaps.</span></h2>
-            <p>Most teams do not need another dashboard. They need the hand-offs between tools and people to stop eating the week.</p>
+        <!-- Visual first: one flat diagram (visuals/holo/problem.js, paper
+             theme) plays the four gaps in turn; the captions follow it and
+             the full text waits in the details (pages/home.js). -->
+        <div class="wrap problem-svx svx--end">
+          <div class="svx__stage" data-problem-stage>
+            <canvas class="svx__canvas" aria-hidden="true"></canvas>
+            <header class="svx__head" data-reveal>
+              <h2 id="problem-title">The business runs. <span>You carry the gaps.</span></h2>
+              <p class="svx__outcome">Most teams do not need another dashboard. They need the hand-offs between tools and people to stop eating the week.</p>
+            </header>
+            <ol class="svx__captions" aria-label="What the visual shows" data-problem-captions></ol>
+            <button class="svx__toggle" type="button" data-svx-toggle aria-pressed="false" aria-label="Pause animation"></button>
+          </div>
+          <div class="svx__info problem-info">
             <a class="text-link" href="/ai-solutions/">Explore AI solutions <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+            <details class="svc__details" data-problem-details>
+              <summary>Why this happens <i class="ph ph-plus" aria-hidden="true"></i></summary>
+              <div class="svc__details-body">
+                <div class="problem-list" data-problems></div>
+              </div>
+            </details>
           </div>
-          <div class="problem-content" data-reveal>
-            <figure class="problem-flow" data-float data-tilt>
-              <figcaption>A request can pass through several tools before anyone acts.</figcaption>
-              <ol class="problem-flow__steps" aria-label="A typical manual hand-off">
-                <li class="problem-flow__step">
-                  <span class="problem-flow__mark"><i class="ph ph-envelope-simple" aria-hidden="true"></i></span>
-                  <span class="problem-flow__copy">
-                    <strong>Request arrives</strong>
-                    <span>Inbox</span>
-                  </span>
-                </li>
-                <li class="problem-flow__step">
-                  <span class="problem-flow__mark"><i class="ph ph-table" aria-hidden="true"></i></span>
-                  <span class="problem-flow__copy">
-                    <strong>Details get copied</strong>
-                    <span>Spreadsheet</span>
-                  </span>
-                </li>
-                <li class="problem-flow__step problem-flow__step--waiting">
-                  <span class="problem-flow__mark"><i class="ph ph-hourglass-medium" aria-hidden="true"></i></span>
-                  <span class="problem-flow__copy">
-                    <strong>Follow-up waits</strong>
-                    <span>Human queue</span>
-                  </span>
-                </li>
-              </ol>
-            </figure>
-          </div>
-          <!-- The four problems zigzag across the grid as stops on the
-               hand-off thread (pages/home.js renders and reveals them). -->
-          <div class="problem-list" data-problems></div>
         </div>
       </section>
 

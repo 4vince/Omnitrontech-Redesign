@@ -23,12 +23,12 @@ const SOURCES = [
   { name: "Website", icon: "ph-globe", hue: HUE.lime, y: 260 },
   { name: "Stock", icon: "ph-package", hue: HUE.violet, y: 430 },
 ];
-const SRC_W = 200;
-const JOIN = [292, 260];
-const CHART = { x: 350, y: 10, w: 690, h: 500 };
-const PLOT = { x: 410, y: 96, w: 600, h: 330 };
-const ALERT = { x: 1090, y: 40, w: 310, h: 190 };
-const TEAM = [1130, 352];
+const SRC_W = 240;
+const JOIN = [330, 260];
+const CHART = { x: 384, y: 6, w: 680, h: 508 };
+const PLOT = { x: 452, y: 104, w: 586, h: 320 };
+const ALERT = { x: 1078, y: 34, w: 340, h: 206 };
+const TEAM = [1118, 366];
 
 // Four weeks of daily orders: a weekly rhythm with day-to-day noise, then
 // one day well above anything usual.
@@ -73,7 +73,7 @@ export function build(kit) {
   function sources(t, out) {
     SOURCES.forEach((s, i) => {
       const inn = easeOut(seg(t, 0.1 + i * 0.15, 0.55 + i * 0.15));
-      kit.chip(SRC_W / 2 - (1 - inn) * 20, s.y, { icon: s.icon, title: s.name, sub: "Live feed", hue: s.hue, w: SRC_W, h: 62, a: inn * out });
+      kit.chip(SRC_W / 2 - (1 - inn) * 20, s.y, { icon: s.icon, title: s.name, sub: "Live feed", hue: s.hue, w: SRC_W, h: 86, a: inn * out });
       const stream = STREAMS[i];
       kit.beam(stream, HUE.cobalt, { a: 0.32, halo: 0.5, width: 1.3 });
       // A steady trickle: a packet every 1.2s per feed, offset per feed.
@@ -86,7 +86,7 @@ export function build(kit) {
     });
     kit.beam(TO_CHART, HUE.cobalt, { a: 0.5, halo: 0.6, width: 1.4 });
     kit.node(JOIN[0], JOIN[1], 22, HUE.cobalt, { icon: "ph-funnel-simple", iconSize: 20, lit: 0.6 });
-    kit.text("Cleaned", JOIN[0], JOIN[1] + 40, { size: 13, weight: 560, color: INK.sub, align: "center" });
+    kit.text("Cleaned", JOIN[0], JOIN[1] + 42, { size: 15.5, weight: 600, color: INK.sub, align: "center" });
   }
 
   function chart(t, out) {
@@ -99,10 +99,10 @@ export function build(kit) {
       ctx.fillStyle = kit.rgba(HUE.cobalt, v === 100 ? 0.4 : 0.16);
       ctx.fillRect(PLOT.x, y, PLOT.w, 1);
       ctx.restore();
-      kit.text(String(v), PLOT.x - 12, y, { size: 12.5, weight: 500, family: FONT.mono, color: INK.faint, align: "right" });
+      kit.text(String(v), PLOT.x - 14, y, { size: 14.5, weight: 500, family: FONT.mono, color: INK.faint, align: "right" });
     });
     ["4 wks ago", "3 wks", "2 wks", "Last week"].forEach((label, w) => {
-      kit.text(label, px(w * 7), PLOT.y + PLOT.h + 22, { size: 12.5, weight: 540, color: INK.faint, align: w === 0 ? "left" : "center" });
+      kit.text(label, px(w * 7), PLOT.y + PLOT.h + 26, { size: 14.5, weight: 560, color: INK.faint, align: w === 0 ? "left" : "center" });
     });
 
     // Learned usual range: a band that grows out from the line.
@@ -125,7 +125,7 @@ export function build(kit) {
       kit.beam(path(top), HUE.teal, { a: 0.6 * learn, width: 1, dash: [5, 6], halo: 0 });
       kit.beam(path(bottom), HUE.teal, { a: 0.6 * learn, width: 1, dash: [5, 6], halo: 0 });
       const la = seg(t, 5.0, 5.4) * out;
-      kit.text("Usual range", px(2), py(base(2) + BAND) - 14, { size: 13, weight: 600, color: INK.sub, a: la });
+      kit.text("Usual range", px(2), py(base(2) + BAND) - 16, { size: 15.5, weight: 620, color: INK.sub, a: la });
     }
 
     // The line: four weeks drawn in, then the newest days.
@@ -160,8 +160,9 @@ export function build(kit) {
       ctx.stroke();
       ctx.restore();
       const la = seg(t, 8.2, 8.6) * out;
-      kit.icon("ph-warning", SPIKE_PT[0] - 150, SPIKE_PT[1] - 2, 17, HUE.red, la);
-      kit.text("Well above usual", SPIKE_PT[0] - 134, SPIKE_PT[1] - 1, { size: 14, weight: 650, a: la });
+      // Label to the left of the point, ending clear of its pulse ring.
+      const labelW = kit.text("Well above usual", SPIKE_PT[0] - 36, SPIKE_PT[1] - 1, { size: 16.5, weight: 650, align: "right", a: la });
+      kit.icon("ph-warning", SPIKE_PT[0] - 36 - labelW - 16, SPIKE_PT[1] - 2, 20, HUE.red, la);
     }
   }
 
@@ -174,11 +175,11 @@ export function build(kit) {
     const a = easeOut(seg(t, ALERT_AT + 0.6, ALERT_AT + 1.0)) * out;
     const body = kit.card(ALERT.x, ALERT.y, ALERT.w, ALERT.h, { title: "Alert", icon: "ph-bell-ringing", hue: a > 0 ? HUE.red : HUE.cobalt, a: Math.max(0.45, a), strong: a > 0.5 });
     if (a > 0) {
-      kit.text("Orders well above usual", ALERT.x + 18, body + 30, { size: 16, weight: 650, family: FONT.display, a, maxW: ALERT.w - 36 });
-      kit.text("Tuesday, from 9:00", ALERT.x + 18, body + 56, { size: 14, weight: 540, color: INK.sub, a });
-      kit.text("Check stock for best sellers", ALERT.x + 18, body + 82, { size: 14, weight: 540, color: INK.sub, a, maxW: ALERT.w - 36 });
+      kit.text("Orders well above usual", ALERT.x + 18, body + 32, { size: 19, weight: 650, family: FONT.display, a, maxW: ALERT.w - 36 });
+      kit.text("Tuesday, from 9:00", ALERT.x + 18, body + 64, { size: 16, weight: 560, color: INK.sub, a });
+      kit.text("Check stock for best sellers", ALERT.x + 18, body + 94, { size: 16, weight: 560, color: INK.sub, a, maxW: ALERT.w - 36 });
     } else {
-      kit.text("Watching for change", ALERT.x + 18, body + 30, { size: 14.5, weight: 540, color: INK.sub, a: 0.75 });
+      kit.text("Watching for change", ALERT.x + 18, body + 32, { size: 16.5, weight: 560, color: INK.sub, a: 0.85 });
     }
 
     kit.beam(TO_TEAM, HUE.amber, { a: 0.3, halo: 0.5, width: 1.2 });
@@ -187,12 +188,12 @@ export function build(kit) {
     if (v > 0 && v < 1) kit.packet(TO_TEAM, easeInOut(v), HUE.amber);
     const told = window01(t, 12.6, OUT - 0.1, 0.35);
     kit.node(TEAM[0], TEAM[1], 36, HUE.amber, { icon: "ph-users-three", lit: 0.2 + told * 0.6, fill: 0.08 + told * 0.14, a: 0.55 + told * 0.45 });
-    kit.chip(TEAM[0] + 160, TEAM[1], {
+    kit.chip(TEAM[0] + 180, TEAM[1], {
       title: "Ops team",
       sub: told > 0 ? "Told the same morning" : "Gets the alerts",
       hue: HUE.amber,
-      w: 214,
-      h: 60,
+      w: 276,
+      h: 84,
       a: 0.6 + told * 0.4,
       strong: told > 0.5,
     });
@@ -206,7 +207,7 @@ export function build(kit) {
   }
 
   return {
-    frame: { w: 1400, h: 520 },
+    frame: { w: 1440, h: 520 },
     story,
     staticTime: 13.6,
     draw: (local) => draw(local),
