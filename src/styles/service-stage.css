@@ -1,16 +1,17 @@
 /* ─────────────────────────────────────────────────────────────
    AI SOLUTIONS: visual-first service sections
    Markup: rowMarkup() in src/js/pages/solutions.js
-   Scenes: src/js/visuals/service-scenes/*.js
+   Scenes: src/js/visuals/holo3d/*.js (3D holograms; Support and Data are
+   2D boards from visuals/holo projected in 3D)
 
-   The 3D scene is the section. The service title sits over its top band,
-   captions that follow the scene's story run along its bottom, and the
-   details wait underneath. The scene's camera leaves those two bands
-   clear (padTop / padBottom in service-scenes/kit.js), so keep the head
-   and captions within roughly the top 22% and bottom 10% of the stage.
+   The scene is the section. On navy cards the title sits over its top
+   band, captions that follow the scene's story run along its bottom, and
+   the details wait underneath; the scene leaves those bands clear (bands
+   measured in solutions.js). On light cards the scene plays in a navy display panel
+   between the title and the captions.
 
-   Phones and browsers without WebGL get the flat diagram of the same
-   service instead (service-visuals.css).
+   Below 1200px (phones and tablets) the flat diagram of the same service
+   stands in (service-visuals.css).
    ───────────────────────────────────────────────────────────── */
 
 .svx {
@@ -22,7 +23,8 @@
 .svx__stage {
   position: relative;
   height: min(92svh, 940px);
-  min-height: 640px;
+  /* Room for the scene between the title and caption bands. */
+  min-height: max(640px, calc(var(--svx-top, 0px) + var(--svx-bottom, 0px) + 400px));
   margin-inline: var(--pad);
 }
 
@@ -37,8 +39,57 @@
   transition: opacity 900ms var(--ease-out);
 }
 
-.svx__stage.has-webgl .svx__canvas {
+.svx__stage.has-visual .svx__canvas {
   opacity: 1;
+}
+
+/* A projected board (holo3d/projection.js): drawn natively, pinned onto the
+   3D sheet by a per-frame matrix3d. Light adds onto the stage; the rim fades
+   and fine scan lines run across it, as in a projected beam. */
+.svx__board-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out);
+}
+
+.svx__stage.has-visual .svx__board-layer {
+  opacity: 1;
+}
+
+.svx__board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  --rim: linear-gradient(90deg, transparent, #000 1.4%, #000 98.6%, transparent);
+  --rim-y: linear-gradient(transparent, #000 2.4%, #000 97.6%, transparent);
+  --lines: repeating-linear-gradient(#000 0 2px, rgb(0 0 0 / 0.8) 2px 3px);
+  -webkit-mask-image: var(--rim), var(--rim-y), var(--lines);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image: var(--rim), var(--rim-y), var(--lines);
+  mask-composite: intersect;
+}
+
+/* Light cards: the hologram plays inside a navy display panel set into the
+   card, between the title and the captions. Navy cards show it directly. */
+.svx:not(.tone-navy) .svx__canvas {
+  /* Between the title and the captions, measured by solutions.js. A canvas
+     is a replaced element: insets alone do not size it. */
+  top: var(--svx-top, 24%);
+  bottom: auto;
+  height: calc(100% - var(--svx-top, 24%) - var(--svx-bottom, 72px));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle, rgba(111, 155, 255, 0.14) 1px, transparent 1.5px) 0 0 / 24px 24px,
+    radial-gradient(ellipse 80% 90% at 50% 45%, #0c1d63 0%, #08133f 62%, #060d2c 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(111, 155, 255, 0.26),
+    inset 0 0 90px rgba(2, 6, 24, 0.55),
+    0 28px 60px -34px rgba(6, 13, 42, 0.5);
 }
 
 /* Title over the top band of the scene */
@@ -105,7 +156,7 @@
   position: relative;
   padding-top: 14px;
   color: var(--muted-2);
-  font-size: clamp(0.78rem, 0.9vw, 0.92rem);
+  font-size: var(--fs-small);
   font-weight: 560;
   line-height: 1.4;
   transition: color var(--dur-ui) var(--ease-out);
@@ -189,7 +240,7 @@
   transform: scale(0.96);
 }
 
-.svx__stage.has-webgl:not(.is-static) .svx__toggle {
+.svx__stage.has-visual:not(.is-static) .svx__toggle {
   display: grid;
 }
 
@@ -203,19 +254,27 @@
   opacity: 0.5;
 }
 
+/* Narrower than the hologram allows (or it failed): the flat diagram only. */
+.svx__stage.is-fallback .svx__canvas,
+.svx__stage.is-fallback .svx__board-layer,
+.svx__stage.is-fallback .svx__captions,
+.svx__stage.is-fallback .svx__toggle {
+  display: none;
+}
+
 /* Until the scene is up (or if it never comes) */
 .svx__fallback {
   display: none;
 }
 
-.svx__stage:not(.has-webgl) .svx__captions {
+.svx__stage:not(.has-visual) .svx__captions {
   visibility: hidden;
 }
 
 .svx__stage.is-fallback .svx__fallback,
 html:not(.js) .svx__fallback {
   position: absolute;
-  inset: 24% 0 4%;
+  inset: var(--svx-top, 24%) 0 var(--svx-bottom, 4%);
   display: grid;
   margin: 0;
 }
@@ -242,10 +301,6 @@ html:not(.js) .svx__fallback {
   .svx__head {
     max-width: 80%;
   }
-
-  .svx__captions li {
-    font-size: 0.74rem;
-  }
 }
 
 /* Phones: the flat diagram stands in for the scene, all in normal flow. */
@@ -263,6 +318,7 @@ html:not(.js) .svx__fallback {
   }
 
   .svx__canvas,
+  .svx__board-layer,
   .svx__captions {
     display: none;
   }
@@ -306,6 +362,7 @@ html:not(.js) .svx__fallback {
 
 @media (prefers-reduced-motion: reduce) {
   .svx__canvas,
+  .svx__board-layer,
   .svx__captions li {
     transition: none;
   }
@@ -313,5 +370,164 @@ html:not(.js) .svx__fallback {
   .svx__captions li.is-active::after {
     animation: none;
     transform: scaleX(1);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Folder stack (solutions-stack.js): desktop, full motion only.
+   The first service is the base of the pile; every later card (and
+   the closing CTA band) overlaps the one before it by its tab height,
+   rounds its top corners and carries a staggered folder tab. JS sets
+   the sticky `top`, the recede transform and the shade opacity.
+   ───────────────────────────────────────────────────────────── */
+
+.svx__tab,
+.svx__shade,
+.svx__cast {
+  display: none;
+}
+
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  [data-service-rows].is-stacked {
+    /* The cards' sticky containing block becomes <main>, so the last
+       service stays filed under the CTA band instead of scrolling off. */
+    display: contents;
+  }
+
+  .svx.is-stacked,
+  .cta-band.is-stacked {
+    --tab-h: 42px;
+    --card-r: 28px;
+    /* Shadow ink. A shadow falling on navy needs more weight to read than
+       one falling on bone, so the cast strength follows the card *below*:
+       light cards land on navy ones and vice versa. */
+    --cast-ink: 1, 4, 20;
+    --cast-a: 0.42;
+    position: sticky;
+    background: var(--bg);
+    /* Ambient: only shows once a card has tipped back and shrunk, where it
+       lifts the card's sides off the one beneath, so the pile reads in layers. */
+    box-shadow: 0 30px 70px -36px rgba(6, 13, 42, 0.38);
+  }
+
+  .svx.is-stacked.tone-navy,
+  .cta-band.is-stacked {
+    --cast-ink: 6, 13, 42;
+    --cast-a: 0.2;
+  }
+
+  .svx.is-stacked {
+    overflow: visible;
+    padding-top: 24px;
+  }
+
+  /* A landed card fits the screen under the nav, so "Discuss this service"
+     and "Service details" are in view the moment it stops. The scene takes
+     whatever height is left after the link row. The info row's bottom
+     padding is the strip the next card's tab and lip cover, so nothing
+     clickable ever sits under it. Opening the details makes the card
+     taller, and it then reads by scrolling as before. */
+  .svx.is-stacked > .svx__stage {
+    --svx-info-h: calc(18px + 53px + var(--tab-h) * 2 + 18px);
+    height: calc(100svh - var(--nav-h, 76px) - 24px - var(--svx-info-h));
+    min-height: 480px;
+  }
+
+  .svx.is-stacked > .svx__info {
+    padding-top: 18px;
+    padding-bottom: calc(var(--tab-h) * 2 + 18px);
+  }
+
+  .svx.is-stacked ~ .svx.is-stacked,
+  .cta-band.is-stacked {
+    margin-top: calc(-1 * var(--tab-h));
+    border-radius: var(--card-r) var(--card-r) 0 0;
+    /* Layered like real paper: a hairline lip, a tight contact shadow where
+       the edge meets the card below, a short near shadow, and the ambient. */
+    box-shadow:
+      0 -1px 0 var(--line),
+      0 -1px 3px rgba(var(--cast-ink), calc(var(--cast-a) * 0.55)),
+      0 -6px 14px -8px rgba(var(--cast-ink), calc(var(--cast-a) * 0.6)),
+      0 30px 70px -36px rgba(6, 13, 42, 0.38);
+  }
+
+  /* The cast shadow: a soft fall-off above the card's top edge, on the
+     card below. JS scales it (from the edge) and fades it as the card lands. */
+  .is-stacked > .svx__cast {
+    position: absolute;
+    right: 10px;
+    bottom: 100%;
+    left: 10px;
+    z-index: 1;
+    display: block;
+    height: 110px;
+    background: linear-gradient(
+      to top,
+      rgba(var(--cast-ink), var(--cast-a)) 0%,
+      rgba(var(--cast-ink), calc(var(--cast-a) * 0.45)) 22%,
+      rgba(var(--cast-ink), calc(var(--cast-a) * 0.12)) 58%,
+      rgba(var(--cast-ink), 0) 100%
+    );
+    /* Fade the ends so the band follows the rounded corners. */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    opacity: 0.3;
+    transform-origin: 50% 100%;
+    pointer-events: none;
+  }
+
+  .svx.is-stacked > .backdrop {
+    border-radius: inherit;
+  }
+
+  .svx.is-stacked ~ .svx.is-stacked > .svx__tab {
+    --tab-w: clamp(220px, 18vw, 300px);
+    position: absolute;
+    bottom: calc(100% - 1px);
+    /* Staggered left to right across the five cards, like divider tabs. */
+    left: calc(var(--pad) + (100% - 2 * var(--pad) - var(--tab-w)) * var(--tab-i) / (var(--tab-n) - 1));
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: var(--tab-w);
+    height: var(--tab-h);
+    padding: 0 18px;
+    border-radius: 14px 14px 0 0;
+    background: var(--bg);
+    box-shadow:
+      0 -1px 0 var(--line),
+      0 -2px 5px rgba(var(--cast-ink), calc(var(--cast-a) * 0.45)),
+      0 -8px 16px -10px rgba(var(--cast-ink), calc(var(--cast-a) * 0.6));
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .svx__tab .ph {
+    flex: none;
+    font-size: 1rem;
+    color: var(--blue);
+  }
+
+  .svx__tab span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Darkens a card as the next one files over it (opacity only). */
+  .is-stacked > .svx__shade {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: block;
+    border-radius: inherit;
+    background: #060d2a;
+    opacity: 0;
+    pointer-events: none;
   }
 }

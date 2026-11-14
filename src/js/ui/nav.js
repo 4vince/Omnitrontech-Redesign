@@ -106,16 +106,18 @@ export function initNav(lenis) {
 
   // Dark bands (navy, the blue CTA, the footer): while one sits under the
   // bar, the bar turns navy glass with light ink instead of laying a light
-  // strip across it. One rect read per dark band per scroll; few bands.
-  // Queried per call: service rows and the footer render after the nav.
-  const DARK = ".tone-navy, .tone-blue, .site-footer";
+  // strip across it. Hit-tested, not rect-tested: on AI Solutions the
+  // service cards stack, and a navy card filed underneath still spans the
+  // bar while a light card lies on top of it.
+  const BAND = "section, footer, .band, .cta-band";
+  const DARK = ".tone-navy, .tone-blue, .cta-band, .site-footer";
   const setScrolled = () => {
     header.classList.toggle("is-scrolled", window.scrollY > 28);
     const probe = (header.offsetHeight || 76) / 2;
-    const onDark = [...document.querySelectorAll(DARK)].some((band) => {
-      const r = band.getBoundingClientRect();
-      return r.top <= probe && r.bottom > probe;
-    });
+    const hit = document
+      .elementsFromPoint(window.innerWidth / 2, probe)
+      .find((el) => !header.contains(el) && el.closest(BAND));
+    const onDark = Boolean(hit?.closest(BAND)?.matches(DARK));
     header.classList.toggle("is-on-dark", onDark);
   };
   setScrolled();

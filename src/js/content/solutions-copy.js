@@ -216,7 +216,7 @@ export const solutionsPageLabels = {
 
 /*
  * What each 3D service scene shows, step by step. The captions sit under
- * the scene and light up in time with it (src/js/visuals/service-scenes/),
+ * the scene and light up in time with it (src/js/visuals/holo3d/),
  * so they describe the picture literally. Keep them short.
  */
 export const solutionsSceneCaptions = {

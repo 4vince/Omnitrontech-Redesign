@@ -31,7 +31,7 @@ export function isDesktop() {
   return window.matchMedia("(min-width: 900px)").matches;
 }
 
-function navOffset() {
+export function navOffset() {
   const value = getComputedStyle(document.documentElement).getPropertyValue("--nav-h");
   return -((Number.parseFloat(value) || 76) + 16);
 }
@@ -70,6 +70,9 @@ export function initSmoothScroll() {
 
   return lenis;
 }
+
+/** The page's Lenis instance, or null (reduced motion, not started yet). */
+export const getLenis = () => lenis;
 
 /** Smoothly scroll to an element or selector (clearing the fixed nav), or
  *  to an absolute scroll position when given a number. */

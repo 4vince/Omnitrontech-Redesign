@@ -150,7 +150,7 @@
   --inset-panel: inset 1px 0 0 rgba(23, 25, 31, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
 
-  --nav-bg: rgba(246, 245, 241, 0.92); /* near-opaque: stays clean over navy bands */
+  --nav-bg: rgba(246, 245, 241, 0.96); /* near-opaque: nothing reads through it */
   --nav-bg-solid: rgba(246, 245, 241, 0.96);
   --selection: rgba(43, 70, 214, 0.2);
 

@@ -16,6 +16,7 @@ import {
   scrollToTarget,
 } from "../core/motion.js";
 import { serviceDiagramMarkup } from "../visuals/service-diagrams.js";
+import { initServiceStack } from "./solutions-stack.js";
 
 /*
  * Timing map for the AI Solutions page
@@ -52,7 +53,11 @@ function initWorkflowVisual() {
       scene = await createSolutionsHeroScene(canvas, {
         services,
         animate: !prefersReducedMotion(),
-        onSelect: (service) => scrollToTarget(`#service-${service.slug}`),
+        onSelect: (service) => {
+          const card = document.querySelector(`#service-${service.slug}`);
+          if (stack && card) stack.scrollTo(card);
+          else scrollToTarget(card);
+        },
       });
       if (!scene) return;
       // Reveal the scene only once the hero copy has landed, and start the
@@ -129,16 +134,21 @@ function initHeroExit() {
 }
 
 /* Scene modules, loaded only when their section comes near the viewport. */
+// Every service plays in the same Three.js hologram stage (visuals/holo3d).
+// Support and reporting are 2D boards (visuals/holo) shown as projections.
+const HOLO3D = () => import("../visuals/holo3d/kit.js");
+const projected = (board) => () => import("../visuals/holo3d/projection.js").then((m) => m.prepare(board));
 const SCENES = {
-  strategy: () => import("../visuals/service-scenes/strategy.js"),
-  automation: () => import("../visuals/service-scenes/automation.js"),
-  agentic: () => import("../visuals/service-scenes/agentic.js"),
-  experience: () => import("../visuals/service-scenes/experience.js"),
-  data: () => import("../visuals/service-scenes/data.js"),
+  strategy: { kit: HOLO3D, scene: () => import("../visuals/holo3d/strategy.js") },
+  automation: { kit: HOLO3D, scene: () => import("../visuals/holo3d/automation.js") },
+  agentic: { kit: HOLO3D, scene: () => import("../visuals/holo3d/agentic.js") },
+  experience: { kit: HOLO3D, scene: projected(() => import("../visuals/holo/experience.js")) },
+  data: { kit: HOLO3D, scene: projected(() => import("../visuals/holo/data.js")) },
 };
 
-// Phones keep the flat diagram: the 3D labels would be too small to read.
-const WIDE = "(min-width: 761px)";
+// Phones and tablets keep the flat diagram: below this width the
+// hologram's labels would be too small to read.
+const WIDE = "(min-width: 1200px)";
 
 function setActiveCaption(stage, index, story) {
   const items = stage.querySelectorAll("[data-caption]");
@@ -164,6 +174,8 @@ function setActiveCaption(stage, index, story) {
   });
 }
 
+let stack = null;
+
 function initServiceStage(section) {
   const stage = section.querySelector("[data-svx]");
   const canvas = stage?.querySelector("canvas");
@@ -171,9 +183,38 @@ function initServiceStage(section) {
   if (!stage || !canvas || !load) return;
 
   const wide = window.matchMedia(WIDE);
+  let failed = false;
+  const syncWidth = () => stage.classList.toggle("is-fallback", failed || !wide.matches);
+  syncWidth();
   let scene = null;
   let loading = false;
   let visible = false;
+  let onScreen = false;
+  // Buried under the next card in the stack (solutions-stack.js).
+  let covered = false;
+
+  // The title (top) and captions (bottom) sit over the stage. Measure the
+  // bands they take so the scene never runs under them: light cards size
+  // their navy panel from --svx-top / --svx-bottom, navy cards frame the 3D
+  // camera inside them (bands option of createHoloStage).
+  const head = stage.querySelector(".svx__head");
+  const captions = stage.querySelector(".svx__captions");
+  const BAND_GAP = 24;
+  const bands = () => ({
+    top: head ? head.offsetTop + head.offsetHeight + BAND_GAP : 0,
+    bottom: captions ? stage.clientHeight - captions.offsetTop + BAND_GAP : 0,
+  });
+  const syncBands = () => {
+    const { top, bottom } = bands();
+    stage.style.setProperty("--svx-top", `${top}px`);
+    stage.style.setProperty("--svx-bottom", `${bottom}px`);
+    scene?.refit();
+  };
+  syncBands();
+  if (typeof ResizeObserver !== "undefined") {
+    const bandObserver = new ResizeObserver(syncBands);
+    [stage, head, captions].forEach((el) => el && bandObserver.observe(el));
+  }
   let seen = false;
   let scroll = 0;
   // Pause control for the looping scene (WCAG 2.2.2).
@@ -198,22 +239,23 @@ function initServiceStage(section) {
     if (scene || loading || !wide.matches) return;
     loading = true;
     try {
-      const [{ createServiceStage }, { build }] = await Promise.all([
-        import("../visuals/service-scenes/kit.js"),
-        load(),
-      ]);
-      scene = await createServiceStage(canvas, {
+      const [{ createHoloStage }, { build }] = await Promise.all([load.kit(), load.scene()]);
+      scene = await createHoloStage(canvas, {
         build,
         animate: !prefersReducedMotion(),
-        dark: section.classList.contains("tone-navy"),
+        // Light cards show the hologram inside a navy display panel.
+        panel: !section.classList.contains("tone-navy"),
+        bands,
         host: section,
         onStep: (index, story) => setActiveCaption(stage, index, story),
       });
       if (!scene) {
-        stage.classList.add("is-fallback");
+        failed = true;
+      syncWidth();
         return;
       }
-      stage.classList.add("has-webgl");
+      stage.classList.add("has-visual");
+      if (import.meta.env.DEV) stage.svxScene = scene;
       scene.setScroll(scroll);
       if (visible) {
         seen = true;
@@ -221,7 +263,8 @@ function initServiceStage(section) {
       }
     } catch (error) {
       console.error(`Could not load the ${stage.dataset.serviceId} visual.`, error);
-      stage.classList.add("is-fallback");
+      failed = true;
+      syncWidth();
     } finally {
       loading = false;
     }
@@ -239,25 +282,33 @@ function initServiceStage(section) {
       { rootMargin: "100% 0px" },
     ).observe(stage);
 
+    const sync = () => {
+      visible = onScreen && !covered;
+      // A jump straight to this section can skip the look-ahead trigger.
+      if (!scene) {
+        if (visible) void start();
+        return;
+      }
+      if (visible) {
+        // First time on screen: play the story from its first step.
+        if (!seen) scene.restart();
+        seen = true;
+        if (!userPaused) scene.resume();
+      } else {
+        scene.pause();
+      }
+    };
     new IntersectionObserver(
       ([entry]) => {
-        visible = entry.isIntersecting;
-        // A jump straight to this section can skip the look-ahead trigger.
-        if (!scene) {
-          if (visible) void start();
-          return;
-        }
-        if (visible) {
-          // First time on screen: play the story from its first step.
-          if (!seen) scene.restart();
-          seen = true;
-          if (!userPaused) scene.resume();
-        } else {
-          scene.pause();
-        }
+        onScreen = entry.isIntersecting;
+        sync();
       },
       { threshold: 0.08 },
     ).observe(stage);
+    section.addEventListener("svx:covered", (event) => {
+      covered = event.detail;
+      sync();
+    });
   }
 
   // Scrubbed camera orbit across the section's pass through the viewport.
@@ -272,6 +323,7 @@ function initServiceStage(section) {
   });
 
   wide.addEventListener?.("change", () => {
+    syncWidth();
     if (!wide.matches) scene?.pause();
     else if (scene && visible && !userPaused) scene.resume();
     else void start();
@@ -394,6 +446,7 @@ function rowMarkup(service, index) {
   const align = ` svx--${ALIGN[index % ALIGN.length]}`;
   const captions = solutionsSceneCaptions[service.id] ?? [];
   return `<section class="svx${tone}${align}" id="service-${service.slug}" aria-labelledby="service-title-${service.slug}">
+    <div class="svx__tab" aria-hidden="true"><i class="ph ${service.icon}"></i><span>${service.name}</span></div>
     <div class="svx__stage" data-svx data-service-id="${service.id}">
       <canvas class="svx__canvas" aria-hidden="true"></canvas>
       <header class="svx__head">
@@ -433,28 +486,46 @@ export function initSolutions() {
   const sections = [...rowsMount.querySelectorAll(".svx")];
   sections.forEach(initServiceStage);
   initServiceEntrances(sections);
+  stack = initServiceStack({
+    mount: rowsMount,
+    sections,
+    closer: document.querySelector(".cta-band--close"),
+  });
 
+  // In-page links go through the stack: a stuck card's own rect is not
+  // where the card lives. Capture phase, so Lenis's anchor handler (which
+  // would measure that rect) never sees the click.
+  document.addEventListener(
+    "click",
+    (event) => {
+      const link = event.target.closest?.('a[href^="#service-"]');
+      const card = link && document.querySelector(link.getAttribute("href"));
+      if (!card) return;
+      event.preventDefault();
+      event.stopPropagation();
+      stack.scrollTo(card);
+    },
+    true,
+  );
+
+  // Scroll-spy: the current service is the last card whose top has reached
+  // the upper half of the screen. Rect-based, so it holds while cards are
+  // stuck (an IntersectionObserver never sees a stuck card leave).
   const links = [...document.querySelectorAll("[data-index-link]")];
-  if (!links.length || typeof IntersectionObserver === "undefined") return;
-
-  const setCurrent = (slug) => {
+  if (!links.length) return;
+  let current = null;
+  const spy = () => {
+    const line = window.innerHeight * 0.45;
+    let slug = null;
+    sections.forEach((section) => {
+      if (section.getBoundingClientRect().top <= line) slug = section.id.replace("service-", "");
+    });
+    if (slug === current) return;
+    current = slug;
     links.forEach((link) => {
       if (link.dataset.indexLink === slug) link.setAttribute("aria-current", "true");
       else link.removeAttribute("aria-current");
     });
   };
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) setCurrent(entry.target.id.replace("service-", ""));
-      });
-    },
-    { rootMargin: "-38% 0px -52% 0px", threshold: 0 },
-  );
-
-  services.forEach((service) => {
-    const section = document.querySelector(`#service-${service.slug}`);
-    if (section) observer.observe(section);
-  });
+  ScrollTrigger.create({ start: 0, end: "max", onUpdate: spy, onRefresh: spy });
 }
