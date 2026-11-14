@@ -169,7 +169,7 @@ export function initNav(lenis) {
     header.classList.add("is-sheet-open");
     toggle.setAttribute("aria-expanded", "true");
     toggle.setAttribute("aria-label", "Close menu");
-    document.body.classList.add("no-scroll");
+    document.documentElement.classList.add("no-scroll");
     lenis?.stop();
     document.addEventListener("keydown", onKeydown);
     // Wait for the sheet to become visible before moving focus.
@@ -183,7 +183,7 @@ export function initNav(lenis) {
     header.classList.remove("is-sheet-open");
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-label", "Open menu");
-    document.body.classList.remove("no-scroll");
+    document.documentElement.classList.remove("no-scroll");
     lenis?.start();
     document.removeEventListener("keydown", onKeydown);
     if (restore && lastFocused instanceof HTMLElement) lastFocused.focus();

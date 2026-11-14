@@ -13,6 +13,7 @@ html {
   text-size-adjust: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--nav-h) + 20px);
+  overflow-x: clip;
   background: var(--bg);
 }
 
@@ -32,8 +33,10 @@ body {
     color var(--theme-dur) var(--ease-out);
 }
 
-body.no-scroll {
-  overflow: hidden;
+/* Menu sheet open: lock the page. On html, since html's own overflow-x
+   now owns the viewport and body's overflow no longer propagates. */
+html.no-scroll {
+  overflow-y: hidden;
 }
 
 h1,

@@ -1,0 +1,15 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "polish",
+  "scope": "page",
+  "theme": "locked (DESIGN.md)",
+  "prompt": "polish the Omnitron homepage",
+  "waived": [
+   "38iii",
+   "64",
+   "26b"
+  ],
+  "date": "2026-11-14"
+ }
+]

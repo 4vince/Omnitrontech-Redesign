@@ -1,3 +1,15 @@
+/* Hallmark · checked: 2026-11-14 · genre: modern-minimal (inferred)
+ * floor: open by choice, DESIGN.md is the locked system (48, 24a, 67, 54 report against it) · fixed: 34, 10a, 75, bridge heading
+ * built: the project · redesign: polish · v2.0.0 */
+/* Hallmark · waive 38iii · the second line of each section head is a span in --blue · DESIGN.md sets the Omnitron two-tone headline as the house voice */
+/* Hallmark · waive 64 · JetBrains Mono on tags and diagram hub labels · the confirmed Omnitron type system pairs Archivo, Manrope and JetBrains Mono for labels */
+/* Hallmark · waive 26b · .btn:not(:disabled):active lives in components.css, pulled in by this import chain · the press state exists, the linter misses it */
+/* Hallmark · dismissed 40 · rendered white on #2b46d6 measures 6.5:1; the 3.2:1 pair comes from the dark token block no Omnitron page sets */
+/* Hallmark · dismissed 41 · the dark surfaces flagged are that same unused dark block; every page forces data-theme light */
+/* Hallmark · dismissed 29 · the blooms are the Omnitron core-mark logo rings, not surface depth */
+/* Hallmark · answered F5 · the problem-row icon coins match the AI Solutions detail rows across the site */
+/* Hallmark · answered F8 · the thread runs the whole homepage; the stage visual and folder stack sit inside it as content */
+
 @import "./tokens.css";
 @import "./base.css";
 @import "./layout.css";

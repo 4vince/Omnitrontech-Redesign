@@ -249,15 +249,26 @@
   background: var(--line-strong);
 }
 
+/* The <i> is the dot's track (the wire less one dot); the dot rides it
+   as ::before and the track moves by transform, never by left/top. */
 .sv-flow__wire i {
   position: absolute;
   top: -2.5px;
+  left: 0;
+  right: 6px;
+  height: 6px;
+  opacity: 0;
+}
+
+.sv-flow__wire i::before {
+  content: "";
+  position: absolute;
+  top: 0;
   left: 0;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--blue);
-  opacity: 0;
 }
 
 /* ── 01 Strategy ─────────────────────────────────────────── */
@@ -1097,7 +1108,11 @@
 
   .sv-flow__wire i {
     top: 0;
+    bottom: 6px;
     left: -2.5px;
+    right: auto;
+    width: 6px;
+    height: auto;
   }
 
   .sv-data__sources {
@@ -1252,7 +1267,7 @@
 
 @keyframes sv-travel {
   0% {
-    left: 0;
+    transform: translateX(0);
     opacity: 0;
   }
   15%,
@@ -1260,14 +1275,14 @@
     opacity: 1;
   }
   100% {
-    left: calc(100% - 6px);
+    transform: translateX(100%);
     opacity: 0;
   }
 }
 
 @keyframes sv-travel-down {
   0% {
-    top: 0;
+    transform: translateY(0);
     opacity: 0;
   }
   15%,
@@ -1275,7 +1290,7 @@
     opacity: 1;
   }
   100% {
-    top: calc(100% - 6px);
+    transform: translateY(100%);
     opacity: 0;
   }
 }
