@@ -47,6 +47,20 @@
             <canvas class="scene-canvas" data-scene-canvas></canvas>
           </div>
 
+          <!-- The route: the page's promise drawn onto the figure. Three
+               everyday inputs feed the processor; one decision comes out to
+               a person. Pinned to the chip by hero.js (scene.restingAnchors),
+               wide desktops only; the hand-off section tells it in full. -->
+          <div class="hero-route" data-hero-route role="img" aria-label="Requests from your inbox, spreadsheet and accounts are routed through the system to the person who approves them.">
+            <svg class="hero-route__links" aria-hidden="true" focusable="false"><g data-hero-route-paths></g></svg>
+            <ul class="hero-route__inputs" aria-hidden="true">
+              <li class="hero-route__node"><i class="ph ph-envelope-simple" aria-hidden="true"></i><span><b>Inbox</b><small>New request</small></span></li>
+              <li class="hero-route__node"><i class="ph ph-table" aria-hidden="true"></i><span><b>Spreadsheet</b><small>Order sheet</small></span></li>
+              <li class="hero-route__node"><i class="ph ph-receipt" aria-hidden="true"></i><span><b>Accounts</b><small>Invoice due</small></span></li>
+            </ul>
+            <div class="hero-route__node hero-route__out" aria-hidden="true"><i class="ph ph-user-check" aria-hidden="true"></i><span><b>You approve</b><small>Reply ready</small></span></div>
+          </div>
+
           <div class="hero-copy" data-hero-copy>
             <div class="hero-copy__glide" data-hero-glide>
             <div class="hero-copy__title" data-hero-title>
@@ -140,7 +154,6 @@
                 <h2 id="handoff-title">Every hand&#8209;off, <span class="signal">routed to the person who decides.</span></h2>
                 <ol class="handoff-steps">
                   <li class="handoff-step" data-handoff-step>
-                    <span class="handoff-step__index mono">01</span>
                     <div class="handoff-step__body">
                       <h3>Manual work</h3>
                       <p>Requests bounce between inbox, spreadsheet and accounts, then wait on someone who is already behind.</p>
@@ -148,7 +161,6 @@
                     <div class="handoff-step__still" data-handoff-still></div>
                   </li>
                   <li class="handoff-step" data-handoff-step>
-                    <span class="handoff-step__index mono">02</span>
                     <div class="handoff-step__body">
                       <h3>Routed</h3>
                       <p>Omnitron connects the tools you already run, reads each request and moves it along. Nothing is copied by hand.</p>
@@ -156,7 +168,6 @@
                     <div class="handoff-step__still" data-handoff-still></div>
                   </li>
                   <li class="handoff-step" data-handoff-step>
-                    <span class="handoff-step__index mono">03</span>
                     <div class="handoff-step__body">
                       <h3>You decide</h3>
                       <p>The work arrives prepared. A person on your team makes the call.</p>
@@ -168,6 +179,16 @@
               <figure class="handoff-figure" data-handoff-figure></figure>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- The five service lines, named once on the homepage, each linking
+           to its card on AI Solutions (rendered from content/services.js). -->
+      <section class="band band-lines is-center" aria-labelledby="lines-title">
+        <span class="thread" aria-hidden="true"></span>
+        <div class="wrap lines-inner" data-reveal>
+          <h2 id="lines-title">Five service lines, <span>one system.</span></h2>
+          <ul class="service-lines" data-service-lines></ul>
         </div>
       </section>
 
@@ -188,20 +209,13 @@
         </div>
       </section>
 
-      <section class="band band-proof tone-navy" aria-labelledby="proof-title">
+      <section class="band band-proof" aria-labelledby="proof-title">
         <span class="thread" aria-hidden="true"></span>
-        <div class="wrap proof-grid">
-          <div class="proof-head" data-reveal>
+        <div class="wrap proof-grid" data-reveal>
+          <div class="proof-head">
             <h2 id="proof-title">No borrowed logos. <span>No invented numbers.</span></h2>
-            <p>We publish outcomes once a client clears them. Until then, these slots stay visibly empty.</p>
           </div>
-          <div>
-            <div class="proof-ledger" data-proof></div>
-            <p class="proof-note">
-              <i class="ph ph-info" aria-hidden="true"></i>
-              <span>Client names, logos and metrics appear only with written clearance.</span>
-            </p>
-          </div>
+          <p class="proof-note">We publish outcomes once a client clears them. Client names, logos and metrics appear only with written clearance.</p>
         </div>
       </section>
 

@@ -24,13 +24,9 @@ export const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t +
 export const pullAt = (p) => smooth(BEATS.pull, BEATS.hold, p);
 
 /*
- * The hand-off is sequenced (lead → follow), not simultaneous:
- *   titleAt — the headline LEADS: it glides from the centre of the screen
- *             to the left column while the camera is still inside the brain.
- *   slideAt — the brain FOLLOWS: once it resolves as an object it slides
- *             right as the headline lands, so the two never cross.
+ * slideAt — once the brain resolves as an object it slides right, clear of
+ * the copy column (the copy holds its resting position throughout).
  */
-export const titleAt = (p) => easeInOut(smooth(0, 0.32, pullAt(p)));
 export const slideAt = (p) => easeInOut(smooth(0.26, 0.75, pullAt(p)));
 
 /** The office photograph fades up once the camera is clear of the brain. */

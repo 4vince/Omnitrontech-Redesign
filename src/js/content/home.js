@@ -21,29 +21,6 @@ export const problems = [
   },
 ];
 
-export const proofRows = [
-  {
-    sector: "Manufacturing",
-    state: "Predictive maintenance pilot",
-    slot: "Reserved",
-  },
-  {
-    sector: "Financial services",
-    state: "Reporting and exception automation",
-    slot: "Reserved",
-  },
-  {
-    sector: "HR & recruitment",
-    state: "Candidate operations and scheduling",
-    slot: "Reserved",
-  },
-  {
-    sector: "Professional services",
-    state: "Client intake, triage and hand-off",
-    slot: "Reserved",
-  },
-];
-
 /*
  * Each applied example carries a three-step flow rendered as a flat diagram.
  * The last step is the "person decides" step: the system prepares the work,
@@ -98,15 +75,15 @@ export const appliedExamples = [
 
 export const contactSteps = [
   {
-    label: "01",
+    icon: "ph-paper-plane-tilt",
     body: "You send the context: what is slowing down, and what you have already tried.",
   },
   {
-    label: "02",
+    icon: "ph-chat-circle-text",
     body: "We reply within two working days with the few questions that actually matter.",
   },
   {
-    label: "03",
+    icon: "ph-calendar-check",
     body: "If there is a fit, we book a 30-minute working call. No pitch deck required.",
   },
 ];

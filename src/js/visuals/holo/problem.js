@@ -177,8 +177,10 @@ export function build(kit) {
       ctx.stroke();
     }
     ctx.restore();
-    const days = pre ? 0 : Math.round(wait * 3);
-    kit.text(pre ? "Waiting" : `Waiting · ${days} day${days === 1 ? "" : "s"}`, wx + 28, wy + 1, {
+    // The count starts at 1 day once the ring starts filling, never at 0.
+    const days = Math.max(1, Math.ceil(wait * 3));
+    const counting = !pre && wait > 0;
+    kit.text(counting ? `Waiting · ${days} day${days === 1 ? "" : "s"}` : "Waiting", wx + 28, wy + 1, {
       size: 16,
       weight: 650,
       color: !pre && wait > 0 ? HUE.amber : INK.faint,

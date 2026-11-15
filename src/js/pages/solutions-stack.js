@@ -394,14 +394,25 @@ export function initServiceStack({ mount, sections, closer }) {
     ScrollTrigger.refresh();
   });
 
-  /** Scroll to a card's landing (a stuck card's own rect lies). */
-  function scrollTo(card, options) {
+  /** Scroll to a card's landing (a stuck card's own rect lies).
+   *  `immediate` jumps without animating, so no landing stop on the way
+   *  catches the move (used when arriving on the page with a hash). */
+  function scrollTo(card, { immediate = false, ...options } = {}) {
     const i = cards.indexOf(card);
-    if (active && i >= 0 && downStops.length) {
-      scrollToTarget(downStops[i], options);
-    } else {
-      scrollToTarget(card, options);
+    const stop = active && i >= 0 && downStops.length ? downStops[i] : null;
+    if (immediate) {
+      const top = stop ?? card.getBoundingClientRect().top + window.scrollY - navHeight();
+      const lenis = getLenis();
+      if (lenis) {
+        // Lenis caches the page height; content rendered since may be past it.
+        lenis.resize();
+        lenis.scrollTo(top, { immediate: true, force: true });
+      }
+      else window.scrollTo(0, top);
+      return;
     }
+    if (stop !== null) scrollToTarget(stop, options);
+    else scrollToTarget(card, options);
   }
 
   return { update, scrollTo, isActive: () => active };

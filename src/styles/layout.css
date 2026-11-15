@@ -340,7 +340,7 @@
 
 .mobile-sheet__link span {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: var(--fs-micro);
   letter-spacing: 0.12em;
   color: var(--blue);
 }
@@ -420,6 +420,14 @@
   box-shadow: 0 0 14px var(--blue);
   transform: translateY(0);
   will-change: transform;
+}
+
+/* Phones: the rail would sit inside the 16px gutter, against the text,
+   and the platform already shows its own scroll indicator. */
+@media (max-width: 639px) {
+  .scroll-progress {
+    display: none;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -545,11 +553,10 @@
   gap: 12px;
 }
 
-.cta-close__step .mono {
-  padding-top: 0.3em;
-  color: var(--muted-2);
-  font-size: var(--fs-micro);
-  letter-spacing: 0.14em;
+.cta-close__step .ph {
+  padding-top: 0.15em;
+  color: var(--blue);
+  font-size: 1.25rem;
 }
 
 .cta-close__step p {
@@ -612,11 +619,9 @@
 }
 
 .footer-col h3 {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: var(--fs-micro);
   font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -680,10 +685,8 @@
   padding-top: 18px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
 }
 
 .footer-bottom__top {

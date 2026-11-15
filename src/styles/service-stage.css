@@ -108,6 +108,53 @@
   line-height: 1.5;
 }
 
+/* Deliverables under the outcome, only when the scene sits beside the title
+   and the column under it would otherwise stand empty. */
+.svx__deliver {
+  display: none;
+  gap: 14px;
+  margin-top: clamp(20px, 4vh, 44px);
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  min-width: min(260px, 100%);
+}
+
+.svx__stage.is-beside .svx__deliver {
+  display: grid;
+}
+
+.svx__deliver p {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.svx__deliver ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.svx__deliver li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 1.0625rem;
+  font-weight: 560;
+}
+
+.svx--end .svx__deliver li {
+  flex-direction: row-reverse;
+}
+
+.svx__deliver .ph {
+  color: var(--blue);
+  font-size: 18px;
+}
+
 /* Captions: what the scene is showing right now */
 .svx__captions {
   position: absolute;
@@ -131,6 +178,7 @@
   font-size: var(--fs-small);
   font-weight: 560;
   line-height: 1.4;
+  text-wrap: pretty;
   transition: color var(--dur-ui) var(--ease-out);
 }
 
@@ -469,10 +517,9 @@ html:not(.js) .svx__fallback {
       0 -2px 5px rgba(var(--cast-ink), calc(var(--cast-a) * 0.45)),
       0 -8px 16px -10px rgba(var(--cast-ink), calc(var(--cast-a) * 0.6));
     color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
     white-space: nowrap;
     pointer-events: none;
   }

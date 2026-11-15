@@ -90,7 +90,7 @@ export function initContact() {
     stepsMount.innerHTML = contactSteps
       .map(
         (step) => `<li class="contact-step">
-          <span>${step.label}</span>
+          <span><i class="ph ${step.icon}" aria-hidden="true"></i></span>
           <p>${step.body}</p>
         </li>`,
       )
@@ -106,7 +106,14 @@ export function initContact() {
   const formError = form.querySelector("[data-form-error]");
   const honeypot = form.querySelector("[data-honeypot]");
   const note = form.querySelector("[data-form-note]");
+  const summary = form.querySelector("[data-form-summary]");
+  const handoff = form.querySelector("[data-form-handoff]");
   const endpoint = (import.meta.env.VITE_CONTACT_ENDPOINT || "").trim();
+  // Email-first until an endpoint is configured: the button says what it
+  // does, and a valid submit opens a ready-written email instead of failing.
+  if (!endpoint && submit) {
+    submit.innerHTML = 'Open email draft <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>';
+  }
   const buttonMarkup = submit?.innerHTML || "Send message";
 
   // Prefill the subject from ?service=intelligent-automation.
@@ -118,7 +125,9 @@ export function initContact() {
   }
 
   if (note) {
-    const requirement = "Name, email, and a short message are required. Subject is optional.";
+    const requirement = endpoint
+      ? "Name, email, and a short message are required. Subject is optional."
+      : "Name, email, and a short message are required. Subject is optional. This opens your email app with the message ready to send.";
     note.textContent = requestedService
       ? `Prefilled for ${requestedService.name}. Change it if needed. ${requirement}`
       : requirement;
@@ -216,7 +225,23 @@ export function initContact() {
       }
     });
 
+    // Focus moves to the first problem; the live region names them all.
+    const invalid = fields.filter((input) => input.getAttribute("aria-invalid") === "true");
+    if (summary) {
+      summary.textContent = "";
+      if (invalid.length) {
+        const names = invalid
+          .map((input) => input.closest(".field")?.querySelector("label")?.firstChild?.textContent.trim().replace(/[?.!]+$/, ""))
+          .filter(Boolean);
+        window.setTimeout(() => {
+          const count = invalid.length === 1 ? "1 field needs" : `${invalid.length} fields need`;
+          summary.textContent = `${count} attention: ${names.join(", ")}.`;
+        }, 60);
+      }
+    }
+
     if (firstInvalid) {
+      if (handoff) handoff.hidden = true;
       firstInvalid.focus();
       return;
     }
@@ -229,10 +254,12 @@ export function initContact() {
     };
 
     if (!endpoint) {
-      showFormError(
-        "This form is not connected yet. Nothing was sent. Use this link to send your message by email.",
-        buildMailto(payload),
-      );
+      const href = buildMailto(payload);
+      const link = handoff?.querySelector("[data-form-handoff-link]");
+      if (link) link.href = href;
+      if (handoff) handoff.hidden = false;
+      window.location.href = href;
+      handoff?.focus();
       return;
     }
 

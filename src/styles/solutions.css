@@ -157,10 +157,8 @@ body[data-page="solutions"] main .wrap {
 
 .solutions-hero__stats dt {
   color: var(--muted-2);
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 .solutions-hero__stats dd {
@@ -170,92 +168,6 @@ body[data-page="solutions"] main .wrap {
   letter-spacing: -0.02em;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
-}
-
-/* Workflow visual — restrained process geometry with a static fallback */
-.solutions-hero__visual {
-  position: absolute;
-  right: -2vw;
-  top: 12%;
-  bottom: 18%;
-  z-index: 0;
-  display: grid;
-  place-items: center;
-  width: clamp(400px, 48vw, 740px);
-  margin-block: auto;
-  opacity: 0.56;
-  pointer-events: none;
-}
-
-.solutions-hero__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  /* Scene entrance: quick fade + settle from 1.04. */
-  transform: scale(1.04);
-  transition:
-    opacity var(--dur-reveal) var(--ease-out),
-    transform 500ms var(--ease-out);
-}
-
-.solutions-hero__visual.has-webgl .solutions-hero__canvas {
-  opacity: 1;
-  transform: none;
-}
-
-.solutions-hero__workflow {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: center;
-  gap: clamp(8px, 1.5vw, 20px);
-  width: 92%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  transition: opacity 700ms var(--ease-out);
-}
-
-.solutions-hero__workflow li {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-  min-width: 0;
-  aspect-ratio: 1.15;
-  padding: clamp(10px, 1.5vw, 20px);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-}
-
-.solutions-hero__workflow li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 100%;
-  width: clamp(8px, 1.5vw, 20px);
-  height: 1px;
-  background: var(--line-strong);
-}
-
-.solutions-hero__workflow li > span {
-  color: var(--blue);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-}
-
-.solutions-hero__workflow li > strong {
-  font-family: var(--font-display);
-  font-size: clamp(0.72rem, 0.9vw, 0.95rem);
-  font-weight: 560;
-  letter-spacing: -0.02em;
-}
-
-.solutions-hero__visual.has-webgl .solutions-hero__workflow {
-  opacity: 0.18;
 }
 
 /* Full-width index ledger */
@@ -310,7 +222,7 @@ body[data-page="solutions"] main .wrap {
 
 .solutions-index__num {
   color: var(--blue);
-  font-size: 0.6rem;
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 .solutions-index__name {
@@ -324,7 +236,7 @@ body[data-page="solutions"] main .wrap {
 .solutions-index__headline {
   max-width: 22ch;
   color: var(--muted-2);
-  font-size: 0.72rem;
+  font-size: var(--fs-micro); /* 12px floor */
   line-height: 1.45;
   transition: color var(--dur-fast);
 }
@@ -582,11 +494,9 @@ body[data-page="solutions"] main .wrap {
   gap: clamp(28px, 4vw, 64px);
   padding-right: clamp(28px, 4vw, 64px);
   color: var(--ink-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: clamp(0.72rem, 0.95vw, 0.84rem);
-  letter-spacing: 0.1em;
   white-space: nowrap;
-  text-transform: uppercase;
 }
 
 .stack-marquee__item::after {
@@ -708,7 +618,7 @@ body[data-page="solutions"] main .wrap {
 
 .svc__rail .mono {
   color: var(--muted-2);
-  font-size: 0.58rem;
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 .svc__rail-note {
@@ -854,7 +764,7 @@ body[data-page="solutions"] main .wrap {
   display: block;
   margin-bottom: 14px;
   color: var(--muted-2);
-  font-size: 0.6rem;
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 .svc__list {
@@ -897,11 +807,9 @@ body[data-page="solutions"] main .wrap {
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
   color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-body);
+  font-size: var(--fs-micro); /* 12px floor */
   line-height: 1.25;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -933,7 +841,7 @@ body[data-page="solutions"] main .wrap {
 
 .svc__phase-num {
   color: var(--blue);
-  font-size: 0.58rem;
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 .svc:nth-of-type(even) .svc__phase-num {
@@ -981,7 +889,7 @@ body[data-page="solutions"] main .wrap {
 .svc__roster-list .mono {
   flex: none;
   color: var(--muted-2);
-  font-size: 0.54rem;
+  font-size: var(--fs-micro); /* 12px floor */
 }
 
 /* Row footer */
@@ -1045,13 +953,6 @@ body[data-page="solutions"] main .wrap {
   .solutions-hero__aside {
     justify-self: start;
     max-width: 440px;
-  }
-
-  .solutions-hero__visual {
-    right: -24vw;
-    top: 6%;
-    bottom: auto;
-    opacity: 0.32;
   }
 
   .solutions-approach .section-head {
@@ -1158,40 +1059,6 @@ body[data-page="solutions"] main .wrap {
     bottom: 18px;
   }
 
-  .solutions-hero__visual {
-    position: relative;
-    inset: auto;
-    display: grid;
-    grid-column: 1;
-    width: 100%;
-    min-height: 120px;
-    margin: 0;
-    opacity: 1;
-  }
-
-  .solutions-hero__canvas {
-    display: none;
-  }
-
-  .solutions-hero__workflow {
-    width: 100%;
-    gap: clamp(6px, 2vw, 10px);
-  }
-
-  .solutions-hero__workflow li {
-    gap: 8px;
-    aspect-ratio: 1.5;
-    padding: 8px;
-  }
-
-  .solutions-hero__workflow li > strong {
-    font-size: clamp(0.62rem, 2.6vw, 0.76rem);
-  }
-
-  .solutions-hero__visual.has-webgl .solutions-hero__workflow {
-    opacity: 1;
-  }
-
   .solutions-approach .section-head h2 {
     font-size: clamp(2rem, 8.6vw, 3rem);
   }
@@ -1295,7 +1162,7 @@ body[data-page="solutions"] main .wrap {
   }
 
   .svc__chip {
-    font-size: 0.54rem;
+    font-size: var(--fs-micro); /* 12px floor */
     padding: 5px 9px;
   }
 }
@@ -1340,59 +1207,6 @@ body[data-page="solutions"] main .wrap {
   max-width: 34ch;
   font-size: clamp(0.98rem, 1.15vw, 1.1rem);
   line-height: 1.55;
-}
-
-.solutions-hero__visual {
-  position: relative;
-  inset: auto;
-  z-index: 0;
-  width: 100%;
-  height: min(58svh, 620px);
-  margin: 0;
-  opacity: 1;
-}
-
-.solutions-hero__canvas {
-  display: block;
-}
-
-.solutions-hero__workflow {
-  position: absolute;
-  right: 0;
-  bottom: 4%;
-  left: 0;
-  z-index: 1;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(8px, 1.4vw, 20px);
-  width: 100%;
-  padding-inline: clamp(12px, 2vw, 28px);
-  opacity: 0.82;
-}
-
-.solutions-hero__workflow li {
-  justify-content: flex-start;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  aspect-ratio: auto;
-}
-
-.solutions-hero__workflow li > .ph {
-  color: var(--blue);
-  font-size: clamp(16px, 1.8vw, 23px);
-}
-
-.solutions-hero__workflow li > strong {
-  color: var(--muted);
-  font-size: clamp(0.58rem, 0.72vw, 0.76rem);
-  font-weight: 560;
-  line-height: 1.3;
-}
-
-.solutions-hero__visual.has-webgl .solutions-hero__workflow {
-  opacity: 1;
 }
 
 .solutions-index {
@@ -1635,7 +1449,7 @@ body[data-page="solutions"] main .wrap {
 .svc__details-body h3 {
   margin-bottom: 12px;
   color: var(--muted-2);
-  font-size: 0.72rem;
+  font-size: var(--fs-micro); /* 12px floor */
   font-weight: 600;
 }
 
@@ -1659,7 +1473,7 @@ body[data-page="solutions"] main .wrap {
 }
 
 .svc__details-body .svc__chip {
-  font-size: 0.54rem;
+  font-size: var(--fs-micro); /* 12px floor */
   padding: 5px 8px;
 }
 
@@ -1688,7 +1502,7 @@ body[data-page="solutions"] main .wrap {
 }
 
 .svc__phase p {
-  font-size: 0.74rem;
+  font-size: var(--fs-micro); /* 12px floor */
   line-height: 1.5;
 }
 
@@ -1773,30 +1587,6 @@ body[data-page="solutions"] main .wrap {
     font-size: 0.95rem;
   }
 
-  .solutions-hero__visual {
-    grid-column: 1;
-    height: clamp(220px, 58vw, 340px);
-    min-height: 0;
-  }
-
-  .solutions-hero__workflow {
-    bottom: 2%;
-    gap: 4px;
-    padding-inline: 6px;
-  }
-
-  .solutions-hero__workflow li {
-    gap: 8px;
-  }
-
-  .solutions-hero__workflow li > .ph {
-    font-size: 17px;
-  }
-
-  .solutions-hero__workflow li > strong {
-    font-size: 0.56rem;
-  }
-
   /* Phones: the five services as one hairline list, read top to bottom. */
   .solutions-index {
     display: grid;
@@ -1858,7 +1648,7 @@ body[data-page="solutions"] main .wrap {
 
   .svc__workflow li {
     gap: 8px;
-    font-size: 0.58rem;
+    font-size: var(--fs-micro); /* 12px floor */
   }
 
   .svc__details-grid,
@@ -1869,59 +1659,8 @@ body[data-page="solutions"] main .wrap {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .svc__canvas,
-  .solutions-hero__canvas {
+  .svc__canvas {
     transition: none;
     transform: none;
-  }
-}
-
-/* Hero overview scene (src/js/visuals/solutions-hero-scene.js)
-   The canvas is interactive (tilt, hover, click-to-section). Once WebGL is
-   up, the cards name every service, so the icon list stays for screen
-   readers only; phones never load the scene and keep the list visible. */
-.solutions-hero__visual {
-  pointer-events: auto;
-}
-
-.solutions-hero__visual.has-webgl .solutions-hero__workflow {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* Tall enough that the card text renders at a readable size (the scene
-   scales the board to this box). */
-@media (min-width: 761px) {
-  .solutions-hero__visual {
-    height: min(72svh, 720px);
-    min-height: 460px;
-  }
-}
-
-@media (max-width: 760px) {
-  .solutions-hero__canvas {
-    display: none;
-  }
-
-  .solutions-hero__visual.has-webgl .solutions-hero__workflow {
-    position: absolute;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-    white-space: normal;
-  }
-}
-
-/* Phones never load the overview scene, so the hero visual would be an
-   empty box holding a tiny icon row that repeats the service index right
-   below it. Drop it; the index is the navigation there. */
-@media (max-width: 760px) {
-  .solutions-hero__visual {
-    display: none;
   }
 }

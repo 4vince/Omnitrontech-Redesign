@@ -49,7 +49,7 @@ Success means the visitor understands the offer in about ten seconds, finds one 
 
 ## Evidence on Hand
 
-- **Real proof exists but is not yet published.** Case studies, logos, testimonials or metrics are coming later. Until they arrive, the four proof slots (manufacturing, financial services, HR & recruitment, professional services) stay visible as honest "Reserved" placeholders.
+- **Real proof exists but is not yet published.** Case studies, logos, testimonials or metrics are coming later. Until they arrive, the homepage carries one compact honesty line instead of placeholder slots: no borrowed logos, no invented numbers, outcomes published only with written client clearance.
 - **Never fabricate** client names, logos, testimonials, quotes, metrics, pricing or deployment claims to fill these slots.
 - **Media assets:** `public/videos/ai-data-analytics.mp4` and its poster `.jpg`, `public/01_ai_human_bust.svg`, `public/favicon.svg`.
 

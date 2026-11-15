@@ -6,7 +6,6 @@ import {
   solutionsSceneCaptions,
 } from "../content/solutions-copy.js";
 import {
-  afterIntro,
   EASE_OUT,
   gsap,
   MOTION_OK,
@@ -21,9 +20,8 @@ import { createStageLayout, setActiveCaption, wirePauseToggle } from "../core/vi
 
 /*
  * Timing map for the AI Solutions page
- *   load      hero copy rises in (initPageIntro), then at its "visual" label
- *             the 3D overview fades up and its cards pop in one by one
- *   scroll    leaving the hero, the overview recedes and the copy lifts away
+ *   load      hero copy rises in over the operations-lab photograph
+ *   scroll    leaving the hero, the copy lifts away and the room pushes in
  *             (scrubbed), handing over to the first service row
  *   per service  the 3D scene is the section: the title and outcome rise in
  *             over it, the scene's story restarts from its first step, and
@@ -32,80 +30,12 @@ import { createStageLayout, setActiveCaption, wirePauseToggle } from "../core/vi
  *             little (scrubbed), so the model reads as a real object.
  */
 
-function initWorkflowVisual() {
-  const visual = document.querySelector("[data-solutions-visual]");
-  const canvas = visual?.querySelector("[data-solutions-canvas]");
-  if (!visual || !canvas) return;
-
-  let scene = null;
-  let isVisible = true;
-  let loading = false;
-
-  // Phones keep the static icon list: the cards would be too small to read.
-  const narrow = window.matchMedia("(max-width: 760px)");
-
-  const loadScene = async () => {
-    if (loading || scene || narrow.matches) return;
-    loading = true;
-    try {
-      const { createSolutionsHeroScene } = await import(
-        "../visuals/solutions-hero-scene.js"
-      );
-      scene = await createSolutionsHeroScene(canvas, {
-        services,
-        animate: !prefersReducedMotion(),
-        onSelect: (service) => {
-          const card = document.querySelector(`#service-${service.slug}`);
-          if (stack && card) stack.scrollTo(card);
-          else scrollToTarget(card);
-        },
-      });
-      if (!scene) return;
-      // Reveal the scene only once the hero copy has landed, and start the
-      // card build-in at the same moment so it is actually seen.
-      await afterIntro("visual");
-      visual.classList.add("has-webgl");
-      scene.playIntro();
-      if (!isVisible) scene.pause();
-    } catch (error) {
-      console.error("Could not load the AI Solutions visual.", error);
-    } finally {
-      loading = false;
-    }
-  };
-
-  if (typeof IntersectionObserver !== "undefined") {
-    new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (!scene && isVisible) void loadScene();
-        else if (scene && isVisible && !narrow.matches) scene.resume();
-        else scene?.pause();
-      },
-      { threshold: 0.02 },
-    ).observe(visual);
-  } else {
-    void loadScene();
-  }
-
-  narrow.addEventListener?.("change", () => {
-    if (narrow.matches) scene?.pause();
-    else if (scene && isVisible) scene.resume();
-    else if (isVisible) void loadScene();
-  });
-
-  window.matchMedia(REDUCED).addEventListener?.("change", () => {
-    scene?.setMotionEnabled(!prefersReducedMotion());
-  });
-}
-
 /* Scroll hand-off out of the hero: scrubbed, so it tracks the wheel exactly. */
 function initHeroExit() {
   const hero = document.querySelector(".solutions-hero");
-  const visual = hero?.querySelector("[data-solutions-visual]");
   const copy = hero?.querySelector(".solutions-hero__copy");
   const photo = hero?.querySelector("[data-solutions-photo]");
-  if (!hero || !visual || !copy) return;
+  if (!hero || !copy) return;
 
   // The hero is a dark photograph from the first pixel: while it is under
   // the nav, the nav takes light ink (layout.css, as on the home hero).
@@ -127,7 +57,6 @@ function initHeroExit() {
         defaults: { ease: "none" },
         scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true },
       })
-      .to(visual, { yPercent: -12, scale: 0.94, opacity: 0.15 }, 0)
       .to(copy, { y: -70, opacity: 0.2 }, 0)
       // The room pushes in slowly behind them.
       .fromTo(photo, { scale: 1 }, { scale: 1.06 }, 0);
@@ -296,7 +225,7 @@ function initServiceEntrances(sections) {
       gsap
         .timeline({
           defaults: { ease: EASE_OUT, duration: 0.9 },
-          scrollTrigger: { trigger: section, start: "top 72%", once: true },
+          scrollTrigger: { trigger: section, start: "top 94%", once: true },
         })
         .from(section.querySelectorAll(".svx__head > *"), { y: 34, opacity: 0, stagger: 0.09 })
         // Scale only: the canvas's opacity belongs to its CSS fade-in.
@@ -313,7 +242,7 @@ function renderCloseSteps() {
   const mount = document.querySelector("[data-close-steps]");
   if (!mount) return;
   mount.innerHTML = contactSteps
-    .map((step) => `<li class="cta-close__step"><span class="mono">${step.label}</span><p>${step.body}</p></li>`)
+    .map((step) => `<li class="cta-close__step"><i class="ph ${step.icon}" aria-hidden="true"></i><p>${step.body}</p></li>`)
     .join("");
 }
 
@@ -395,6 +324,16 @@ function detailsMarkup(service) {
 // Title placement walks the page so the text never sits on one side only.
 const ALIGN = ["start", "end", "center", "start", "end"];
 
+/* What a client leaves with: shown only when the scene sits beside the title,
+   where it fills the column under it (visual-stage.js sets .is-beside). */
+function deliverMarkup(service) {
+  if (!service.tags?.length) return "";
+  return `<div class="svx__deliver">
+          <p>What you leave with</p>
+          <ul>${service.tags.map((tag) => `<li><i class="ph ph-check" aria-hidden="true"></i>${tag}</li>`).join("")}</ul>
+        </div>`;
+}
+
 function rowMarkup(service, index) {
   const tone = index % 2 === 1 ? " tone-navy" : "";
   const align = ` svx--${ALIGN[index % ALIGN.length]}`;
@@ -406,6 +345,7 @@ function rowMarkup(service, index) {
       <header class="svx__head">
         <h2 id="service-title-${service.slug}">${service.name}</h2>
         <p class="svx__outcome">${service.outcome}</p>
+        ${deliverMarkup(service)}
       </header>
       <figure class="svx__fallback svc__visual is-live tone-light">${serviceDiagramMarkup(service.id)}</figure>
       <ol class="svx__captions" aria-label="What the visual shows">
@@ -415,7 +355,7 @@ function rowMarkup(service, index) {
     </div>
     <div class="svx__info">
       <a class="text-link" href="${serviceContactHref(service)}">
-        Discuss this service
+        Start the conversation
         <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
       </a>
       ${detailsMarkup(service)}
@@ -425,7 +365,6 @@ function rowMarkup(service, index) {
 
 export function initSolutions() {
   renderCloseSteps();
-  initWorkflowVisual();
   initHeroExit();
   const indexMount = document.querySelector("[data-service-index]");
   const rowsMount = document.querySelector("[data-service-rows]");
@@ -461,6 +400,21 @@ export function initSolutions() {
     },
     true,
   );
+
+  // Arriving with a service hash (the homepage's service index links here):
+  // the sections are rendered by script, so the browser's own jump to the
+  // fragment finds nothing. Land on the card once the page has settled.
+  const arrival = /^#service-[\w-]+$/.test(location.hash) && document.querySelector(location.hash);
+  if (arrival) {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    const land = () =>
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+        stack.scrollTo(arrival, { immediate: true });
+      });
+    if (document.readyState === "complete") land();
+    else window.addEventListener("load", land, { once: true });
+  }
 
   // Scroll-spy: the current service is the last card whose top has reached
   // the upper half of the screen. Rect-based, so it holds while cards are

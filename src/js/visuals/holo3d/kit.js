@@ -164,6 +164,8 @@ export async function createHoloStage(canvas, { build, animate = true, panel = f
     console.error("Could not start a service hologram.", error);
     return null;
   }
+  // Compile-status reads block the main thread on the GPU; dev only.
+  renderer.debug.checkShaderErrors = import.meta.env.DEV;
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;

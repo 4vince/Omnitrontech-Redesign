@@ -158,6 +158,15 @@ export function build(kit) {
     const fade = out;
     const left = x + 18;
     const right = x + w - 18;
+    // Never an empty frame: while the inbox fills, the thread says what is
+    // about to happen, then hands over to the first message.
+    const waiting = t < 3.6 ? 1 - seg(t, 3.25, 3.55) : 0;
+    if (waiting > 0) {
+      const cx = x + w / 2;
+      kit.icon("ph-chat-circle-dots", cx, body + 104, 32, HUE.cobalt, waiting * 0.9);
+      kit.text("New messages coming in", cx, body + 152, { size: 19, weight: 640, align: "center", a: waiting });
+      kit.text("The assistant answers what it can and flags the rest.", cx, body + 190, { size: 15.5, weight: 600, color: INK.sub, align: "center", a: waiting, maxW: w - 64 });
+    }
     bubble(left, body + 16, 290, "Where's my order #2291?", HUE.sky, easeOut(seg(t, 3.5, 3.9)) * fade);
     bubble(right, body + 76, 470, "It left our depot today and arrives Thursday.", HUE.cobalt, easeOut(seg(t, 5.0, 5.4)) * fade, {
       align: "right",

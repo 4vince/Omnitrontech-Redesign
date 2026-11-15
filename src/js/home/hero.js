@@ -8,7 +8,7 @@ import {
   ScrollTrigger,
   scrollToTarget,
 } from "../core/motion.js";
-import { photoAt, titleAt } from "./hero-timing.js";
+import { photoAt } from "./hero-timing.js";
 
 /*
  * Homepage hero — "inside the AI's mind".
@@ -22,14 +22,14 @@ import { photoAt, titleAt } from "./hero-timing.js";
  *     progress so copy and 3D can never drift apart
  *
  * Beats (progress p, 0-1; BEATS in hero-timing.js):
- *   0    - 0.08  inside: the network surrounds the centred copy block
- *                 (headline, subline and both CTAs, so the offer and the
- *                 next step are there from the first frame), with a
+ *   0    - 0.08  inside: the network surrounds the copy block, already
+ *                 in its resting left column (headline, subline and both
+ *                 CTAs, so the offer and the next step never move), with a
  *                 "Skip intro" control; the photograph is hidden
- *   0.08 - 0.55  pull-back: the copy glides to the left column (it
- *                 leads), the camera crosses the cortex wall, the brain
- *                 resolves and slides right (it follows), the office
- *                 photograph fades up behind it
+ *   0.08 - 0.55  pull-back: the camera crosses the cortex wall, the brain
+ *                 resolves and slides right, the office photograph fades
+ *                 up behind it. A solid shade column holds behind the
+ *                 copy until the brain has cleared it
  *   0.55 - 0.9   rest: the brain settles right of the copy
  *   0.9  - 1     short hold, then the pin releases into the bridge band
  *
@@ -40,9 +40,9 @@ import { photoAt, titleAt } from "./hero-timing.js";
  */
 
 const PHONE = window.matchMedia("(max-width: 639px)");
-
-const START_SCALE = 0.94;
-const START_Y = 0.5; // copy-block centre at p=0, as a fraction of stage height
+const ROUTE_MIN = window.matchMedia("(min-width: 1200px)");
+const ROUTE_GAP = 56; // inputs → chip, px
+const ROUTE_DROP = 46; // chip → decision, px
 
 export function initHero() {
   const track = document.querySelector("[data-hero-track]");
@@ -53,6 +53,8 @@ export function initHero() {
   const skip = track?.querySelector("[data-hero-skip]");
   const photo = track?.querySelector("[data-hero-photo]");
   const nav = document.querySelector("#site-nav");
+  const route = track?.querySelector("[data-hero-route]");
+  const routePaths = route?.querySelector("[data-hero-route-paths]");
   if (!track || !stage || !canvas || !glide) return;
 
   let scene = null;
@@ -61,47 +63,30 @@ export function initHero() {
   let driver = null;
   let timeline = null;
   let visible = true;
-  const center = { x: 0, y: 0 };
 
   const openingMode = () => isDesktop() && !prefersReducedMotion() && !failed;
   const layout = () => (isDesktop() ? "pinned" : "stacked");
 
-  /* Where the copy block sits at p=0: centred on the stage. Measured
-     against its resting (left-column) position. */
-  function measureCenter() {
-    const previous = glide.style.transform;
-    glide.style.transform = "none";
-    const s = stage.getBoundingClientRect();
-    const r = glide.getBoundingClientRect();
-    glide.style.transform = previous;
-    center.x = s.left + s.width / 2 - (r.left + r.width / 2);
-    center.y = s.top + s.height * START_Y - (r.top + r.height / 2);
-  }
-
   function buildTimeline() {
-    measureCenter();
     timeline = gsap.timeline({ paused: true, defaults: { ease: "none" } });
     timeline
       // autoAlpha, so "Skip intro" leaves the tab order once it has faded.
       .fromTo(caption, { y: 0, autoAlpha: 1 }, { y: 16, autoAlpha: 0, duration: 0.07 }, 0.03)
-      // The shade that keeps the headline legible over the network lifts
-      // once the brain has cleared the left column.
-      .fromTo(stage, { "--hero-scrim": 1 }, { "--hero-scrim": 0, duration: 0.2 }, 0.44)
+      // The shade column that keeps the copy legible over the network and
+      // the passing brain lifts only once the brain has settled right
+      // (slideAt is ~1 by p 0.7); the photo's own fall-off takes over.
+      .fromTo(stage, { "--hero-scrim": 1 }, { "--hero-scrim": 0, duration: 0.16 }, 0.62)
+      // The route lands once the brain has settled: inputs, links, decision.
+      .fromTo(route ? route.querySelectorAll(".hero-route__inputs, .hero-route__out") : [], { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.08, stagger: 0.04 }, 0.74)
+      .fromTo(route ? route.querySelector(".hero-route__links") : [], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0.78)
       // Pad to exactly 1 so timeline progress maps 1:1 onto scroll progress.
       .set({}, {}, 1);
   }
 
-  const setTitleX = gsap.quickSetter(glide, "x", "px");
-  const setTitleY = gsap.quickSetter(glide, "y", "px");
-  const setTitleScale = gsap.quickSetter(glide, "scale");
   const setPhotoOpacity = photo ? gsap.quickSetter(photo, "opacity") : () => {};
   const setPhotoScale = photo ? gsap.quickSetter(photo, "scale") : () => {};
 
   function placeLayers(p) {
-    const k = titleAt(p);
-    setTitleX(center.x * (1 - k));
-    setTitleY(center.y * (1 - k));
-    setTitleScale(START_SCALE + (1 - START_SCALE) * k);
     // The office settles in from slightly close as the camera clears the brain.
     const ph = photoAt(p);
     setPhotoOpacity(ph);
@@ -133,14 +118,6 @@ export function initHero() {
     if (photo) gsap.set(photo, { clearProps: "opacity,transform" });
   }
 
-  // Layout changes (resize, fonts) move the headline's resting position.
-  ScrollTrigger.addEventListener("refresh", () => {
-    if (!timeline || !driver) return;
-    measureCenter();
-    timeline.invalidate();
-    applyProgress(driver.progress);
-  });
-
   function applyMode() {
     if (openingMode()) {
       setupScroll();
@@ -154,6 +131,7 @@ export function initHero() {
     scene.setProgress(driver ? driver.progress : 1);
     if (started) scene.setMotionEnabled(!prefersReducedMotion());
     if (!visible) scene.pause();
+    queueRoute();
   }
 
   async function setupScene() {
@@ -179,7 +157,75 @@ export function initHero() {
     stage.classList.add("has-webgl");
     started = true;
     applyMode();
+    placeRoute();
   }
+
+  /* ── The route ─────────────────────────────────────────────────────
+     Three inputs → the processor → "You approve", pinned to the chip's
+     resting position on screen (scene.restingAnchors), so the figure
+     itself shows the promise: work routed to the person who decides.
+     Wide desktops only, and only while it clears the copy column. */
+  function placeRoute() {
+    if (!route) return;
+    const show = Boolean(scene && started && ROUTE_MIN.matches);
+    if (!show) {
+      stage.classList.remove("has-route");
+      return;
+    }
+    const anchors = scene.restingAnchors();
+    const sr = stage.getBoundingClientRect();
+    const cr = canvas.getBoundingClientRect();
+    const at = (pt) => ({ x: cr.left - sr.left + pt.x * cr.width, y: cr.top - sr.top + pt.y * cr.height });
+    const left = at(anchors.left);
+    const front = at(anchors.front);
+
+    const inputs = route.querySelector(".hero-route__inputs");
+    const out = route.querySelector(".hero-route__out");
+    const inX = left.x - ROUTE_GAP - inputs.offsetWidth;
+    const inY = left.y - inputs.offsetHeight / 2;
+    Object.assign(inputs.style, { left: `${Math.round(inX)}px`, top: `${Math.round(inY)}px` });
+    const outX = front.x - out.offsetWidth / 2;
+    const outY = front.y + ROUTE_DROP;
+    Object.assign(out.style, { left: `${Math.round(outX)}px`, top: `${Math.round(outY)}px` });
+
+    // Hide rather than crowd: the inputs must clear every line of copy.
+    const box = { l: sr.left + inX - 48, t: sr.top + inY - 12, r: sr.left + inX + inputs.offsetWidth, b: sr.top + inY + inputs.offsetHeight + 12 };
+    const hits = [...glide.querySelectorAll("h1, p, .actions > *")].some((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const r = el.matches("a") ? el.getBoundingClientRect() : range.getBoundingClientRect();
+      return r.right > box.l && r.left < box.r && r.bottom > box.t && r.top < box.b;
+    });
+    const fits = !hits && outY + out.offsetHeight < sr.height - 72;
+    stage.classList.toggle("has-route", fits);
+    if (!fits) return;
+
+    // Links: each input's right edge curves into the chip's left rim;
+    // one line drops from the front rim into the decision.
+    const paths = [...inputs.children].map((node, i) => {
+      const sx = inX + node.offsetLeft + node.offsetWidth;
+      const sy = inY + node.offsetTop + node.offsetHeight / 2;
+      const ex = left.x - 6;
+      const ey = left.y + (i - 1) * 7;
+      const mid = (sx + ex) / 2;
+      return `<path class="hero-route__link" d="M${sx.toFixed(1)} ${sy.toFixed(1)} C${mid.toFixed(1)} ${sy.toFixed(1)}, ${mid.toFixed(1)} ${ey.toFixed(1)}, ${ex.toFixed(1)} ${ey.toFixed(1)}"/>`;
+    });
+    paths.push(`<path class="hero-route__link hero-route__link--out" d="M${front.x.toFixed(1)} ${(front.y + 8).toFixed(1)} V${outY.toFixed(1)}"/>`);
+    routePaths.innerHTML = paths.join("");
+    route.querySelector("svg").setAttribute("viewBox", `0 0 ${sr.width.toFixed(0)} ${sr.height.toFixed(0)}`);
+  }
+
+  // Re-pin after the scene has taken the new size (its own observer runs
+  // first, then two frames later the anchors are current).
+  let routeFrame = 0;
+  const queueRoute = () => {
+    cancelAnimationFrame(routeFrame);
+    routeFrame = requestAnimationFrame(() => {
+      routeFrame = requestAnimationFrame(placeRoute);
+    });
+  };
+  if (route && typeof ResizeObserver !== "undefined") new ResizeObserver(queueRoute).observe(stage);
+  ROUTE_MIN.addEventListener?.("change", queueRoute);
 
   // The hero is navy from the first pixel: the nav takes light ink at once.
   nav?.classList.add("is-hero-static");
@@ -234,8 +280,8 @@ export function initHero() {
     scrollToTarget(end, { duration: 1.4 });
   });
 
-  // The pin and the headline's start position are set up straight away,
-  // so the first screen is already "inside" while the scene loads.
+  // The pin is set up straight away, so the first screen is already
+  // "inside" while the scene loads.
   if (openingMode()) setupScroll();
 
   let sceneRequested = false;

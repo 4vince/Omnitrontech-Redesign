@@ -152,8 +152,9 @@
   }
 
   .hero-track.is-opening {
-    /* p 0.9-1 is a short hold before the pin releases; keep it short. */
-    height: 200vh;
+    /* About two-thirds of a screen of scroll: long enough for the pull-back
+       to read, short enough not to hold the offer hostage. */
+    height: 170vh;
   }
 
   .hero-track.is-opening .hero-stage {
@@ -172,9 +173,10 @@
     will-change: transform;
   }
 
-  /* A soft shade that travels with the headline while the network and
-     the cortex wall pass behind it; hero.js lifts it (--hero-scrim, set
-     on the stage) once the brain has cleared the left column. */
+  /* A shade column behind the copy, full stage height, so the headline,
+     subline and actions stay legible while the network and the brain
+     pass behind them; hero.js lifts it (--hero-scrim, set on the stage)
+     once the brain has settled right. */
   .hero-track.is-opening .hero-copy__glide {
     position: relative;
   }
@@ -182,9 +184,9 @@
   .hero-track.is-opening .hero-copy__glide::before {
     content: "";
     position: absolute;
-    inset: -22% -14%;
+    inset: -100vh -16vw -100vh -100vw;
     z-index: -1;
-    background: radial-gradient(closest-side, rgba(4, 9, 30, 0.74) 0%, rgba(4, 9, 30, 0.42) 55%, transparent 100%);
+    background: linear-gradient(90deg, rgba(4, 9, 30, 0.9) 0%, rgba(4, 9, 30, 0.86) 62%, rgba(4, 9, 30, 0.5) 82%, transparent 100%);
     opacity: var(--hero-scrim, 0);
     pointer-events: none;
   }
@@ -199,9 +201,7 @@
     display: flex;
     width: fit-content;
     margin-inline: auto;
-    font-size: 0.6875rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: var(--fs-micro); /* 12px floor */
     white-space: nowrap;
   }
 
@@ -213,7 +213,7 @@
     padding: 0 18px;
     border: 1px solid rgba(138, 163, 255, 0.34);
     border-radius: var(--radius-pill);
-    background: rgba(6, 13, 42, 0.62);
+    background: rgba(6, 13, 42, 0.8);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     color: #e6ecff;
@@ -315,7 +315,7 @@
 }
 
 .handoff-copy h2 {
-  max-width: 14ch;
+  max-width: 18ch;
   font-size: var(--fs-h2);
   font-weight: 600;
   line-height: 1.04;
@@ -335,18 +335,11 @@
 
 .handoff-step {
   display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  gap: 4px 12px;
+  gap: 4px;
   padding-block: 16px;
   border-bottom: 1px solid var(--line);
   color: var(--muted-2);
   transition: color var(--dur-ui) var(--ease-out);
-}
-
-.handoff-step__index {
-  padding-top: 0.35em;
-  font-size: var(--fs-micro);
-  letter-spacing: 0.14em;
 }
 
 .handoff-step h3 {
@@ -378,10 +371,6 @@
 
 .handoff-step.is-active {
   color: var(--ink);
-}
-
-.handoff-step.is-active .handoff-step__index {
-  color: var(--blue);
 }
 
 .handoff-step.is-active .handoff-step__body {
@@ -561,11 +550,9 @@
   left: 50%;
   translate: -50% 0;
   white-space: nowrap;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: var(--fs-micro);
-  letter-spacing: 0.1em;
   text-align: center;
-  text-transform: uppercase;
 }
 
 .handoff-hub__label .handoff-swap__item {
@@ -763,7 +750,7 @@
    ───────────────────────────────────────────────────────────── */
 
 .band-problem {
-  padding-block: clamp(56px, 8vw, 110px);
+  padding-block: clamp(56px, 8vw, 110px) clamp(40px, 5vw, 72px);
   background: var(--paper);
   border-top: 1px solid var(--line);
 }
@@ -951,23 +938,15 @@
    ───────────────────────────────────────────────────────────── */
 
 .band-proof {
-  padding-block: clamp(56px, 8vw, 110px);
+  /* One short honesty band, not a ledger of empty slots: the statement,
+     and the single line on how outcomes get published. */
+  padding-block: clamp(48px, 6vw, 88px);
   background: var(--bg);
   border-top: 1px solid var(--line);
 }
 
 .proof-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  gap: clamp(44px, 7vw, 110px);
-  align-items: start;
-}
-
-.proof-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: end;
 }
 
 .proof-head h2 {
@@ -979,70 +958,11 @@
   color: var(--blue-bright);
 }
 
-.proof-head p {
-  max-width: 38ch;
+.proof-note {
+  max-width: 46ch;
   color: var(--muted);
   font-size: var(--fs-lead);
-  line-height: 1.62;
-}
-
-.proof-ledger {
-  border-top: 1px solid var(--line);
-}
-
-.proof-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) auto;
-  align-items: center;
-  gap: 20px;
-  padding-block: 20px;
-  border-bottom: 1px solid var(--line);
-}
-
-.proof-row__sector,
-.proof-row__state {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.proof-row__sector {
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 1.25vw, 1.16rem);
-  font-weight: 530;
-  letter-spacing: -0.02em;
-}
-
-.proof-row__state {
-  color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.45;
-}
-
-.proof-row__slot {
-  color: var(--muted-2);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.proof-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  max-width: 54ch;
-  margin-top: 18px;
-  color: var(--muted-2);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
-.proof-note .ph {
-  flex: none;
-  margin-top: 2px;
-  font-size: 14px;
-  color: var(--blue-bright);
+  line-height: 1.6;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1398,11 +1318,10 @@
   border-bottom: 1px solid var(--line);
 }
 
-.cta-home__step .mono {
-  padding-top: 0.3em;
-  color: var(--muted-2);
-  font-size: var(--fs-micro);
-  letter-spacing: 0.14em;
+.cta-home__step .ph {
+  padding-top: 0.15em;
+  color: var(--blue);
+  font-size: 1.25rem;
 }
 
 .cta-home__step p {
@@ -1456,10 +1375,6 @@
     gap: 8px 12px;
     padding-block: 24px;
     color: var(--ink);
-  }
-
-  .handoff-step__index {
-    color: var(--blue);
   }
 
   .handoff-step__body {
@@ -1703,21 +1618,6 @@
     grid-template-columns: 42px 1fr;
   }
 
-  .proof-row {
-    grid-template-columns: 1fr auto;
-    gap: 8px 16px;
-  }
-
-  .proof-row__state {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  .proof-row__slot {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
   .site-footer .wrap {
     grid-template-columns: 1fr;
   }
@@ -1778,13 +1678,6 @@
 .faq-grid > [data-faq],
 .cta-home__next {
   grid-column: 8 / -1;
-}
-
-/* The proof heading travels with its ledger like the problem and FAQ
-   headings do. */
-.proof-head {
-  position: sticky;
-  top: calc(var(--nav-h) + 44px);
 }
 
 /* Column 6's centre, measured from the section edge (100% = section
@@ -1897,7 +1790,7 @@
 .showcase {
   display: block;
   min-height: 0;
-  padding-block: clamp(72px, 9vw, 128px);
+  padding-block: clamp(72px, 9vw, 128px) clamp(48px, 6vw, 88px);
 }
 
 .showcase-grid {
@@ -2083,11 +1976,6 @@
     grid-column: 1 / -1;
   }
 
-  .proof-head {
-    position: relative;
-    top: auto;
-  }
-
   .thread,
   .thread-end,
   .handoff-copy::after,
@@ -2210,4 +2098,310 @@
    title steps down a size and the section heading keeps the lead. */
 .showcase.is-flip .applied-panel__title {
   font-size: clamp(1.45rem, 2.1vw, 2rem);
+}
+
+/* Reduced motion on desktop: no pin, so each stage sits beside its own
+   still diagram (text left, diagram right) instead of every still stacking
+   in the left half with the right half empty. */
+@media (min-width: 900px) and (prefers-reduced-motion: reduce) {
+  .band-handoff .thread,
+  .handoff-copy::after {
+    display: none;
+  }
+
+  .handoff-copy {
+    grid-column: 1 / -1;
+  }
+
+  /* The title and sentence centre on the diagram beside them. */
+  .handoff-step {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    column-gap: var(--split-gap);
+    row-gap: 10px;
+    padding-block: clamp(28px, 3vw, 44px);
+  }
+
+  .handoff-step__body {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .handoff-step__still {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    margin-top: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Service lines: the five lines named once, each a link to its card on
+   AI Solutions (pages/home.js renders them from content/services.js).
+   Centred on the thread: the route stops above the head and picks up
+   again below the row, so it never runs through the words.
+   ───────────────────────────────────────────────────────────── */
+
+.band-lines {
+  --lines-pad: clamp(64px, 8vw, 120px);
+  padding-block: var(--lines-pad);
+  background: var(--bg);
+}
+
+.band-lines > .thread {
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--lines-pad) - 16px), transparent calc(var(--lines-pad) - 16px), transparent calc(100% - var(--lines-pad) + 16px), #000 calc(100% - var(--lines-pad) + 16px));
+  mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--lines-pad) - 16px), transparent calc(var(--lines-pad) - 16px), transparent calc(100% - var(--lines-pad) + 16px), #000 calc(100% - var(--lines-pad) + 16px));
+}
+
+.lines-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: clamp(32px, 4vw, 56px);
+}
+
+.lines-inner h2 {
+  max-width: 20ch;
+  font-size: var(--fs-h2);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.lines-inner h2 span {
+  color: var(--blue);
+}
+
+.service-lines {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-strong);
+}
+
+.service-line {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  height: 100%;
+  padding: 24px clamp(16px, 1.8vw, 28px) 28px;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--dur-ui) var(--ease-out);
+}
+
+.service-lines li:first-child .service-line {
+  border-left: 0;
+}
+
+.service-line__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 24px;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+
+.service-line__name .ph {
+  flex: none;
+  color: var(--blue);
+  font-size: 20px;
+}
+
+.service-line__summary {
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.service-line__arrow {
+  position: absolute;
+  top: 27px;
+  right: clamp(16px, 1.8vw, 28px);
+  color: var(--muted);
+  font-size: 16px;
+  transition:
+    transform var(--dur-ui) var(--ease-out),
+    color var(--dur-fast);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .service-line:hover {
+    background: var(--surface-2);
+  }
+
+  .service-line:hover .service-line__arrow {
+    color: var(--blue);
+    transform: translateX(3px);
+  }
+}
+
+.service-line:active {
+  background: var(--surface-2);
+}
+
+/* Below 1100px five columns get too narrow: one row per line. */
+@media (max-width: 1099px) {
+  .service-lines {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .service-line {
+    grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: var(--split-gap, 24px);
+    padding: 20px 48px 20px 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .service-line__arrow {
+    top: 50%;
+    right: 8px;
+    margin-top: -8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .lines-inner {
+    justify-items: start;
+  }
+
+  .lines-inner h2 {
+    text-align: left;
+  }
+
+  .service-line {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+    padding-right: 40px;
+  }
+}
+
+/* ─── One-ink section headlines ─────────────────────────────────
+   Blue is kept for the hero headline and the closing CTA. Between them,
+   section headlines are one ink colour, so the two-tone treatment marks
+   the start and end of the page instead of every band. */
+.bridge-statement span,
+.problem-svx .svx__head h2 span,
+.handoff-copy h2 .signal,
+.lines-inner h2 span,
+.showcase-heading h2 span,
+.proof-head h2 span {
+  color: inherit;
+}
+
+/* ─── Hero route ────────────────────────────────────────────────
+   Three inputs feed the processor; one decision comes out to a person.
+   Positioned by hero.js against the chip's resting place on screen
+   (.has-route only once it clears the copy). Wide desktops only. */
+.hero-route {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  pointer-events: none;
+}
+
+@media (min-width: 1200px) {
+  .has-route .hero-route {
+    display: block;
+  }
+}
+
+.hero-route__links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-route__link {
+  fill: none;
+  stroke: rgba(150, 175, 255, 0.78);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 6;
+  stroke-linecap: round;
+}
+
+/* Out to a person: amber, the colour of a person's object in the scenes. */
+.hero-route__link--out {
+  stroke: rgba(255, 176, 103, 0.9);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-route__link {
+    animation: hero-route-flow 1.1s linear infinite;
+  }
+}
+
+@keyframes hero-route-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.hero-route__inputs {
+  position: absolute;
+  display: grid;
+  gap: 10px;
+  width: 170px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-route__node {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 13px;
+  border: 1px solid rgba(138, 163, 255, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(6, 13, 42, 0.82);
+  box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.6);
+  color: #eef2ff;
+}
+
+.hero-route__node i {
+  flex: none;
+  color: #8aa3ff;
+  font-size: 1.15rem;
+}
+
+.hero-route__node b {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 620;
+  line-height: 1.25;
+}
+
+.hero-route__node small {
+  display: block;
+  color: #b9c5ee;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.hero-route__out {
+  position: absolute;
+  min-width: 176px;
+  border-color: rgba(255, 176, 103, 0.55);
+}
+
+.hero-route__out i {
+  color: #ffb067;
 }

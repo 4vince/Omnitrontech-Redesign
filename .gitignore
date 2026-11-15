@@ -8,3 +8,8 @@ dist-ssr
 *.log
 .DS_Store
 Thumbs.db
+.claude
+.hallmark
+.impeccable
+
+

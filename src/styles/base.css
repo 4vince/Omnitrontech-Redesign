@@ -205,12 +205,10 @@ html.lenis body {
 }
 
 .mono {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: var(--fs-micro);
   font-weight: 500;
-  letter-spacing: 0.14em;
   line-height: 1.4;
-  text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
 

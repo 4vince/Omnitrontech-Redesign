@@ -1,7 +1,7 @@
 import "@fontsource-variable/archivo";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/jetbrains-mono";
-import "@phosphor-icons/web/regular";
+import "../styles/icons.css"; // Phosphor, subset to the icons in use (npm run icons)
 
 import "../styles/main.css";
 
@@ -35,45 +35,51 @@ initTheme();
 initFaq();
 initScrollProgress();
 
-// Each page loads only its own module, so no page ships another's code.
-if (page === "home") {
-  const [{ initHomeSections }, { initHandoff }] = await Promise.all([
-    import("./pages/home.js"),
-    import("./home/handoff.js"),
-  ]);
-  initHomeSections();
-  initHandoff();
-}
-if (page === "solutions") {
-  const { initSolutions } = await import("./pages/solutions.js");
-  initSolutions(lenis);
-}
-if (page === "contact") {
-  const { initContact } = await import("./pages/contact.js");
-  initContact();
+// One async boot (not top-level await, which older build targets reject):
+// the same order as before, page module first, then everything that measures it.
+async function boot() {
+  // Each page loads only its own module, so no page ships another's code.
+  if (page === "home") {
+    const [{ initHomeSections }, { initHandoff }] = await Promise.all([
+      import("./pages/home.js"),
+      import("./home/handoff.js"),
+    ]);
+    initHomeSections();
+    initHandoff();
+  }
+  if (page === "solutions") {
+    const { initSolutions } = await import("./pages/solutions.js");
+    initSolutions(lenis);
+  }
+  if (page === "contact") {
+    const { initContact } = await import("./pages/contact.js");
+    initContact();
+  }
+
+  // Backdrops must exist before parallax measures them, and after the
+  // page modules have rendered their sections (AI Solutions rows).
+  initBackdrops();
+  initRails();
+  initReveal();
+  initParallax();
+  initTilt();
+  initZoomReveal();
+
+  // The 3D scene is only requested on the home page, after the shell has
+  // painted. Three.js therefore never ships to the secondary pages.
+  if (page === "home") {
+    import("./home/hero.js")
+      .then(({ initHero }) => initHero(lenis))
+      .catch((error) => {
+        console.error("Could not initialize the homepage service switcher.", error);
+      });
+  }
+
+  document.documentElement.classList.add("is-ready");
+  window.__omnitronBooted = true;
 }
 
-// Backdrops must exist before parallax measures them, and after the
-// page modules have rendered their sections (AI Solutions rows).
-initBackdrops();
-initRails();
-initReveal();
-initParallax();
-initTilt();
-initZoomReveal();
-
-// The 3D scene is only requested on the home page, after the shell has
-// painted. Three.js therefore never ships to the secondary pages.
-if (page === "home") {
-  import("./home/hero.js")
-    .then(({ initHero }) => initHero(lenis))
-    .catch((error) => {
-      console.error("Could not initialize the homepage service switcher.", error);
-    });
-}
-
-document.documentElement.classList.add("is-ready");
-window.__omnitronBooted = true;
+boot().catch((error) => console.error("Could not start the page.", error));
 
 // Late layout shifts (images, web fonts) move trigger positions; viewport
 // resizes are already handled by ScrollTrigger itself.

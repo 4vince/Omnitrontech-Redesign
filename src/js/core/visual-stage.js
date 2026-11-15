@@ -87,6 +87,7 @@ export function createStageLayout(stage, { aspect, onChange, gap = 24 } = {}) {
     // back and forth on small resizes.
     for (const r of [right, left]) if (size(r) > size(best) * 1.08) best = r;
     area = best;
+    stage.classList.toggle("is-beside", best !== below);
     const set = (name, v) => stage.style.setProperty(name, `${Math.round(v)}px`);
     set("--svx-x", best.x);
     set("--svx-y", best.y);

@@ -128,8 +128,9 @@ export function build(kit) {
       kit.text("Usual range", px(2), py(base(2) + BAND) - 16, { size: 15.5, weight: 620, color: INK.sub, a: la });
     }
 
-    // The line: four weeks drawn in, then the newest days.
-    const draw1 = easeInOut(seg(t, 0.8, 3.3));
+    // The line: four weeks drawn in, then the newest days. It opens with the
+    // first week already on the chart, so the first frame is never blank.
+    const draw1 = 0.28 + 0.72 * easeInOut(seg(t, 0.3, 3.1));
     kit.beam(BEFORE, HUE.cobalt, { a: out, width: 2, to: draw1, halo: 0.9 });
     if (draw1 > 0 && draw1 < 1) {
       const [hx, hy] = BEFORE.points[Math.min(BEFORE.points.length - 1, Math.floor(draw1 * (BEFORE.points.length - 1)))];

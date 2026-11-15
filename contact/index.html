@@ -33,7 +33,7 @@
         <div class="wrap contact-grid">
           <div class="contact-intro">
             <h1 id="contact-title" data-intro>Let’s talk about <span>what is slowing down.</span></h1>
-            <p data-intro>No pitch deck required. Tell us where the week goes, what you have already tried, and what a good outcome would change. If we are not the right fit, we will say so.</p>
+            <p data-intro>Tell us where the week goes. If we are not the right fit, we will say so.</p>
 
             <div class="contact-details" aria-label="Contact details" data-intro>
               <div class="contact-detail">
@@ -52,7 +52,7 @@
               <div class="contact-detail">
                 <i class="ph ph-clock" aria-hidden="true"></i>
                 <div>
-                  <span>Mon-Fri, 09:00-18:00 SGT. Replies within two working days.</span>
+                  <span>Mon-Fri, 09:00-18:00 SGT.</span>
                 </div>
               </div>
             </div>
@@ -70,17 +70,17 @@
               <div class="form-row">
                 <div class="field">
                   <label for="contact-name">Your name</label>
-                  <input class="input" id="contact-name" name="name" type="text" placeholder="Alex Tan" autocomplete="name" required data-field>
+                  <input class="input" id="contact-name" name="name" type="text" placeholder="e.g. Alex Tan" autocomplete="name" required data-field>
                 </div>
                 <div class="field">
                   <label for="contact-email">Work email</label>
-                  <input class="input" id="contact-email" name="email" type="email" placeholder="alex@company.com" autocomplete="email" inputmode="email" required data-field>
+                  <input class="input" id="contact-email" name="email" type="email" placeholder="e.g. alex@company.com" autocomplete="email" inputmode="email" required data-field>
                 </div>
               </div>
 
               <div class="field">
                 <label for="contact-subject">Subject <span class="optional">(optional)</span></label>
-                <input class="input" id="contact-subject" name="subject" type="text" placeholder="Client intake is eating the week" autocomplete="off">
+                <input class="input" id="contact-subject" name="subject" type="text" placeholder="e.g. Client intake is eating the week" autocomplete="off">
               </div>
 
               <div class="field">
@@ -93,13 +93,23 @@
                 <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off" data-honeypot>
               </div>
 
+              <p class="sr-only" aria-live="polite" data-form-summary></p>
+
+              <div class="form-handoff" data-form-handoff role="status" tabindex="-1" hidden>
+                <i class="ph ph-envelope-simple" aria-hidden="true"></i>
+                <div>
+                  <strong>Your email app should now be open with this message ready.</strong>
+                  Press send there and it reaches a person here. Nothing opened? <a data-form-handoff-link>Open the draft again</a> or write to <a href="mailto:hello@omnitron.tech">hello@omnitron.tech</a>.
+                </div>
+              </div>
+
               <div class="form-error" data-form-error role="alert" aria-live="assertive" tabindex="-1" hidden>
                 <i class="ph ph-warning-circle" aria-hidden="true"></i>
                 <span data-form-error-text>Something went wrong. Please try again, or email hello@omnitron.tech directly.</span>
                 <a class="form-error__link" data-form-error-link hidden>Open email draft</a>
               </div>
 
-              <button class="btn btn--primary" type="submit">
+              <button class="btn btn--primary" type="submit" data-submit>
                 Send message
                 <i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>
               </button>

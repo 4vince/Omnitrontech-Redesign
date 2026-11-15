@@ -21,7 +21,7 @@ function frame({ title, status, body, steps, label }) {
       ${steps
         .map(
           (step, i) =>
-            `<li style="--i:${i}"><span>${String(i + 1).padStart(2, "0")}</span>${step}</li>`,
+            `<li style="--i:${i}">${step}</li>`,
         )
         .join("")}
     </ol>

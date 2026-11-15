@@ -2,8 +2,8 @@ import {
   appliedExamples,
   contactSteps,
   problems,
-  proofRows,
 } from "../content/home.js";
+import { services } from "../content/services.js";
 import { gsap, prefersReducedMotion } from "../core/motion.js";
 import { createStageLayout, setActiveCaption, wirePauseToggle } from "../core/visual-stage.js";
 
@@ -64,15 +64,18 @@ export function initHomeSections() {
     captionMount.innerHTML = problems.map((problem) => `<li data-caption><span>${problem.title}</span></li>`).join("");
   }
 
-  const proofMount = document.querySelector("[data-proof]");
-  if (proofMount) {
-    proofMount.innerHTML = proofRows
+  // The five service lines, each a link to its card on AI Solutions.
+  const linesMount = document.querySelector("[data-service-lines]");
+  if (linesMount) {
+    linesMount.innerHTML = services
       .map(
-        (row) => `<div class="proof-row" data-reveal>
-          <span class="proof-row__sector">${row.sector}</span>
-          <span class="proof-row__state">${row.state}</span>
-          <span class="proof-row__slot">${row.slot}</span>
-        </div>`,
+        (service) => `<li>
+          <a class="service-line" href="/ai-solutions/#service-${service.slug}">
+            <span class="service-line__name"><i class="ph ${service.icon}" aria-hidden="true"></i>${service.name}</span>
+            <span class="service-line__summary">${service.summary}</span>
+            <i class="ph ph-arrow-right service-line__arrow" aria-hidden="true"></i>
+          </a>
+        </li>`,
       )
       .join("");
   }
@@ -84,7 +87,7 @@ export function initHomeSections() {
     stepsMount.innerHTML = contactSteps
       .map(
         (step) => `<li class="cta-home__step">
-          <span class="mono">${step.label}</span>
+          <i class="ph ${step.icon}" aria-hidden="true"></i>
           <p>${step.body}</p>
         </li>`,
       )
@@ -291,6 +294,8 @@ function initAppliedShowcase() {
 
   function renderPauseButton() {
     if (!pauseButton) return;
+    // Nothing auto-advances under reduced motion, so there is nothing to pause.
+    pauseButton.hidden = prefersReducedMotion();
     pauseButton.innerHTML = paused
       ? '<i class="ph ph-play" aria-hidden="true"></i><span>Resume</span>'
       : '<i class="ph ph-pause" aria-hidden="true"></i><span>Pause</span>';
@@ -358,6 +363,10 @@ function initAppliedShowcase() {
 
   renderPauseButton();
   render(active, { instant: true });
+  window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", () => {
+    renderPauseButton();
+    scheduleAdvance();
+  });
 
   if (typeof IntersectionObserver !== "undefined") {
     new IntersectionObserver(

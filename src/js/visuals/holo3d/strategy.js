@@ -4,7 +4,8 @@ import { THREE, COLOR, mergeGeometries, seg, lerp, easeOut, easeInOut, easeBack,
  * Strategy & Consulting: a hologram of the business itself.
  *
  * A miniature office floor (reception, the finance team's desks, a meeting
- * room, support desks, the warehouse) with its people at work. A scan
+ * room, support desks, the warehouse) with work in progress at every desk
+ * (amber laptops and tablets in use; no figures). A scan
  * passes over it and maps how work gets done; three areas light up where
  * AI could help; a pin drops on the quick win (finance); a fence of light
  * goes up around it (the data rules); and a route grows from it to the next
@@ -49,7 +50,7 @@ function merge(list) {
   return g;
 }
 
-/** A desk with a monitor and a chair; the person sits at the chair. */
+/** A desk with a monitor and a chair. */
 function workstation(x, z, facing = 1) {
   return [
     box(1.0, 0.36, 0.56, x, 0, z),
@@ -58,11 +59,18 @@ function workstation(x, z, facing = 1) {
     box(0.36, 0.22, 0.36, x, 0, z + 0.55 * facing),
   ];
 }
-function person(x, z) {
+/* People are never drawn (no figures in the scenes): a person shows as the
+   amber things they are using right now, an open laptop with a mug beside it,
+   or a handheld tablet on a shelf or trolley. */
+function laptopInUse(x, y, z, facing = 1) {
   return [
-    new THREE.CapsuleGeometry(0.11, 0.22, 4, 10).translate(x, 0.45, z),
-    new THREE.SphereGeometry(0.1, 14, 10).translate(x, 0.78, z),
+    box(0.38, 0.025, 0.26, x, y, z),
+    box(0.38, 0.25, 0.025, x, y + 0.025, z - 0.13 * facing),
+    cyl(0.05, 0.1, x + 0.3, y, z + 0.04 * facing, 12),
   ];
+}
+function tabletInUse(x, y, z) {
+  return [box(0.24, 0.025, 0.34, x, y, z), box(0.16, 0.012, 0.24, x, y + 0.025, z)];
 }
 
 export function build(kit) {
@@ -104,7 +112,7 @@ export function build(kit) {
   const wallHolo = holo(merge(walls), { color: COLOR.ice, face: 0.05, level: 0.75 });
   root.add(wallHolo.group);
 
-  /* Furniture and people, per area */
+  /* Furniture and work in progress, per area */
   const furniture = {
     finance: [
       ...workstation(-5.1, -2.9), ...workstation(-3.7, -2.9), ...workstation(-2.3, -2.9),
@@ -143,19 +151,21 @@ export function build(kit) {
       box(0.7, 0.06, 0.5, 5.4, 0.2, 2.6), box(0.06, 0.8, 0.5, 5.75, 0.2, 2.6),
     ],
   };
-  const people = {
-    finance: [[-5.1, -2.35], [-3.7, -2.35], [-2.3, -2.35], [-5.1, -0.55], [-3.7, -0.55], [-2.3, -0.55]],
-    reception: [[-4.2, 1.2], [-2.6, 3.2]],
-    meeting: [[0.75 + 1.4, -2.2], [0.75 - 0.7, -2.2 - 1.0]],
-    support: [[0.0, 1.25], [1.5, 1.25], [0.0, 2.35], [1.5, 2.35]],
-    warehouse: [[4.45, 0.4], [3.9, 1.6]],
+  // Work in progress, per area: what each person is using, on its surface.
+  const desk = (x, z, facing = 1) => laptopInUse(x - 0.14, 0.36, z + 0.12 * facing, facing);
+  const inUse = {
+    finance: [[-5.1, -2.9], [-3.7, -2.9], [-2.3, -2.9], [-5.1, -1.1], [-3.7, -1.1], [-2.3, -1.1]].flatMap(([x, z]) => desk(x, z)),
+    reception: [...laptopInUse(-4.4, 0.5, 1.72), ...tabletInUse(-2.6, 0.22, 3.2)],
+    meeting: [...laptopInUse(0.75 + 0.5, 0.36, -2.0), ...laptopInUse(0.75 - 0.35, 0.36, -2.6)],
+    support: [...desk(0.0, 0.7), ...desk(1.5, 0.7), ...desk(0.0, 2.9, -1), ...desk(1.5, 2.9, -1)],
+    warehouse: [...tabletInUse(4.0, 0.87, 2.4), ...tabletInUse(5.4, 0.26, 2.6)],
   };
 
   const rooms = {};
   Object.keys(AREAS).forEach((name) => {
     const [x0, x1, z0, z1] = AREAS[name];
     const things = holo(merge(furniture[name]), { face: 0.05 });
-    const folk = holo(merge(people[name].flatMap(([x, z]) => person(x, z))), { color: COLOR.amber, face: 0.7, level: 1, threshold: 70 });
+    const folk = holo(merge(inUse[name]), { color: COLOR.amber, face: 0.7, level: 1, threshold: 70 });
     // A patch of light on the floor of the room, for when it is picked out.
     const patch = holo(new THREE.BoxGeometry(x1 - x0 - 0.2, 0.02, z1 - z0 - 0.2).translate((x0 + x1) / 2, 0.012, (z0 + z1) / 2), {
       color: COLOR.ice,

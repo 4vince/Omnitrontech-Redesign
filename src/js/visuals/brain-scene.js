@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
@@ -361,6 +360,10 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     console.error("Could not initialise the homepage hero visual.", error);
     return null;
   }
+  // Reading a program's compile status forces the main thread to wait for
+  // the GPU compile (~1 s on the first frame with bloom). Check it in dev
+  // only; production lets the driver compile without blocking the page.
+  renderer.debug.checkShaderErrors = import.meta.env.DEV;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
   renderer.setClearColor(0x000000, 0);
@@ -408,13 +411,9 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
 
-  // A dim neutral environment gives the chip's metal a sheen to catch.
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const room = new RoomEnvironment();
-  scene.environment = pmrem.fromScene(room, 0.04).texture;
-  scene.environmentIntensity = 0.08;
-  room.dispose();
-  pmrem.dispose();
+  // No environment map: at the dim intensity the chip used, its sheen was
+  // invisible under the bloom, and baking it (PMREM) cost ~0.7 s of main
+  // thread on a cold load. The key, rim and hemisphere lights carry the metal.
 
   const chipLight = new THREE.PointLight("#3d6dff", 0, 0, 2);
   chipLight.position.set(CHIP.x, CHIP.y + 0.6, CHIP.z);
@@ -672,8 +671,30 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
     resume();
   }
 
-  // Compile every program up front so the first animated frames don't stall.
-  await renderer.compileAsync(scene, camera);
+  // Compile every program up front so the first frame doesn't stall: an
+  // unlinked program blocks the main thread on its first use (~1 s here).
+  // Two catches. The scene renders into the bloom's off-screen target, and
+  // a program built for the screen (tone mapped, sRGB) is a different
+  // program from one built for that target, so the scene compiles against
+  // the target. And compileAsync(scene) never sees the passes' own
+  // full-screen materials, so those are warmed on a throwaway scene, both
+  // off-screen and on screen (the last passes draw to the canvas).
+  const passMaterials = new Set();
+  for (const pass of [...composer.passes, composer.copyPass]) {
+    for (const value of Object.values(pass)) {
+      if (value?.isMaterial) passMaterials.add(value);
+      else if (Array.isArray(value)) value.forEach((m) => m?.isMaterial && passMaterials.add(m));
+    }
+  }
+  const warmQuad = new THREE.PlaneGeometry(2, 2);
+  const warmScene = new THREE.Scene();
+  passMaterials.forEach((material) => warmScene.add(new THREE.Mesh(warmQuad, material)));
+  renderer.setRenderTarget(target);
+  await Promise.all([renderer.compileAsync(scene, camera), renderer.compileAsync(warmScene, camera)]);
+  renderer.setRenderTarget(null);
+  await renderer.compileAsync(warmScene, camera);
+  warmScene.clear();
+  warmQuad.dispose();
 
   const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
   resizeObserver?.observe(canvas);
@@ -681,8 +702,33 @@ export async function createBrainScene(canvas, { animate = true } = {}) {
   canvas.addEventListener("webglcontextrestored", onContextRestored);
   resize();
 
+  /* Where the chip sits on screen in the resting composition (progress 1,
+     no cursor parallax), as 0-1 fractions of the canvas. The hero's HTML
+     route (inputs → chip → "You approve") is pinned to these points. */
+  const anchorPoint = new THREE.Vector3();
+  function restingAnchors() {
+    const saved = { progress: state.progress, lookX: state.lookX, lookY: state.lookY };
+    Object.assign(state, { progress: 1, lookX: 0, lookY: 0 });
+    placeCamera(1);
+    camera.updateMatrixWorld();
+    const project = (x, y, z) => {
+      anchorPoint.set(x, y, z).project(camera);
+      return { x: (anchorPoint.x + 1) / 2, y: (1 - anchorPoint.y) / 2 };
+    };
+    const anchors = {
+      // Left rim of the substrate, a little forward of centre.
+      left: project(CHIP.x - 2.0, BASE_Y + 0.16, CHIP.z + 0.35),
+      // Front rim, centre.
+      front: project(CHIP.x, BASE_Y + 0.06, CHIP.z + 1.35),
+    };
+    Object.assign(state, saved);
+    if (!state.running) draw(0);
+    return anchors;
+  }
+
   return {
     getStats: () => getRendererInfo(renderer),
+    restingAnchors,
     /** Start (or continue) the animation loop. */
     resume,
     pause,
