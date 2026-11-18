@@ -31,3 +31,11 @@ export const slideAt = (p) => easeInOut(smooth(0.26, 0.75, pullAt(p)));
 
 /** The office photograph fades up once the camera is clear of the brain. */
 export const photoAt = (p) => smooth(0.36, 0.56, p);
+
+/*
+ * roomAt - the room camera (visuals/room-scene.js): 0 = beyond the glass,
+ * close on Marina Bay; 1 = the photograph's own framing. It starts moving
+ * as the photo fades up and settles before the route lands (0.74). Linear
+ * here: the scene applies its own ease.
+ */
+export const roomAt = (p) => clamp01((p - 0.38) / (0.74 - 0.38));

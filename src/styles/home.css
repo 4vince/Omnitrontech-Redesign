@@ -51,6 +51,10 @@
   object-position: 62% 50%;
 }
 
+.hero-room {
+  display: none;
+}
+
 .hero-photo::after {
   content: "";
   position: absolute;
@@ -167,6 +171,30 @@
 
   .hero-track.is-opening .hero-photo {
     transform-origin: 62% 55%;
+  }
+
+  /* The room camera takes over from the photograph once its plates load
+     (hero.js setupRoom); the last frame is the photograph exactly. */
+  .hero-room {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out);
+  }
+
+  .hero-photo picture {
+    transition: opacity 0.5s var(--ease-out);
+  }
+
+  .hero-photo.has-room .hero-room {
+    opacity: 1;
+  }
+
+  .hero-photo.has-room picture {
+    opacity: 0;
   }
 
   .hero-track.is-opening .hero-copy__glide {

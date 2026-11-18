@@ -8,7 +8,7 @@ import {
   ScrollTrigger,
   scrollToTarget,
 } from "../core/motion.js";
-import { photoAt } from "./hero-timing.js";
+import { photoAt, roomAt } from "./hero-timing.js";
 
 /*
  * Homepage hero — "inside the AI's mind".
@@ -55,9 +55,11 @@ export function initHero() {
   const nav = document.querySelector("#site-nav");
   const route = track?.querySelector("[data-hero-route]");
   const routePaths = route?.querySelector("[data-hero-route-paths]");
+  const roomCanvas = track?.querySelector("[data-hero-room]");
   if (!track || !stage || !canvas || !glide) return;
 
   let scene = null;
+  let room = null; // the room camera, once its plates have loaded
   let started = false;
   let failed = false;
   let driver = null;
@@ -90,7 +92,8 @@ export function initHero() {
     // The office settles in from slightly close as the camera clears the brain.
     const ph = photoAt(p);
     setPhotoOpacity(ph);
-    setPhotoScale(1.12 - 0.12 * ph);
+    // With the room camera the depth move replaces the flat settle.
+    setPhotoScale(room ? 1 : 1.12 - 0.12 * ph);
   }
 
   function applyProgress(p) {
@@ -99,6 +102,7 @@ export function initHero() {
       placeLayers(p);
     }
     scene?.setProgress(p);
+    room?.setProgress(roomAt(p));
   }
 
   function setupScroll() {
@@ -116,6 +120,26 @@ export function initHero() {
     timeline = null;
     gsap.set(glide, { clearProps: "transform" });
     if (photo) gsap.set(photo, { clearProps: "opacity,transform" });
+    room?.setProgress(1);
+  }
+
+  /* The room camera: desktop opening only. Until (or unless) its plates
+     load, the photograph does the job exactly as before. */
+  async function setupRoom() {
+    if (!roomCanvas || !photo || room || !openingMode()) return;
+    try {
+      const { createRoomScene } = await import("../visuals/room-scene.js");
+      room = await createRoomScene(roomCanvas, {
+        plates: "/images/room/hero-singapore-office",
+        position: [0.62, 0.5], // the photo's object-position
+        focus: [0.75, 0.4], // Marina Bay Sands
+      });
+      room.setProgress(driver ? roomAt(driver.progress) : 1);
+      photo.classList.add("has-room");
+      gsap.set(photo, { scale: 1 });
+    } catch (error) {
+      console.warn("[room] keeping the photograph", error);
+    }
   }
 
   function applyMode() {
@@ -289,6 +313,7 @@ export function initHero() {
     if (sceneRequested || PHONE.matches) return;
     sceneRequested = true;
     void setupScene();
+    void setupRoom();
   };
   requestScene();
   PHONE.addEventListener?.("change", requestScene);

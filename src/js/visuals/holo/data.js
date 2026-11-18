@@ -102,7 +102,8 @@ export function build(kit) {
       kit.text(String(v), PLOT.x - 14, y, { size: 14.5, weight: 500, family: FONT.mono, color: INK.faint, align: "right" });
     });
     ["4 wks ago", "3 wks", "2 wks", "Last week"].forEach((label, w) => {
-      kit.text(label, px(w * 7), PLOT.y + PLOT.h + 26, { size: 14.5, weight: 560, color: INK.faint, align: w === 0 ? "left" : "center" });
+      // Centred in its own week, so neighbours never touch.
+      kit.text(label, px(w * 7 + 3.5), PLOT.y + PLOT.h + 26, { size: 14.5, weight: 560, color: INK.faint, align: "center" });
     });
 
     // Learned usual range: a band that grows out from the line.

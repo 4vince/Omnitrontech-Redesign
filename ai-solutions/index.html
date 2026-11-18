@@ -28,6 +28,20 @@
     <header id="site-nav" class="site-nav" data-page="solutions"></header>
 
     <main id="main" class="page-main">
+      <!-- The office tour (desktop, full motion): one fixed office behind the
+           whole page. The hero holds (sticky) while the camera comes back from
+           the skyline, through the glass, into the lab; each service then
+           takes the camera to its own station in the room, and the close
+           settles on the wide view. src/js/visuals/room-scene.js; plates from
+           scripts/make-room-plates.py. Phones and reduced motion never see it. -->
+      <div class="solutions-office" data-solutions-office aria-hidden="true">
+        <picture>
+          <source type="image/webp" srcset="/images/solutions-ops-lab-960.webp 960w, /images/solutions-ops-lab-1672.webp 1672w" sizes="100vw">
+          <img src="/images/solutions-ops-lab-1672.jpg" alt="" width="1672" height="941" decoding="async">
+        </picture>
+        <canvas class="solutions-office__room" data-solutions-room></canvas>
+      </div>
+      <div class="solutions-hero-track" data-solutions-track>
       <section class="solutions-hero tone-navy" data-solutions-hero aria-labelledby="solutions-title">
         <!-- Backdrop: an AI operations lab at dusk. Scrims in CSS keep the
              copy (bottom left) readable over it. -->
@@ -52,6 +66,7 @@
 
         <nav class="solutions-index" data-service-index aria-label="AI service lines"></nav>
       </section>
+      </div>
 
       <div data-service-rows></div>
 
